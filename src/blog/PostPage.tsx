@@ -12,29 +12,8 @@ import { PostCard } from './BlogIndex'
 import { setProgress, toggleSaved, useReader } from './store'
 import { reduceMotion } from './prefs'
 import { useHydrated } from './hydrated'
+import { notFoundHead, postHead, setHead } from './head'
 import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
-
-/** Keep <head> in sync on client-side navigation (pre-rendered pages already have it). */
-function setMeta(p: PostMeta) {
-  document.title = `${p.title} · Gul’s Notebook`
-  const set = (sel: string, attr: string, val: string) => {
-    let el = document.head.querySelector(sel)
-    if (!el) {
-      el = document.createElement(sel.startsWith('link') ? 'link' : 'meta')
-      const [, k, v] = sel.match(/\[([\w:]+)="([^"]+)"\]/)!
-      el.setAttribute(k, v)
-      document.head.appendChild(el)
-    }
-    el.setAttribute(attr, val)
-  }
-  const url = `${SITE_URL}/blog/${p.slug}`
-  set('meta[name="description"]', 'content', p.description)
-  set('link[rel="canonical"]', 'href', url)
-  set('meta[property="og:title"]', 'content', p.title)
-  set('meta[property="og:description"]', 'content', p.description)
-  set('meta[property="og:url"]', 'content', url)
-  set('meta[property="og:image"]', 'content', `${SITE_URL}/og/${p.slug}.png`)
-}
 
 /** 0..1 of the article read, measured so the last screen counts as "done". */
 function readFraction(el: HTMLElement) {
@@ -301,7 +280,7 @@ export default function PostPage({ slug }: { slug: string }) {
   useEffect(() => clearScholarMeta, [])
   useEffect(() => {
     if (!p) return
-    setMeta(p)
+    setHead(postHead(p))
     syncScholarMeta(p)
     if (getBody(slug)) return
     let alive = true
@@ -496,7 +475,7 @@ export default function PostPage({ slug }: { slug: string }) {
 export function NotFound() {
   const [q, setQ] = useState('')
   useEffect(() => {
-    document.title = 'Page not found · Gul’s Notebook'
+    setHead(notFoundHead())
   }, [])
   const picks = posts.filter((p) => p.featured).concat(posts.filter((p) => !p.featured)).slice(0, 3)
   return (

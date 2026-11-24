@@ -7,7 +7,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import rehypeKatex from 'rehype-katex'
 import rehypeSlug from 'rehype-slug'
 import rehypePrettyCode from 'rehype-pretty-code'
-import { loadPosts, SITE_URL, POSTS_DIR } from './scripts/blog.mjs'
+import { loadPosts, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
 
 const VIRTUAL = 'virtual:blog'
 const RESOLVED = '\0' + VIRTUAL
@@ -32,7 +32,8 @@ function blog(): Plugin {
     load(id) {
       if (id !== RESOLVED) return
       const posts = loadPosts(POSTS_DIR, { includeDrafts: !isBuild })
-      return `export const posts = ${JSON.stringify(posts)}\nexport const SITE_URL = ${JSON.stringify(SITE_URL)}`
+      const seo = { BLOG_TITLE, BLOG_DESCRIPTION, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION }
+      return `export const posts = ${JSON.stringify(posts)}\nexport const SITE_URL = ${JSON.stringify(SITE_URL)}\nexport const SEO = ${JSON.stringify(seo)}`
     },
     configureServer(server) {
       server.watcher.add(POSTS_DIR)

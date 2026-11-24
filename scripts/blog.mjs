@@ -7,6 +7,10 @@
  *
  *   title:        required, aim for 30–65 characters (search results truncate ~60)
  *   description:  required, 70–160 characters; used for cards, meta description, feeds
+ *   seoTitle:     optional, a shorter <title> for search results (the page headline is unchanged)
+ *
+ *   Every post gets its <head> (title, description, canonical, Open Graph, Twitter, JSON-LD),
+ *   a 1200×630 share image at /og/<slug>.png, a sitemap entry and feed items automatically.
  *   date:         required, YYYY-MM-DD
  *   updated:      optional, YYYY-MM-DD (shown as "Updated", used as dateModified)
  *   category:     Founder | Engineering | AI Research | Writing
@@ -99,6 +103,7 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
         slug,
         title: String(data.title ?? slug),
         description: String(data.description ?? ''),
+        seoTitle: data.seoTitle ? String(data.seoTitle) : undefined,
         date: toISO(data.date) ?? '1970-01-01',
         updated: toISO(data.updated),
         category: data.category ?? 'Engineering',
@@ -214,7 +219,15 @@ export function lintPosts(dir = POSTS_DIR) {
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const cdata = (s) => `<![CDATA[${String(s).replace(/]]>/g, ']]]]><![CDATA[>')}]]>`
 export const postUrl = (p) => `${SITE_URL}/blog/${p.slug}`
-export const ogImage = (p) => `${SITE_URL}/og/${p ? p.slug : 'blog'}.png`
+/**
+ * Share images live at /og/<key>.png (key: a post slug, or home | blog | research | 404).
+ * The build stamps each URL with a hash of the image (?v=…), so Facebook, LinkedIn,
+ * Slack and X fetch the new picture whenever a title or the artwork changes.
+ */
+const OG_VERSIONS = {}
+export const setOgVersions = (map) => Object.assign(OG_VERSIONS, map)
+export const ogUrl = (key) => `${SITE_URL}/og/${key}.png${OG_VERSIONS[key] ? `?v=${OG_VERSIONS[key]}` : ''}`
+export const ogImage = (p) => ogUrl(p ? p.slug : 'blog')
 
 export function rss(posts, html = {}) {
   const items = posts
@@ -341,9 +354,9 @@ export function jsonFeed(posts, html = {}, { feedPath = '/feed.json', title = BL
 
 export function sitemap(posts) {
   const urls = [
-    { loc: `${SITE_URL}/`, lastmod: posts[0]?.date },
+    { loc: `${SITE_URL}/`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('home') },
     { loc: `${SITE_URL}/blog`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogImage() },
-    { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1) },
+    { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('research') },
     ...posts.map((p) => ({ loc: postUrl(p), lastmod: p.updated ?? p.date, image: ogImage(p) })),
   ]
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -556,22 +569,32 @@ function researchGraph(posts) {
   }
 }
 export const RESEARCH_DESCRIPTION =
-  'How to cite Muhammad Gulzaib’s writing: ORCID iD, research profiles, open-access (CC BY 4.0) posts with DOIs and PDFs, and citation formats for APA, IEEE, BibTeX and more.'
+  'How to cite Muhammad Gulzaib’s writing: ORCID iD, research profiles, open-access (CC BY 4.0) posts with DOIs and PDFs, and APA, IEEE and BibTeX citations.'
+export const NOT_FOUND_DESCRIPTION = 'This page doesn’t exist. Search Gul’s Notebook or start with a recent post on founding, engineering and AI.'
+
+/** "<post> · Gul’s Notebook", or just the post title when that would be cut off in search results. */
+export const postTitle = (p) => p.seoTitle ?? (`${p.title} · ${BLOG_TITLE}`.length <= 65 ? `${p.title} · ${BLOG_TITLE}` : p.title)
 
 /** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
 export function headTags({ post, posts, notFound, research }) {
   const title = notFound
     ? `Page not found · ${BLOG_TITLE}`
     : post
-      ? `${post.title} · ${BLOG_TITLE}`
+      ? postTitle(post)
       : research
         ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
         : `${BLOG_TITLE}: founder, engineering and AI notes by Muhammad Gulzaib`
-  const description = notFound ? 'This page does not exist.' : post ? post.description : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
+  const description = notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
   const url = post ? postUrl(post) : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
   const lic = post ? LICENSES[post.license] : null
-  const img = ogImage(post)
-  const imgAlt = post ? `${post.title}, by Muhammad Gulzaib` : `${BLOG_TITLE} by Muhammad Gulzaib`
+  const img = post ? ogImage(post) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
+  const imgAlt = post
+    ? `${post.title}: ${post.category} post by Muhammad Gulzaib`
+    : research
+      ? 'Research and writing by Muhammad Gulzaib: ORCID iD, open-access posts and citation formats'
+      : notFound
+        ? 'Page not found'
+        : `${BLOG_TITLE} by Muhammad Gulzaib: ${posts?.length ?? ''} posts on founding, engineering, AI and writing`
   const t = [
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
@@ -613,6 +636,15 @@ export function headTags({ post, posts, notFound, research }) {
     `<meta name="twitter:description" content="${esc(description)}" />`,
     `<meta name="twitter:image" content="${img}" />`,
     `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
+    // shown under link unfurls in Slack, Discord and others
+    ...(post
+      ? [
+          `<meta name="twitter:label1" content="Reading time" />`,
+          `<meta name="twitter:data1" content="${post.minutes} min read" />`,
+          `<meta name="twitter:label2" content="Filed under" />`,
+          `<meta name="twitter:data2" content="${esc(post.category)}" />`,
+        ]
+      : []),
     notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
   ]
   return t.filter(Boolean).join('\n    ')
@@ -624,6 +656,7 @@ export function headTags({ post, posts, notFound, research }) {
  */
 export function pageHtml(indexHtml, { head, preload = '', body = '' }) {
   return indexHtml
+    .replace(/\s*<!-- seo -->[\s\S]*?<!-- \/seo -->/, '')
     .replace(/<title>[\s\S]*?<\/title>/, '')
     .replace(/\s*<meta name="description"[^>]*>/, '')
     .replace(/\s*<meta property="og:[^>]*>/g, '')
@@ -632,4 +665,143 @@ export function pageHtml(indexHtml, { head, preload = '', body = '' }) {
     .replace(/\s*<noscript>[\s\S]*?<\/noscript>/, '')
     .replace('</head>', `    ${head}\n    ${preload}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root" data-ssr="1">${body}</div>`)
+}
+
+/* ------------------------------------------------------- the landing page */
+
+/** Title, description and share text for the portfolio, all from src/data/content.ts. */
+export function homeMeta({ profile, ventures }) {
+  const company = ventures.find((v) => /founder/i.test(v.role) && /company/i.test(v.kicker)) ?? ventures[0]
+  const role = company ? company.role.replace(/^\w/, (c) => c.toLowerCase()) : 'founder'
+  const building = ventures.filter((v) => /founder/i.test(v.role)).slice(0, 3).map((v) => v.name)
+  const list = building.length > 1 ? `${building.slice(0, -1).join(', ')} and ${building.at(-1)}` : building[0]
+  // the longest version that fits a search snippet (~160 characters)
+  const description =
+    [
+      `${profile.name}, ${role} of ${company?.name}: a senior full stack engineer building AI-native SaaS with Laravel, React and agentic AI in ${profile.location}.`,
+      `${profile.name}, ${role} of ${company?.name}: a senior full stack engineer building AI-native SaaS in ${profile.location}.`,
+      `${profile.name}: ${profile.role}. ${profile.location}.`,
+    ].find((d) => d.length <= 160) ?? `${profile.name}: ${profile.role}.`
+  return {
+    title: `${profile.name}: ${profile.role}`,
+    description,
+    ogTitle: `${profile.name}: ${profile.tagline}`,
+    ogDescription: `${profile.headline}. Building ${list}. ${profile.availability}.`,
+  }
+}
+
+function homeGraph({ profile, ventures, manifesto, education, stack, languages }, posts, meta) {
+  const founded = ventures.filter((v) => /founder/i.test(v.role))
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}/#website`,
+        url: `${SITE_URL}/`,
+        name: profile.name,
+        alternateName: [profile.short, BLOG_TITLE],
+        description: meta.description,
+        inLanguage: 'en',
+        publisher: { '@id': PERSON['@id'] },
+        // the blog has search (?q=), which lets Google show a search box for the site
+        potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/blog?q={search_term_string}` }, 'query-input': 'required name=search_term_string' },
+      },
+      {
+        '@type': 'ProfilePage',
+        '@id': `${SITE_URL}/#page`,
+        url: `${SITE_URL}/`,
+        name: meta.title,
+        description: meta.description,
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        mainEntity: { '@id': PERSON['@id'] },
+        about: { '@id': PERSON['@id'] },
+        primaryImageOfPage: { '@type': 'ImageObject', url: ogUrl('home'), width: 1200, height: 630 },
+        dateModified: posts.map((p) => p.updated ?? p.date).sort().at(-1),
+        hasPart: { '@id': BLOG['@id'] },
+      },
+      {
+        ...PERSON,
+        description: manifesto,
+        jobTitle: profile.role,
+        knowsAbout: [...new Set([...AUTHOR.knowsAbout, ...stack.flatMap((g) => g.skills.filter((k) => k.level >= 5).map((k) => k.name))])],
+        knowsLanguage: languages.map((l) => l.name),
+        alumniOf: { '@type': 'CollegeOrUniversity', name: education.school, url: education.url },
+        hasOccupation: { '@type': 'Occupation', name: 'Senior Full Stack Engineer', skills: profile.headline },
+        worksFor: founded.slice(0, 1).map((v) => ({ '@id': `${SITE_URL}/#org-${slug(v.name)}` }))[0],
+      },
+      ...founded.map((v) => ({
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#org-${slug(v.name)}`,
+        name: v.name,
+        description: `${v.tagline} ${v.body}`,
+        ...(v.url ? { url: v.url } : {}),
+        founder: { '@id': PERSON['@id'] },
+      })),
+      BLOG,
+    ],
+  }
+}
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+/** <head> tags for the portfolio landing page. */
+export function homeHeadTags(content, posts) {
+  const meta = homeMeta(content)
+  const img = ogUrl('home')
+  const alt = `${content.profile.name}, ${content.profile.role}: ${content.profile.tagline}`
+  return [
+    `<title>${esc(meta.title)}</title>`,
+    `<meta name="description" content="${esc(meta.description)}" />`,
+    `<meta name="author" content="${esc(AUTHOR.name)}" />`,
+    `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+    `<link rel="canonical" href="${SITE_URL}/" />`,
+    `<link rel="alternate" type="application/rss+xml" title="${esc(BLOG_TITLE)}" href="${SITE_URL}/rss.xml" />`,
+    `<link rel="alternate" type="text/plain" title="llms.txt" href="${SITE_URL}/llms.txt" />`,
+    ...sameAs().map((u) => `<link rel="me" href="${u}" />`),
+    `<meta property="og:site_name" content="${esc(content.profile.name)}" />`,
+    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:type" content="profile" />`,
+    `<meta property="profile:first_name" content="${esc(AUTHOR.givenName)}" />`,
+    `<meta property="profile:last_name" content="${esc(AUTHOR.familyName)}" />`,
+    `<meta property="og:title" content="${esc(meta.ogTitle)}" />`,
+    `<meta property="og:description" content="${esc(meta.ogDescription)}" />`,
+    `<meta property="og:url" content="${SITE_URL}/" />`,
+    `<meta property="og:image" content="${img}" />`,
+    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${esc(alt)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${esc(meta.ogTitle)}" />`,
+    `<meta name="twitter:description" content="${esc(meta.ogDescription)}" />`,
+    `<meta name="twitter:image" content="${img}" />`,
+    `<meta name="twitter:image:alt" content="${esc(alt)}" />`,
+    `<script type="application/ld+json">${json(homeGraph(content, posts, meta))}</script>`,
+  ].join('\n    ')
+}
+
+/**
+ * Plain-HTML summary of the portfolio for visitors and crawlers without JavaScript
+ * (link unfurlers, AI crawlers, text browsers). Same facts as the interactive page.
+ */
+export function homeNoscript({ profile, ventures, manifesto }, posts) {
+  const li = (s) => `<li>${s}</li>`
+  return `<noscript>
+      <main style="max-width:44rem;margin:0 auto;padding:3rem 1.25rem;font:16px/1.6 system-ui,sans-serif;color:#ecebe6;background:#07070a">
+        <h1>${esc(profile.name)}</h1>
+        <p><strong>${esc(profile.role)}</strong> · ${esc(profile.headline)} · ${esc(profile.location)}</p>
+        <p>${esc(manifesto)}</p>
+        <h2>Ventures</h2>
+        <ul>${ventures.map((v) => li(`<strong>${v.url ? `<a href="${v.url}">${esc(v.name)}</a>` : esc(v.name)}</strong> (${esc(v.role)}): ${esc(v.tagline)} ${esc(v.body)}`)).join('')}</ul>
+        <h2>Latest from <a href="${SITE_URL}/blog">${esc(BLOG_TITLE)}</a></h2>
+        <ul>${posts.slice(0, 6).map((p) => li(`<a href="${postUrl(p)}">${esc(p.title)}</a>: ${esc(p.description)}`)).join('')}</ul>
+        <h2>Contact</h2>
+        <p><a href="mailto:${profile.email}">${esc(profile.email)}</a> · ${profile.socials.filter((x) => /^https?:/.test(x.url)).map((x) => `<a href="${x.url}" rel="me">${esc(x.label)}</a>`).join(' · ')} · ${esc(profile.availability)}</p>
+      </main>
+    </noscript>`
+}
+
+/** The built index.html with the landing page's generated head and no-JS summary. */
+export function homeHtml(indexHtml, { head, noscript }) {
+  return indexHtml.replace(/<!-- seo -->[\s\S]*?<!-- \/seo -->/, `<!-- seo -->\n    ${head}\n    <!-- /seo -->`).replace(/<noscript>[\s\S]*?<\/noscript>/, noscript)
 }

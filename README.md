@@ -137,6 +137,24 @@ Hover a link (mouse, pen or keyboard focus) to see a card: favicon, title, descr
 - **Client:** `src/lib/linkPreview/` (one delegated listener; mounted in `src/App.tsx` and `src/blog/BlogApp.tsx`). `data-no-preview` turns the card off for a link or a container. `data-preview="hover"` keeps the hover card but lets a tap open the link straight away (used for the blog header, breadcrumbs, prev/next and link cards).
 - **Feedback:** soft synthesized sounds (follow the portfolio's sound toggle; on the blog, Settings → Sounds, off by default) and haptics on phones (blog: Settings → Vibration). Reduced motion turns the motion into fades. Blog readers can turn previews off in Settings.
 
+## SEO and share images
+
+Every page gets its own `<head>` and its own 1200×630 share image. Nothing has to be added by hand: a new post (or a change to the portfolio copy) gets them on the next build.
+
+| Page | `<head>` | Share image |
+| --- | --- | --- |
+| `/` portfolio | generated from `src/data/content.ts` and injected into `dist/index.html`: title, description, canonical, Open Graph `profile`, Twitter, `rel="me"`, JSON-LD (`WebSite` + search, `ProfilePage`, `Person`, one `Organization` per venture) and a `<noscript>` summary for crawlers that don't run JavaScript | `og/home.png`: photo on the lime disc, role, tagline, stack, ventures, latest note |
+| `/blog` | `Blog` + `ItemList` JSON-LD, RSS/JSON Feed links | `og/blog.png`: post count, categories, latest post |
+| `/blog/<slug>` | title, description, canonical, `article:*`, Twitter reading time and category, `citation_*` (Google Scholar), `BlogPosting` + `BreadcrumbList` (+ `FAQPage`) JSON-LD | `og/<slug>.png`: category colour and cover art, series, reading time, date, level or licence |
+| `/blog/research` | `ProfilePage` + `Person` with ORCID | `og/research.png`: open-access posts and citation formats |
+| 404 | `noindex` | `og/404.png` |
+
+- **Code:** images are drawn by `scripts/og.mjs` (SVG → PNG with resvg, fonts from `@expo-google-fonts`); head tags and JSON-LD come from `scripts/blog.mjs` (`headTags`, `homeHeadTags`); `scripts/prerender.mjs` renders them after the build. Image URLs carry a content hash (`?v=…`) so LinkedIn, X, Slack and WhatsApp refetch an image when it changes.
+- **Between pages:** the blog is a single-page app after the first load, so `src/blog/head.ts` updates the title, description, canonical, robots and share tags on every navigation. Filtered blog views (`?tag=`, `?category=`) get their own title; search results and saved posts are `noindex`.
+- **Titles:** a post's `<title>` is "Post title · Gul’s Notebook" when that fits in about 65 characters, otherwise just the post title. Set `seoTitle:` in the frontmatter to choose a shorter one.
+- **Audit:** the build ends with `scripts/seo-check.mjs`, which reads every page in `dist/` and **fails the build** on a missing title, description, canonical, Open Graph or Twitter tag, a share image that doesn't exist, invalid JSON-LD, a link to another host, a sitemap URL without a page, or a duplicate title or description. Lengths, alt text and headings are warnings. Run it on its own with `npm run seo:check`.
+- **Domain:** URLs use `VITE_SITE_URL` (default `https://gulzaib.vercel.app`). Set it in Vercel if the site moves to a custom domain.
+
 ## Portrait, logo and icons
 
 One photo (`assets/gulzaib.jpg`) feeds every image of me on the site. `scripts/portrait.mjs` cuts out the background and writes each version into `public/img/gul/`, plus the favicons and app icons in `public/`:
@@ -147,7 +165,7 @@ One photo (`assets/gulzaib.jpg`) feeds every image of me on the site. `scripts/p
 | `mark.webp` | Portfolio logo (top left) | face on ink inside the spinning lime ring; colour on hover |
 | `avatar.webp` | Blog header mark, bylines, author card, research page | warm-toned transparent cut-out (the reader's theme shows through) |
 | `avatar-og.png` | Blog post share images (`og/<slug>.png`) | same, embedded by `scripts/prerender.mjs` |
-| `og-home.jpg` | Portfolio share image (`og:image`) | 1200×630, lime disc and name |
+| `assets/og-person.png` | Portfolio share image (`og/home.png`, drawn by `scripts/og.mjs`) | black and white cut-out, placed on a lime disc |
 | `gulzaib.jpg` | `Person.image` structured data, link-preview cards | the original photo |
 | `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png`, `/site.webmanifest` | Browser tabs, home screens | face in a lime-to-blue ring on ink |
 
@@ -165,6 +183,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # type-check, build, pre-render the blog into dist/
 npm run lint:blog  # check posts against docs/BLOG_GUIDELINES.md
+npm run seo:check  # audit dist/ (titles, descriptions, OG images, JSON-LD); also runs in build
 npm run blog:dois  # fetch Rogue Scholar DOIs into post frontmatter (after registering the blog)
 npm run blog:indexnow  # tell Bing & co. that pages changed (after a deploy)
 npm run preview

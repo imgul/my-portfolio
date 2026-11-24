@@ -1,4 +1,4 @@
-import { posts as ALL, SITE_URL } from 'virtual:blog'
+import { posts as ALL, SITE_URL, SEO } from 'virtual:blog'
 import type { LicenseId } from './scholar.mjs'
 
 export type Category = 'Founder' | 'Engineering' | 'AI Research' | 'Writing'
@@ -18,6 +18,8 @@ export interface PostMeta {
   slug: string
   title: string
   description: string
+  /** optional shorter <title> for search results */
+  seoTitle?: string
   date: string
   updated?: string
   category: Category
@@ -40,7 +42,7 @@ export interface PostMeta {
 }
 
 export const posts: PostMeta[] = ALL
-export { SITE_URL }
+export { SITE_URL, SEO }
 
 export const CATEGORIES: { id: Category; audience: string; blurb: string; glyph: string }[] = [
   { id: 'Founder', audience: 'Founders', blurb: 'Building companies: validation, distribution, pricing and hiring.', glyph: '◆' },

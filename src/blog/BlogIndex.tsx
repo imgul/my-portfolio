@@ -9,6 +9,7 @@ import { prefetchBody } from './content'
 import { useCounts } from './reactions'
 import { toggleSaved, useReader } from './store'
 import { useHydrated } from './hydrated'
+import { indexHead, setHead } from './head'
 
 /* ------------------------------------------------------------------ search */
 
@@ -205,7 +206,6 @@ export default function BlogIndex() {
   }
 
   useEffect(() => {
-    document.title = savedOnly ? 'Saved posts · Gul’s Notebook' : 'Gul’s Notebook: founder, engineering and AI notes by Muhammad Gulzaib'
     if (search.get('focus') === 'search') {
       input.current?.focus()
       input.current?.scrollIntoView({ block: 'center' })
@@ -253,6 +253,10 @@ export default function BlogIndex() {
   }, [q, tag, cat, savedOnly, saved, hydrated, sort, counts])
 
   const filtering = !!(q || tag || cat || savedOnly || sort !== 'new')
+  // the tab title, description and share tags follow the active filter
+  useEffect(() => {
+    setHead(indexHead({ q, tag, cat, saved: savedOnly, count: filtered.length }))
+  }, [q, tag, cat, savedOnly, filtered.length])
   const featured = featuredPost()
   const list = filtering ? filtered : filtered.filter((p) => p !== featured)
   const byYear = list.reduce<Record<string, PostMeta[]>>((acc, p) => ((acc[p.date.slice(0, 4)] ||= []).push(p), acc), {})
