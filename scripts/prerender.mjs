@@ -3,9 +3,13 @@
  *
  * Writes into dist/:
  *   blog.html, blog/<slug>.html, 404.html               pre-rendered pages (full text, JSON-LD, OG tags)
+ *   blog/research.html                                   research & citation page (ORCID, profiles, open-access posts)
  *   blog/<slug>.md                                       clean Markdown copy of each post (for AI tools / notes)
+ *   blog/<slug>.pdf                                      PDF version (Google Scholar citation_pdf_url, Zenodo uploads)
  *   og/blog.png, og/<slug>.png                           1200×630 Open Graph images
  *   rss.xml, feed.json                                   feeds with full post content
+ *   feeds/open-access.xml, feeds/open-access.json        CC BY posts only (register with Rogue Scholar for DOIs)
+ *   <INDEXNOW_KEY>.txt                                   IndexNow key (npm run blog:indexnow pings Bing & co.)
  *   sitemap.xml, robots.txt, llms.txt, llms-full.txt     discovery for search engines and AI assistants
  */
 import fs from 'node:fs'
@@ -15,7 +19,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 import { Resvg } from '@resvg/resvg-js'
-import { AUTHOR, BLOG_TITLE, BLOG_DESCRIPTION, SITE_URL, headTags, jsonFeed, llmsTxt, pageHtml, postUrl, robots, rss, sitemap } from './blog.mjs'
+import { AUTHOR, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, sitemap } from './blog.mjs'
+import { LICENSES, doiUrl } from '../src/blog/scholar.mjs'
+import { postPdf } from './pdf.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const dist = path.join(root, 'dist')
@@ -82,6 +88,7 @@ const page = (url, opts, kind) =>
 // blog.html + blog/<slug>.html are served at /blog and /blog/<slug> (vercel.json cleanUrls)
 write('blog.html', page('/blog', { posts }, 'index'))
 for (const p of posts) write(`blog/${p.slug}.html`, page(`/blog/${p.slug}`, { post: p, posts }, 'post'))
+write('blog/research.html', page('/blog/research', { posts, research: true }, 'research'))
 // the 404 page is served for any unknown URL, so its pre-paint script must always apply the blog theme
 write('404.html', page('404', { notFound: true }, '404').replace("location.pathname.indexOf('/blog') === 0", 'true'))
 
@@ -117,6 +124,29 @@ td.addRule('aside', {
   filter: (n) => n.nodeName === 'ASIDE',
   replacement: (c) => `\n\n${c.trim().split('\n').map((l) => `> ${l}`.trimEnd()).join('\n')}\n\n`,
 })
+// decorative glyphs (callout icons etc.) are aria-hidden: not content
+td.addRule('decorative', { filter: (n) => n.getAttribute?.('aria-hidden') === 'true' && !/katex/.test(n.getAttribute('class') || ''), replacement: () => '' })
+td.addRule('flowStep', {
+  filter: (n) => n.nodeName === 'SPAN' && /\bb-flow__(n|label|note)\b/.test(n.getAttribute('class') || ''),
+  replacement: (c, n) => {
+    const cls = n.getAttribute('class')
+    return /b-flow__n\b/.test(cls) ? '' : /b-flow__label/.test(cls) ? `**${c.trim()}**` : `: ${c.trim()}`
+  },
+})
+// component parts that are visually separate but adjacent in the HTML
+const cls = (n) => (n.getAttribute && n.getAttribute('class')) || ''
+td.addRule('boldTitles', {
+  filter: (n) => /\bb-(decision__title|proscons__title|step__title|linkcard__title|postlink__title)\b/.test(cls(n)),
+  replacement: (c, n) => (n.nodeName === 'P' ? `\n\n**${c.trim()}**\n\n` : `**${c.trim()}**`),
+})
+td.addRule('cardKicker', { filter: (n) => /\bb-kicker\b/.test(cls(n)) && !!n.closest?.('a'), replacement: () => '' })
+td.addRule('cardDesc', { filter: (n) => /\bb-(linkcard|postlink)__desc\b/.test(cls(n)), replacement: (c) => `: ${c.trim()}` })
+td.addRule('decisionStatus', { filter: (n) => /\bb-decision__status\b/.test(cls(n)), replacement: (c) => ` · ${c.trim()}` })
+td.addRule('sidenote', { filter: (n) => /\bb-sidenote__body\b/.test(cls(n)), replacement: (c) => ` (${c.trim()})` })
+td.addRule('calloutTitle', {
+  filter: (n) => n.nodeName === 'P' && /\bb-callout__title\b/.test(n.getAttribute('class') || ''),
+  replacement: (c) => `\n\n**${c.trim()}**\n\n`,
+})
 td.addRule('details', { filter: ['details'], replacement: (c) => `\n\n${c.trim()}\n\n` })
 td.addRule('summary', { filter: ['summary'], replacement: (c) => `\n\n**${c.trim()}**\n\n` })
 
@@ -124,27 +154,36 @@ const absolutize = (html) => html.replace(/(href|src)="\/(?!\/)/g, `$1="${SITE_U
 
 const articles = {}
 const markdown = {}
+const bodies = {}
 for (const p of posts) {
   const html = absolutize(ssr.renderArticle(p.slug))
   articles[p.slug] = html
+    .replace(/<span class="b-callout__icon" aria-hidden="true">[^<]*<\/span>/g, '')
+    .replace(/<span class="b-flow__n">(\d+)<\/span>/g, '')
+    .replace(/<span class="b-flow__note">/g, '<span>: ')
     .replace(/<svg[\s\S]*?<\/svg>/g, '')
+    .replace(/<\/span><span/g, '</span> <span')
     .replace(/<button[\s\S]*?<\/button>/g, '')
     .replace(/\s(class|style|tabindex|data-[\w-]+)="[^"]*"/g, '')
     .replace(/<span>\s*<\/span>/g, '')
   const body = td.turndown(html).replace(/\n{3,}/g, '\n\n').trim()
+  bodies[p.slug] = body
+  const lic = LICENSES[p.license]
   const fm = [
     '---',
     `title: ${JSON.stringify(p.title)}`,
     `description: ${JSON.stringify(p.description)}`,
     `author: ${AUTHOR.name}`,
+    `orcid: ${AUTHOR.orcidUrl}`,
     `published: ${p.date}`,
     p.updated ? `updated: ${p.updated}` : '',
     `url: ${postUrl(p)}`,
+    p.doi ? `doi: ${doiUrl(p.doi)}` : '',
     `category: ${p.category}`,
     `tags: [${p.tags.join(', ')}]`,
     p.series ? `series: ${JSON.stringify(p.series)}${p.seriesPart ? ` (part ${p.seriesPart})` : ''}` : '',
     `reading_time: ${p.minutes} min`,
-    'license: Text © Muhammad Gulzaib; please cite with a link. Code samples MIT.',
+    lic.open ? `license: ${lic.short} (${lic.url}); code samples MIT` : `license: © ${p.date.slice(0, 4)} ${AUTHOR.name}, all rights reserved (quote with a link); code samples MIT`,
     '---',
   ]
     .filter(Boolean)
@@ -157,6 +196,20 @@ for (const p of posts) {
 
 write('rss.xml', rss(posts, articles))
 write('feed.json', jsonFeed(posts, articles))
+write('feeds/open-access.xml', openAccessAtom(posts, articles))
+write(
+  'feeds/open-access.json',
+  jsonFeed(
+    posts.filter((p) => LICENSES[p.license].open),
+    articles,
+    { feedPath: '/feeds/open-access.json', title: `${BLOG_TITLE}: open-access posts (CC BY 4.0)` },
+  ),
+)
+write(`${INDEXNOW_KEY}.txt`, INDEXNOW_KEY)
+
+/* ------------------------------------------------------------------- pdfs */
+
+await Promise.all(posts.map(async (p) => write(`blog/${p.slug}.pdf`, await postPdf(p, bodies[p.slug], { site: SITE_URL }))))
 write('sitemap.xml', sitemap(posts))
 write('robots.txt', robots())
 write('llms.txt', llmsTxt(posts))
@@ -264,4 +317,4 @@ write(
 
 fs.rmSync(ssrDir, { recursive: true, force: true })
 fs.rmSync(path.dirname(manifestFile), { recursive: true, force: true })
-console.log(`prerender: ${posts.length} posts → pages, Markdown, OG images, feeds, sitemap, llms.txt (${Date.now() - t0} ms)`)
+console.log(`prerender: ${posts.length} posts → pages, Markdown, PDFs, OG images, feeds, sitemap, llms.txt (${Date.now() - t0} ms)`)

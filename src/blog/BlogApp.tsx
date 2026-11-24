@@ -4,6 +4,7 @@ import BlogIndex from './BlogIndex'
 import PostPage, { NotFound } from './PostPage'
 import { BackToTop, Footer, Header } from './components/layout'
 import { Toaster } from './components/ui'
+import { ResearchPage } from './components/scholar'
 
 /** `notFound` forces the 404 page (the pre-rendered 404.html, served for unknown URLs). */
 export default function BlogApp({ notFound }: { notFound?: boolean }) {
@@ -23,7 +24,7 @@ export default function BlogApp({ notFound }: { notFound?: boolean }) {
   return (
     <div className="b-app">
       <Header />
-      {notFound ? <NotFound /> : path === '/blog' ? <BlogIndex /> : slug && !slug.includes('/') ? <PostPage key={slug} slug={slug} /> : <NotFound />}
+      {notFound ? <NotFound /> : path === '/blog' ? <BlogIndex /> : path === '/blog/research' ? <ResearchPage /> : slug && !slug.includes('/') ? <PostPage key={slug} slug={slug} /> : <NotFound />}
       <Footer />
       <BackToTop />
       <Toaster />

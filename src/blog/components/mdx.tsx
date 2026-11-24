@@ -379,9 +379,9 @@ export function References() {
       <ol>
         {refs.map((r) => (
           <li key={r.id} id={`ref-${r.id}`}>
-            {r.authors && <span>{r.authors}. </span>}
-            {r.url ? (
-              <a href={r.url} target="_blank" rel="noopener noreferrer" className="b-ext">
+            {r.authors && <span>{r.authors.replace(/\.$/, '')}. </span>}
+            {r.url || r.doi ? (
+              <a href={r.url ?? `https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer" className="b-ext">
                 {r.title}
               </a>
             ) : (
@@ -389,6 +389,14 @@ export function References() {
             )}
             {r.venue && <span>. {r.venue}</span>}
             {r.year && <span>, {r.year}</span>}.
+            {r.doi && (
+              <>
+                {' '}
+                <a href={`https://doi.org/${r.doi}`} className="b-refs__doi" target="_blank" rel="noopener noreferrer">
+                  https://doi.org/{r.doi}
+                </a>
+              </>
+            )}
           </li>
         ))}
       </ol>

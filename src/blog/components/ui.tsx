@@ -101,6 +101,9 @@ export type IconName =
   | 'eye'
   | 'reset'
   | 'whatsapp'
+  | 'pdf'
+  | 'download'
+  | 'id'
 
 const PATHS: Record<IconName, string> = {
   copy: 'M9 9h10v10H9zM5 15V5h10',
@@ -138,6 +141,9 @@ const PATHS: Record<IconName, string> = {
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
   reset: 'M4 4v6h6M4.5 15a8 8 0 1 0 1.9-8.3L4 10',
   whatsapp: 'M4 20l1.3-4A8 8 0 1 1 8 18.7zM9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1a4 4 0 0 1-2-2l1-1-1-2z',
+  pdf: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h4',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  id: 'M3 5h18v14H3zM7 10h.01M7 14h4M14 9h4M14 13h4M7 10a1.5 1.5 0 1 0 0 .01',
 }
 
 export function Icon({ name, size = 18, filled }: { name: IconName; size?: number; filled?: boolean }) {

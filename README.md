@@ -102,6 +102,18 @@ Built with the build step (`vite build` → SSR build → [`scripts/prerender.mj
 - `robots.txt`: explicitly welcomes search engines and AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended and others).
 - Writing guidance for answer engines (answer-first TL;DR, question-shaped headings, FAQ, citations, an updated date) is in [`docs/BLOG_GUIDELINES.md`](docs/BLOG_GUIDELINES.md).
 
+### Research, citations and indexing
+
+Posts are set up to be cited and indexed like scholarly work. The step-by-step setup for ORCID, Rogue Scholar DOIs, Google Scholar, Zenodo, IEEE, Semantic Scholar and OpenAlex is in [`docs/SCHOLARLY_INDEXING.md`](docs/SCHOLARLY_INDEXING.md).
+
+- **Identity:** [`src/blog/scholar.mjs`](src/blog/scholar.mjs) holds the author (ORCID [0009-0000-8709-6989](https://orcid.org/0009-0000-8709-6989)), the research `PROFILES` (paste a URL and it appears everywhere), the licence rules and the citation formats. The build and the browser share it.
+- **Licences:** AI Research, Engineering and Writing posts are **CC BY 4.0**. Founder posts are all rights reserved. Override with `license:` in a post's frontmatter.
+- **On open posts:** Highwire Press `citation_*` and Dublin Core tags (Google Scholar, Zotero, Mendeley), `ScholarlyArticle` JSON-LD with ORCID, `rel="license"`, an "Open access" badge, and `rel="cite-as"` plus `citation_doi` once a post has a `doi:`.
+- **Every post:** an "Article information" panel (author + ORCID, dates, DOI or permanent link, licence, downloads), "Cite this post" in APA, MLA, Chicago, IEEE, Harvard, BibTeX and RIS (`.bib`/`.ris` downloads), and a **PDF** (`/blog/<slug>.pdf`, generated with pdfkit by [`scripts/pdf.mjs`](scripts/pdf.mjs)).
+- **`/blog/research`:** identifiers, open-access posts, how to cite, reuse policy (schema.org `ProfilePage`).
+- **`/feeds/open-access.xml`** (Atom) and **`/feeds/open-access.json`:** CC BY posts only, full text, ORCID and licence. Register the Atom feed with [Rogue Scholar](https://rogue-scholar.org) for free Crossref DOIs.
+- `npm run blog:dois` writes Rogue Scholar DOIs into post frontmatter. `npm run blog:indexnow` pings Bing and other IndexNow engines after a deploy. Both need internet, so run them on your machine.
+
 Set `VITE_SITE_URL` to change the canonical domain (default `https://gulzaib.vercel.app`). Set `VITE_NEWSLETTER_ENDPOINT` to a URL that accepts `POST {email}` to collect signups; without it, the form falls back to a pre-filled email.
 
 **Components available in every post (no imports):** `TLDR`, `Abstract`, `Takeaways`, `Callout` (note/tip/warning/danger/insight/success), `Update`, `PullQuote`, `Stats`/`Stat`, `Timeline`/`Event`, `Decision` (ADR), `ProsCons`, `Steps`/`Step`, `Tabs`/`Tab`, `FileTree`, `Kbd`, `Cite` with automatic references, `BarChart`, `Flow`, `Sidenote`, `Term`, `Details`, `Figure`, `YouTube`, `LinkCard`, `PostLink`. Markdown extras: GFM tables, task lists and footnotes, KaTeX math (`$…$`, `$$…$$`), and Shiki code blocks with `title="file.ts"`, `showLineNumbers`, `{2-4}` line highlights, and wrap and copy buttons. The post [`how-i-write-technical-posts.mdx`](src/blog/posts/how-i-write-technical-posts.mdx) shows every component in use.
@@ -113,6 +125,8 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # type-check, build, pre-render the blog into dist/
 npm run lint:blog  # check posts against docs/BLOG_GUIDELINES.md
+npm run blog:dois  # fetch Rogue Scholar DOIs into post frontmatter (after registering the blog)
+npm run blog:indexnow  # tell Bing & co. that pages changed (after a deploy)
 npm run preview
 ```
 
@@ -137,6 +151,8 @@ src/
     posts/*.mdx           blog posts (frontmatter + MDX)
     BlogIndex.tsx         /blog: search, filters, paths, continue reading, saved, series
     PostPage.tsx          /blog/:slug: TOC, progress/resume, actions, FAQ, reactions, cite
+    scholar.mjs           author/ORCID, research profiles, licences, citation formats, Scholar meta tags
+    components/scholar.tsx  ORCID iD, article info, Cite this post, /blog/research page
     components/mdx.tsx    every component available inside posts
     components/reactions.tsx  "Was this useful?" + optional feedback (Supabase)
     components/listen.tsx text-to-speech read-along
@@ -145,11 +161,15 @@ src/
     ssr.tsx               server renderer used by the pre-render step
     blog.css              reading-first themes and typography
 scripts/blog.mjs          frontmatter loader, lint, feeds, sitemap, robots, llms.txt, head tags/JSON-LD
-scripts/prerender.mjs     static pages, Markdown copies, OG images (runs after vite build)
+scripts/prerender.mjs     static pages, Markdown copies, PDFs, OG images, feeds (runs after vite build)
+scripts/pdf.mjs           PDF version of each post (pdfkit)
+scripts/blog-dois.mjs     npm run blog:dois (Rogue Scholar DOI lookup)
+scripts/indexnow.mjs      npm run blog:indexnow
 supabase/migrations/      likes/dislikes schema
 docs/BLOG_GUIDELINES.md   how to write posts that read well, rank and get cited
+docs/SCHOLARLY_INDEXING.md  free setup: ORCID, Rogue Scholar DOIs, Google Scholar, Zenodo, IEEE…
 ```
 
 ## Deploy
 
-It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`). `vercel.json` turns on clean URLs (so `blog/<slug>.html` is served at `/blog/<slug>`) and sets content types for feeds, Markdown and `llms.txt`. Unknown URLs get the pre-rendered `404.html` with a real 404 status.
+It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`). `vercel.json` turns on clean URLs (so `blog/<slug>.html` is served at `/blog/<slug>`) and sets content types for feeds, Markdown and `llms.txt` (PDFs get a canonical `Link` header pointing to the HTML post). Unknown URLs get the pre-rendered `404.html` with a real 404 status.

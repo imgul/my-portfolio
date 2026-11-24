@@ -12,6 +12,7 @@ import { PostCard } from './BlogIndex'
 import { setProgress, toggleSaved, useReader } from './store'
 import { reduceMotion } from './prefs'
 import { useHydrated } from './hydrated'
+import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
 
 /** Keep <head> in sync on client-side navigation (pre-rendered pages already have it). */
 function setMeta(p: PostMeta) {
@@ -215,40 +216,6 @@ function Share({ p }: { p: PostMeta }) {
   )
 }
 
-function CiteThis({ p }: { p: PostMeta }) {
-  const [fmt, setFmt] = useState<'bibtex' | 'apa' | 'mla'>('apa')
-  const year = p.date.slice(0, 4)
-  const url = `${SITE_URL}/blog/${p.slug}`
-  const key = `gulzaib${year}${p.slug.split('-').slice(0, 2).join('')}`
-  const month = new Date(p.date + 'T12:00:00Z').toLocaleString('en', { month: 'long', timeZone: 'UTC' })
-  const text =
-    fmt === 'bibtex'
-      ? `@misc{${key},\n  author = {Gulzaib, Muhammad},\n  title  = {${p.title}},\n  year   = {${year}},\n  month  = {${month.slice(0, 3).toLowerCase()}},\n  url    = {${url}},\n  note   = {Gul's Notebook}\n}`
-      : fmt === 'apa'
-        ? `Gulzaib, M. (${year}, ${month} ${Number(p.date.slice(8, 10))}). ${p.title}. Gul’s Notebook. ${url}`
-        : `Gulzaib, Muhammad. “${p.title}.” Gul’s Notebook, ${formatDate(p.date)}, ${url.replace(/^https?:\/\//, '')}.`
-  return (
-    <details className="b-citethis">
-      <summary>
-        <Icon name="quote" size={16} /> Cite this post
-      </summary>
-      <div className="b-citethis__tabs" role="group" aria-label="Citation format">
-        {(['apa', 'mla', 'bibtex'] as const).map((f) => (
-          <button type="button" key={f} aria-pressed={fmt === f} onClick={() => setFmt(f)}>
-            {f === 'bibtex' ? 'BibTeX' : f.toUpperCase()}
-          </button>
-        ))}
-        <button type="button" className="b-citethis__copy" onClick={() => copy(text, 'Citation copied')}>
-          <Icon name="copy" size={14} /> Copy
-        </button>
-      </div>
-      <pre tabIndex={0} aria-label={`${fmt} citation`}>
-        {text}
-      </pre>
-    </details>
-  )
-}
-
 function PrevNext({ p }: { p: PostMeta }) {
   const { newer, older } = neighbours(p)
   if (!newer && !older) return null
@@ -301,6 +268,10 @@ function Actions({ p, prose }: { p: PostMeta; prose: React.RefObject<HTMLElement
         <Icon name="markdown" size={16} />
         <span>Markdown</span>
       </a>
+      <a className="b-action" href={`/blog/${p.slug}.pdf`} title="PDF version, to save, print or cite">
+        <Icon name="pdf" size={16} />
+        <span>PDF</span>
+      </a>
     </div>
   )
 }
@@ -326,9 +297,12 @@ export default function PostPage({ slug }: { slug: string }) {
   const active = useActiveHeading(ids, !!Content)
   useHashScroll(Content)
 
+  // bibliographic tags belong to this post only (Zotero reads the live <head>)
+  useEffect(() => clearScholarMeta, [])
   useEffect(() => {
     if (!p) return
     setMeta(p)
+    syncScholarMeta(p)
     if (getBody(slug)) return
     let alive = true
     loadBody(slug)
@@ -426,6 +400,7 @@ export default function PostPage({ slug }: { slug: string }) {
                   <a href="/" rel="author">
                     Muhammad Gulzaib
                   </a>
+                  <OrcidLink compact />
                 </p>
                 <p className="b-meta">
                   <span>
@@ -443,6 +418,7 @@ export default function PostPage({ slug }: { slug: string }) {
                   {p.level && <span>{p.level}</span>}
                   {audience && <span>For {audienceLower(audience)}</span>}
                   {p.draft && <span className="b-draft">Draft</span>}
+                  <LicenseBadge p={p} />
                 </p>
               </div>
             </div>
@@ -484,6 +460,7 @@ export default function PostPage({ slug }: { slug: string }) {
                   <Reactions slug={p.slug} title={p.title} />
                   <NextInSeries p={p} />
                   <Share p={p} />
+                  <ArticleInfo p={p} />
                   <CiteThis p={p} />
                   <p className="b-edit">
                     Spotted a mistake?{' '}

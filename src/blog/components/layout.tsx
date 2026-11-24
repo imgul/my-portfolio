@@ -4,6 +4,8 @@ import { DEFAULTS, resetPrefs, setPrefs, THEME_BG, usePrefs, type Prefs } from '
 import { useReader } from '../store'
 import { useHydrated } from '../hydrated'
 import { Icon, toast } from './ui'
+import { OrcidLink, ResearchProfiles } from './scholar'
+import { activeProfiles } from '../scholar.mjs'
 
 /* ------------------------------------------------------------ focus music */
 
@@ -507,8 +509,13 @@ export function AuthorCard() {
           Founder &amp; CEO of SynergyFlow Labs and a senior full stack engineer. I build AI-native SaaS with Laravel, React and agentic AI, and write about what I learn shipping it. Based in Islamabad, open to remote
           work and relocation to the UAE/KSA.
         </p>
+        <p className="b-author__orcid">
+          <OrcidLink />
+        </p>
+        {activeProfiles(true).length > 1 && <ResearchProfiles className="is-compact" />}
         <p className="b-author__links">
           <a href="/">Portfolio</a>
+          <Link href="/blog/research">Research &amp; citation</Link>
           <a href="https://www.linkedin.com/in/gulzaib-ai" target="_blank" rel="noopener noreferrer me">
             LinkedIn
           </a>
@@ -530,13 +537,20 @@ export function Footer() {
       <div className="b-footer__in">
         <div>
           <p className="b-footer__brand">Gul’s Notebook</p>
-          <p>© {new Date().getFullYear()} Muhammad Gulzaib. Words are my own; code samples are MIT unless noted.</p>
+          <p>
+            © {new Date().getFullYear()} Muhammad Gulzaib. AI Research, Engineering and Writing posts are open access under{' '}
+            <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer" target="_blank">
+              CC BY 4.0<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+            ; Founder posts are all rights reserved; code samples are MIT.
+          </p>
           <p className="b-footer__a11y">
             Built to be read: WCAG 2.2 AA contrast in every theme, keyboard and screen-reader friendly. Press <kbd className="b-kbd">?</kbd> for shortcuts.
           </p>
         </div>
         <nav aria-label="Footer">
           <Link href="/blog">All posts</Link>
+          <Link href="/blog/research">Research &amp; citation</Link>
           <a href="/rss.xml">RSS</a>
           <a href="/feed.json">JSON feed</a>
           <a href="/llms.txt">llms.txt</a>

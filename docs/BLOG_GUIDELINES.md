@@ -18,7 +18,9 @@ How to write a post for Gul’s Notebook that is pleasant to read for a long tim
 | `category` / `art` ✅ | One of the allowed values. |
 | `tags` ✅ | 1–8 lowercase tags. Reuse existing tags before inventing new ones. |
 | `faq` | Optional. 2–4 real questions readers ask, each answered in 1–3 self-contained sentences. Rendered at the end and emitted as `FAQPage` structured data. |
-| `references` ✅ | Every reference must be cited with `<Cite id="…" />`, and every citation must have a reference. |
+| `references` ✅ | Every reference must be cited with `<Cite id="…" />`, and every citation must have a reference. Add `doi:` whenever the cited work has one (✅ format checked): Crossref and Rogue Scholar only track linked references. |
+| `license` ✅ | Optional. Defaults to `CC-BY-4.0` for AI Research, Engineering and Writing and `all-rights-reserved` for Founder. Open posts get Google Scholar tags, the open-access feed and free DOIs ([SCHOLARLY_INDEXING.md](SCHOLARLY_INDEXING.md)). |
+| `doi` ✅ | Optional. Filled in by `npm run blog:dois` after Rogue Scholar registers the post. Don't invent one. |
 
 The file name is the URL: lowercase words with hyphens, short, no dates (`multi-tenant-laravel-saas.mdx`). ✅ Never rename a published post.
 
@@ -67,4 +69,5 @@ The build already handles the technical side: pre-rendered HTML, JSON-LD (`BlogP
 - [ ] Every claim you didn't experience yourself has a source
 - [ ] Read it aloud once (the **Listen** button helps)
 - [ ] Check the post in Light and Night themes, and at the largest text size
-- [ ] Remove `draft: true`, then `npm run build` and check `dist/og/<slug>.png`
+- [ ] Remove `draft: true`, then `npm run build` and check `dist/og/<slug>.png` and `dist/blog/<slug>.pdf`
+- [ ] After deploying: `npm run blog:indexnow`; about 15 minutes later `npm run blog:dois` (open posts), then commit and push

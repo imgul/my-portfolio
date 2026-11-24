@@ -1,4 +1,5 @@
 import { posts as ALL, SITE_URL } from 'virtual:blog'
+import type { LicenseId } from './scholar.mjs'
 
 export type Category = 'Founder' | 'Engineering' | 'AI Research' | 'Writing'
 export type Art = 'galaxy' | 'dna' | 'road' | 'city' | 'book' | 'stack' | 'network' | 'tree' | 'mountains' | 'globe'
@@ -10,6 +11,7 @@ export interface Reference {
   year?: string
   venue?: string
   url?: string
+  doi?: string
 }
 
 export interface PostMeta {
@@ -28,6 +30,10 @@ export interface PostMeta {
   level?: 'Beginner' | 'Intermediate' | 'Advanced'
   references: Reference[]
   faq: { q: string; a: string }[]
+  /** CC-BY-4.0 for AI Research, Engineering and Writing by default (see scholar.mjs) */
+  license: LicenseId
+  /** e.g. 10.59350/abcde-12345, minted by Rogue Scholar for open posts */
+  doi?: string
   headings: { depth: 2 | 3; text: string; id: string }[]
   words: number
   minutes: number
