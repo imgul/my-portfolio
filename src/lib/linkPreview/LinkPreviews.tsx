@@ -8,13 +8,18 @@
  *  Touch        first tap → card (a bottom sheet on phones), second tap
  *               or "Open" → follow the link. Swipe the sheet down to close.
  *
+ * Any link works: other sites (fetched live when the build missed them, then
+ * cached in the browser), this site's pages, files, email / phone / WhatsApp,
+ * and in-page links (#section shows the section, [1] shows the cited work).
+ * Links that stay on screen are prefetched lazily while the browser is idle.
+ *
  * Event delegation on the document, so new links work without any changes.
  * Opt out with data-no-preview on a link or container; data-preview="hover"
  * keeps the hover card but lets a tap follow the link straight away.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type PointerEvent as RPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { prefetchManifest, resolve, urlOf, warmImages, type Preview } from './data'
+import { inPageTarget, prefetch, prefetchManifest, resolve, urlOf, warmImages, watchLinks, type Preview } from './data'
 import { playSfx, unlockSfx } from './sfx'
 import './linkPreview.css'
 
@@ -68,10 +73,17 @@ function anchorFrom(t: EventTarget | null): HTMLAnchorElement | null {
   return a instanceof HTMLAnchorElement ? a : null
 }
 
+/** In-page links that are navigation, not content (TOC, skip links, heading anchors, footnote back-links). */
+const IN_PAGE_SKIP = 'nav, body > header, [role="banner"], [role="navigation"], [role="tablist"], .b-toc, .b-h__anchor, .b-skip, .skip-link, [data-footnote-backref], .footnote-backref, h1, h2, h3, h4, h5, h6'
+
 function eligible(a: HTMLAnchorElement): boolean {
   if (!a.isConnected || a.closest('[data-no-preview], .lp')) return false
   const raw = (a.getAttribute('href') || '').trim()
-  if (!raw || raw.startsWith('#') || /^javascript:/i.test(raw)) return false
+  if (!raw || raw === '#' || /^javascript:/i.test(raw)) return false
+  if (raw.startsWith('#') || (a.hash && a.origin === location.origin && a.pathname === location.pathname && a.search === location.search)) {
+    if (a.closest(IN_PAGE_SKIP) || /^#(top|main|content|root)$/i.test(a.hash)) return false
+    return !!inPageTarget(a)
+  }
   const u = urlOf(a)
   if (!u || !/^(https?|mailto|tel):$/.test(u.protocol)) return false
   if (SHARE.test(u.href)) return false
@@ -129,6 +141,12 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
 
   const restoreDescribedBy = (o: Open | null) => {
     if (!o) return
+    // give the native tooltip back
+    const t = o.anchor.getAttribute('data-lp-title')
+    if (t !== null) {
+      o.anchor.setAttribute('title', t)
+      o.anchor.removeAttribute('data-lp-title')
+    }
     const s = st.current
     if (s.describedBy === null) o.anchor.removeAttribute('aria-describedby')
     else o.anchor.setAttribute('aria-describedby', s.describedBy)
@@ -143,6 +161,12 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
     const sheet = mode === 'touch' && isSheet()
     const glide = !!prev && !prev.sheet && !sheet && prev.anchor !== anchor
     restoreDescribedBy(prev)
+    // the card replaces the native title tooltip while it's open (no double tooltips)
+    const title = anchor.getAttribute('title')
+    if (title !== null) {
+      anchor.setAttribute('data-lp-title', title)
+      anchor.removeAttribute('title')
+    }
     if (mode === 'focus') {
       s.describedBy = anchor.getAttribute('aria-describedby')
       anchor.setAttribute('aria-describedby', 'lp-card')
@@ -227,6 +251,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
 
   useEffect(() => {
     prefetchManifest()
+    const unwatch = watchLinks(eligible)
     const s = st.current
     const inCard = (t: EventTarget | null) => t instanceof Node && !!cardRef.current?.contains(t)
 
@@ -256,6 +281,11 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
       s.px = e.clientX
       s.py = e.clientY
       if (fb.current?.sound?.()) unlockSfx()
+      // a finger on a link: start loading its card before the tap completes
+      if (e.pointerType === 'touch') {
+        const t = anchorFrom(e.target)
+        if (t && !inCard(e.target) && eligible(t)) prefetch(t, 'now')
+      }
       if (!s.open || inCard(e.target)) return
       // tap/click elsewhere closes; a tap on another link is handled by onClick
       const a = anchorFrom(e.target)
@@ -391,6 +421,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
     document.addEventListener('visibilitychange', onVis)
     return () => {
       clearTimers()
+      unwatch()
       window.removeEventListener('pointerdown', onPointerDown, opts)
       window.removeEventListener('pointerover', onOver, opts)
       window.removeEventListener('pointerout', onOut, opts)
@@ -560,7 +591,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
     .filter(Boolean)
     .join(' ')
 
-  const hint = p.kind === 'email' ? 'opens your mail app' : p.kind === 'phone' ? 'starts a call' : open.anchor.target === '_blank' ? 'new tab' : ''
+  const hint = p.hint || (p.kind === 'email' ? 'opens your mail app' : p.kind === 'phone' ? 'starts a call' : open.anchor.target === '_blank' ? 'new tab' : '')
 
   return createPortal(
     <>
@@ -572,6 +603,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
         style={style}
         role={touch ? 'dialog' : 'tooltip'}
         aria-label={touch ? `Link preview: ${p.title}` : undefined}
+        aria-busy={p.loading || undefined}
         data-no-preview=""
         onPointerEnter={() => clearTimeout(st.current.closeTimer)}
         onPointerDown={onSheetDown}
@@ -581,6 +613,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
       >
         <div className="lp-panel" key={open.id}>
           {open.sheet && <div className="lp-grab" aria-hidden="true" />}
+          {p.loading && <span className="lp-progress" aria-hidden="true" />}
           <a
             className="lp-hit"
             href={p.href}
@@ -612,6 +645,11 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
                 </span>
               ) : (
                 p.description && <span className="lp-desc">{p.description}</span>
+              )}
+              {p.failed && (
+                <span className="lp-note" role="status">
+                  {p.failed === 'offline' ? 'You’re offline: showing what the link itself says.' : 'Couldn’t load more details for this link.'}
+                </span>
               )}
               {p.list && p.list.length > 0 && (
                 <span className="lp-list">
@@ -668,6 +706,7 @@ export default function LinkPreviews({ theme, feedback, reducedMotion }: Props) 
 
 /* ============================================================ pieces */
 
+/** Images load lazily (only when a card shows them), decode off the main thread and fade in; failures disappear. */
 function Img({ src, className, alt, onFail }: { src: string; className: string; alt: string; onFail?: () => void }) {
   const [state, setState] = useState<'load' | 'ok' | 'err'>('load')
   useEffect(() => setState('load'), [src])
@@ -678,6 +717,8 @@ function Img({ src, className, alt, onFail }: { src: string; className: string; 
       src={src}
       alt={alt}
       decoding="async"
+      loading="lazy"
+      fetchPriority="low"
       referrerPolicy="no-referrer"
       draggable={false}
       onLoad={() => setState('ok')}
@@ -709,9 +750,17 @@ function Media({ p }: { p: Preview }) {
     )
   }
   if (!p.image || failed || p.avatar === p.image) return null
+  const mod = p.kind === 'post' ? 'lp-media--og' : p.kind === 'image' ? 'lp-media--image' : p.kind === 'video' ? 'lp-media--video' : ''
   return (
-    <span className={`lp-media ${p.kind === 'post' ? 'lp-media--og' : ''}`}>
+    <span className={`lp-media ${mod}`}>
       <Img className="lp-media__img" src={p.image} alt={p.imageAlt ?? ''} onFail={() => setFailed(true)} />
+      {p.kind === 'video' && (
+        <span className="lp-play" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 7.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L9.9 6.7a.6.6 0 0 0-.9.5Z" />
+          </svg>
+        </span>
+      )}
     </span>
   )
 }
@@ -738,6 +787,16 @@ const GLYPH: Partial<Record<Preview['kind'], ReactElement>> = {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14" />
       <circle cx="6" cy="18" r="1.4" />
+    </svg>
+  ),
+  section: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 6h14M5 12h10M5 18h7" />
+    </svg>
+  ),
+  cite: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9.5 7.5H6.8A1.8 1.8 0 0 0 5 9.3V12h4.5v4.5H5M19 7.5h-2.7a1.8 1.8 0 0 0-1.8 1.8V12H19v4.5h-4.5" />
     </svg>
   ),
   topic: (
