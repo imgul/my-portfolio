@@ -13,7 +13,26 @@ A portfolio you can see, hear and feel, built for Muhammad Gulzaib (Gul): Founde
 | Interaction | Magnetic buttons, custom cursor, 3D tilt cards, a playable "stack synth", a clickable multi-agent orchestrator with a live terminal, velocity-reactive marquees |
 | App | React 19 + TypeScript + Vite |
 
-Press **M** to toggle sound. The site respects `prefers-reduced-motion`.
+Press **M** to toggle sound and **N** to switch the music track. The site respects `prefers-reduced-motion`.
+
+### Section-aware score
+
+The music re-arranges itself for every section (`src/lib/sound/scenes.ts`, run by `conductor.ts`):
+
+| Section | Mood | What changes |
+|---|---|---|
+| Intro | Arrival | pad + bass only, dark tone, wind |
+| Manifesto | Conviction | half-time drums and lead come in |
+| Journey | On the road | key +2, arpeggio and percussion up, a ticking clock |
+| Ventures | Build mode | full band, key +4th, filters wide open, groove keeps going |
+| Notes | Reflection | drums out, minor shift, darker, big reverb, vinyl crackle |
+| Stack | Machinery | tight and dry, no lead, digital data chatter |
+| Agents | Many minds | layered arps and percussion, heavy data chatter |
+| Learning | Roots | key −5, soft drums, vinyl |
+| Beyond | Open air | sparse and spacious, wind + synthesized birdsong |
+| Contact | Home | back to the home key, warm full mix |
+
+Each change crossfades the layers, queues the key change for the next chord, glides the tone and reverb, swaps the ambience, and plays a short signature motif. Four tracks share the same score: Original, A · Neon Pulse, B · Margalla Dawn, C · Night Shift (lo-fi). Tap the "now playing" chip (bottom-right) to switch. Rendered tours of every section are in `sound-previews/tour-*.mp3`.
 
 ## Develop
 

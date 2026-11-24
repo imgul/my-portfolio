@@ -5,8 +5,9 @@
  *
  * Pick a theme with ?sound=original|pulse|dawn (remembered in localStorage).
  * Scroll energy feeds the music; an analyser feeds the 3D scene.
+ * The Conductor re-arranges the music for every section (see sound/scenes.ts).
  */
-import { applyFx, createRig, getTheme, mtof, noiseBuffer, osc, perc, type Rig, type Theme } from './sound'
+import { applyFx, Conductor, createRig, getTheme, mtof, noiseBuffer, osc, perc, SCENES, THEMES, type Rig, type Theme } from './sound'
 
 const STORAGE_KEY = 'gul:sound-theme'
 
@@ -28,6 +29,10 @@ class AudioEngine {
   private rig!: Rig
   private analyserData!: Uint8Array<ArrayBuffer>
   private theme!: Theme
+  private conductor!: Conductor
+  private section = 0
+  private lastSting = 0
+  private listeners = new Set<() => void>()
   themeId = getTheme(initialThemeId()).id
   private energy = 0
   private muted = true
@@ -50,6 +55,49 @@ class AudioEngine {
     this.analyserData = new Uint8Array(this.rig.analyser.frequencyBinCount)
     this.theme = getTheme(this.themeId).create()
     applyFx(this.rig, this.theme.fx)
+    this.conductor = new Conductor(this.rig, this.theme)
+    this.conductor.setScene(this.section, 0, false)
+  }
+
+  /** Subscribe to theme / section changes (for the "now playing" UI). */
+  subscribe(fn: () => void) {
+    this.listeners.add(fn)
+    return () => {
+      this.listeners.delete(fn)
+    }
+  }
+
+  private emit() {
+    this.listeners.forEach((fn) => fn())
+  }
+
+  get themeName() {
+    return getTheme(this.themeId).name.replace(/^[A-Z] · /, '')
+  }
+
+  get sceneInfo() {
+    return SCENES[this.section] ?? SCENES[0]
+  }
+
+  /** Called when the visitor scrolls into a new section. */
+  setSection(i: number) {
+    if (i === this.section) return
+    this.section = i
+    if (this.ctx && this.conductor) {
+      const t = this.ctx.currentTime
+      // Signature stinger only when audible, and not machine-gunned during fast scrolls.
+      const now = performance.now()
+      const sting = this.ready() && now - this.lastSting > 1100
+      if (sting) this.lastSting = now
+      this.conductor.setScene(i, t, sting)
+    }
+    this.emit()
+  }
+
+  /** Cycle to the next theme (used by the "now playing" chip). */
+  nextTheme() {
+    const i = THEMES.findIndex((t) => t.id === this.themeId)
+    this.setTheme(THEMES[(i + 1) % THEMES.length].id)
   }
 
   get isMuted() {
@@ -77,12 +125,11 @@ class AudioEngine {
     } catch {
       /* ignore */
     }
-    if (!this.ctx) return
-    const t = this.ctx.currentTime
-    if (this.musicOn) this.theme.stop(this.rig, t)
-    this.theme = info.create()
-    applyFx(this.rig, this.theme.fx, t)
-    if (this.musicOn) this.theme.start(this.rig, t + 0.3)
+    if (this.ctx) {
+      this.theme = info.create()
+      this.conductor.setTheme(this.theme, this.ctx.currentTime)
+    }
+    this.emit()
   }
 
   /* ------------------------------ Music ------------------------------ */
@@ -90,7 +137,7 @@ class AudioEngine {
   private startMusic() {
     if (!this.ctx || this.musicOn) return
     this.musicOn = true
-    this.theme.start(this.rig, this.ctx.currentTime)
+    this.conductor.start(this.ctx.currentTime)
     window.setInterval(() => this.schedule(), 100)
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return
@@ -103,7 +150,7 @@ class AudioEngine {
     const now = this.ctx!.currentTime
     // Smoothly relax scroll energy.
     this.energy *= 0.92
-    this.theme.tick(this.rig, now, now + 0.25, this.energy)
+    this.conductor.tick(now, now + 0.25, this.energy)
   }
 
   /* --------------------------- Interaction --------------------------- */
@@ -290,3 +337,5 @@ class AudioEngine {
 }
 
 export const audio = new AudioEngine()
+
+if (import.meta.env.DEV) (window as unknown as { __audio: AudioEngine }).__audio = audio

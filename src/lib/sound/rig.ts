@@ -23,6 +23,8 @@ export interface Rig {
   /** Master gain (mute/unmute fades happen here). */
   master: GainNode
   musicBus: GainNode
+  /** Lowpass on the music bus; scenes open/close it ("brightness"). */
+  musicTone: BiquadFilterNode
   sfxBus: GainNode
   reverb: ConvolverNode
   reverbOut: GainNode
@@ -57,7 +59,11 @@ export function createRig(ctx: BaseAudioContext, destination: AudioNode = ctx.de
   master.connect(analyser)
 
   const musicBus = ctx.createGain()
-  musicBus.connect(master)
+  const musicTone = ctx.createBiquadFilter()
+  musicTone.type = 'lowpass'
+  musicTone.frequency.value = 20000
+  musicTone.Q.value = 0.5
+  musicBus.connect(musicTone).connect(master)
   const sfxBus = ctx.createGain()
   sfxBus.connect(master)
 
@@ -79,7 +85,7 @@ export function createRig(ctx: BaseAudioContext, destination: AudioNode = ctx.de
   const delaySend = ctx.createGain()
   delaySend.connect(delay)
 
-  return { ctx, master, musicBus, sfxBus, reverb, reverbOut, reverbSend, delay, delayFb, delayTone, delaySend, analyser }
+  return { ctx, master, musicBus, musicTone, sfxBus, reverb, reverbOut, reverbSend, delay, delayFb, delayTone, delaySend, analyser }
 }
 
 export function applyFx(rig: Rig, fx: FxSettings, t = rig.ctx.currentTime) {
@@ -161,4 +167,73 @@ export function noiseHit(
   const offset = Math.random() * 1.5
   src.start(t, offset, (opts.attack ?? 0.002) + opts.decay + 0.05)
   return last
+}
+
+const crackleCache = new WeakMap<BaseAudioContext, AudioBuffer>()
+/** 4 seconds of loopable vinyl crackle: sparse pops over a soft hiss. */
+export function crackleBuffer(ctx: BaseAudioContext) {
+  let b = crackleCache.get(ctx)
+  if (!b) {
+    const len = ctx.sampleRate * 4
+    b = ctx.createBuffer(2, len, ctx.sampleRate)
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c)
+      let lp = 0
+      for (let i = 0; i < len; i++) {
+        lp += ((Math.random() * 2 - 1) - lp) * 0.08
+        d[i] = lp * 0.05
+      }
+      const pops = 90 + Math.floor(Math.random() * 40)
+      for (let k = 0; k < pops; k++) {
+        const at = Math.floor(Math.random() * (len - 200))
+        const amp = (Math.random() < 0.12 ? 0.5 : 0.2) * (Math.random() < 0.5 ? -1 : 1)
+        const w = 2 + Math.floor(Math.random() * 30)
+        for (let j = 0; j < w; j++) d[at + j] += amp * Math.exp(-j / (w / 4)) * (j % 2 ? -0.6 : 1)
+      }
+    }
+    crackleCache.set(ctx, b)
+  }
+  return b
+}
+
+export type LayerName = 'pad' | 'bass' | 'drums' | 'perc' | 'arp' | 'lead'
+export const LAYER_NAMES: LayerName[] = ['pad', 'bass', 'drums', 'perc', 'arp', 'lead']
+
+/**
+ * Arrangement layers. Each layer is a proxy Rig whose musicBus / reverbSend /
+ * delaySend are gated by the layer level, so muting a layer also mutes its
+ * reverb and delay tails. Instruments just take `layers.rigs.arp` as their rig.
+ */
+export interface Layers {
+  rigs: Record<LayerName, Rig>
+  gates: Record<LayerName, GainNode[]>
+}
+
+export function makeLayers(rig: Rig, initial = 1): Layers {
+  const rigs = {} as Record<LayerName, Rig>
+  const gates = {} as Record<LayerName, GainNode[]>
+  const gated = (dest: AudioNode) => {
+    const input = rig.ctx.createGain()
+    const gate = rig.ctx.createGain()
+    gate.gain.value = initial
+    input.connect(gate).connect(dest)
+    return [input, gate] as const
+  }
+  for (const k of LAYER_NAMES) {
+    const [dry, g1] = gated(rig.musicBus)
+    const [rev, g2] = gated(rig.reverbSend)
+    const [dly, g3] = gated(rig.delaySend)
+    rigs[k] = { ...rig, musicBus: dry, reverbSend: rev, delaySend: dly }
+    gates[k] = [g1, g2, g3]
+  }
+  return { rigs, gates }
+}
+
+export function setLayers(layers: Layers, levels: Record<LayerName, number>, t: number, tau = 1.2) {
+  for (const k of LAYER_NAMES) {
+    for (const g of layers.gates[k]) {
+      g.gain.cancelScheduledValues(t)
+      g.gain.setTargetAtTime(levels[k], t, tau)
+    }
+  }
 }

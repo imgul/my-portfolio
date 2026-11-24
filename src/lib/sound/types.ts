@@ -1,4 +1,5 @@
 import type { FxSettings, Rig } from './rig'
+import type { Scene } from './scenes'
 
 /**
  * A sound theme = background music + a full set of UI sound effects.
@@ -7,6 +8,10 @@ import type { FxSettings, Rig } from './rig'
  */
 export interface Theme {
   fx: FxSettings
+  /** Tempo, used to lock ambience (clock ticks, data chatter) to the groove. */
+  bpm: number
+  /** Re-arrange for a section: crossfade layers, queue a key change, etc. */
+  scene(rig: Rig, scene: Scene, t: number): void
   start(rig: Rig, t: number): void
   tick(rig: Rig, now: number, horizon: number, energy: number): void
   stop(rig: Rig, t: number): void

@@ -4,8 +4,10 @@
  * Layers: tanpura drone (Pa–Sa–Sa–Sa) with a jawari "buzz" sweep, FM electric piano,
  * a bansuri-style flute that glides between notes (meend), and soft shaker + tabla-ish
  * percussion that only arrives when you scroll.
+ * Scene layers: pad = tanpura + Rhodes · bass · drums = bayan · perc = dayan + shaker
+ * arp = kalimba ostinato · lead = bansuri.
  */
-import { mtof, osc, perc, noiseHit, noiseBuffer, type Rig } from '../rig'
+import { mtof, osc, perc, noiseHit, noiseBuffer, makeLayers, setLayers, type Layers, type Rig } from '../rig'
 import type { Theme } from '../types'
 
 const BPM = 70
@@ -29,6 +31,10 @@ export function createDawn(): Theme {
   let fluteIdx = 4
   let lastFluteFreq = 0
   let lastFluteEnd = 0
+  let layers: Layers | null = null
+  let key = 0
+  let pendingKey = 0
+  const ARP_PAT = [0, 2, 1, 3, 2, 1, 3, 2]
 
   const kalimba = (rig: Rig, m: number, t: number, vol: number, out: AudioNode) => {
     const { ctx } = rig
@@ -66,8 +72,8 @@ export function createDawn(): Theme {
     lp.frequency.value = 3800
     const g = ctx.createGain()
     perc(g.gain, t, 0.022, 0.02, 4.2)
-    const a = osc(ctx, 'sawtooth', mtof(m), -3)
-    const b = osc(ctx, 'sawtooth', mtof(m), 3)
+    const a = osc(ctx, 'sawtooth', mtof(m + key), -3)
+    const b = osc(ctx, 'sawtooth', mtof(m + key), 3)
     a.connect(buzz)
     b.connect(buzz)
     buzz.connect(lp).connect(g)
@@ -94,7 +100,7 @@ export function createDawn(): Theme {
     if (keep) release(t, 0.5)
     chord.keys.forEach((m, i) => {
       const s = t + i * 0.035
-      const f = mtof(m)
+      const f = mtof(m + key)
       const car = osc(ctx, 'sine', f)
       const mod = osc(ctx, 'sine', f)
       const idx = ctx.createGain()
@@ -121,8 +127,8 @@ export function createDawn(): Theme {
 
   const bass = (rig: Rig, t: number) => {
     const { ctx } = rig
-    const o = osc(ctx, 'sine', mtof(chord.bass))
-    const o2 = osc(ctx, 'triangle', mtof(chord.bass + 12))
+    const o = osc(ctx, 'sine', mtof(chord.bass + key))
+    const o2 = osc(ctx, 'triangle', mtof(chord.bass + key + 12))
     const g = ctx.createGain()
     g.gain.value = 0
     g.gain.setValueAtTime(0.0001, t)
@@ -240,18 +246,25 @@ export function createDawn(): Theme {
     noiseHit(rig, t, { type: 'bandpass', freq: 3000, q: 1, peak: vol * 0.4, decay: 0.01, out: rig.musicBus })
   }
 
-  const playStep = (rig: Rig, t: number, energy: number) => {
+  const playStep = (t: number, energy: number) => {
+    const L = layers!.rigs
     const s = step % 16
     const e8 = step % 8
     if (s === 0) {
+      key = pendingKey
       chord = CHORDS[Math.floor(step / 16) % CHORDS.length]
-      keys(rig, t, 1)
-      bass(rig, t)
+      keys(L.pad, t, 1)
+      bass(L.bass, t)
     } else if (s === 11 && energy > 0.3) {
-      keys(rig, t, 0.55, false)
+      keys(L.pad, t, 0.55, false)
     }
     // tanpura: one pluck per beat
-    if (step % 2 === 0) tanpura(rig, TANPURA[(step / 2) % 4], t)
+    if (step % 2 === 0) tanpura(L.pad, TANPURA[(step / 2) % 4], t)
+
+    // kalimba ostinato (16ths-feel when moving)
+    const m = chord.keys[ARP_PAT[step % ARP_PAT.length]] + 12 + key
+    kalimba(L.arp, m, t, 0.035 + energy * 0.02, L.arp.musicBus)
+    if (energy > 0.45 && step % 2 === 1) kalimba(L.arp, m + 7, t + EIGHTH / 2, 0.022, L.arp.musicBus)
 
     // flute phrases
     if (t >= fluteBusyUntil && step >= 8 && Math.random() < 0.1 + energy * 0.35) {
@@ -259,17 +272,17 @@ export function createDawn(): Theme {
       fluteIdx = Math.max(0, Math.min(FLUTE.length - 1, fluteIdx + jump))
       const len = [2, 2, 3, 4, 4, 6][Math.floor(Math.random() * 6)]
       const dur = len * EIGHTH
-      flute(rig, FLUTE[fluteIdx], t, dur * 0.92, 0.065)
+      flute(L.lead, FLUTE[fluteIdx] + key, t, dur * 0.92, 0.065)
       fluteBusyUntil = t + dur
     }
 
     // percussion only when the visitor is moving
-    if (e8 === 0) bayan(rig, t, 0.06 + energy * 0.08)
-    if (energy > 0.35 && e8 === 5) bayan(rig, t, 0.05 + energy * 0.06)
-    if (energy > 0.3 && (e8 === 2 || e8 === 3 || e8 === 6)) dayan(rig, t, 0.02 + energy * 0.03)
+    if (e8 === 0) bayan(L.drums, t, 0.06 + energy * 0.08)
+    if (energy > 0.35 && e8 === 5) bayan(L.drums, t, 0.05 + energy * 0.06)
+    if (energy > 0.3 && (e8 === 2 || e8 === 3 || e8 === 6)) dayan(L.perc, t, 0.02 + energy * 0.03)
     if (energy > 0.12) {
       const acc = [1, 0.45, 0.7, 0.45][step % 4]
-      noiseHit(rig, t, { type: 'highpass', freq: 5500, peak: (0.006 + energy * 0.022) * acc, attack: 0.012, decay: 0.06, out: rig.musicBus, pan: step % 2 ? 0.3 : -0.3 })
+      noiseHit(L.perc, t, { type: 'highpass', freq: 5500, peak: (0.006 + energy * 0.022) * acc, attack: 0.012, decay: 0.06, out: L.perc.musicBus, pan: step % 2 ? 0.3 : -0.3 })
     }
   }
 
@@ -284,15 +297,21 @@ export function createDawn(): Theme {
       musicLevel: 0.9,
       sfxLevel: 0.75,
     },
-    start(_rig, t) {
+    bpm: BPM,
+    scene(_rig, sc, t) {
+      if (layers) setLayers(layers, sc.layers, t)
+      pendingKey = sc.key
+    },
+    start(rig, t) {
+      layers = makeLayers(rig, 0)
       step = 0
       nextStep = t + 0.05
       fluteBusyUntil = 0
       lastFluteFreq = 0
     },
-    tick(rig, _now, horizon, energy) {
+    tick(_rig, _now, horizon, energy) {
       while (horizon >= nextStep) {
-        playStep(rig, nextStep, energy)
+        playStep(nextStep, energy)
         step++
         nextStep += EIGHTH
       }
@@ -354,7 +373,7 @@ export function createDawn(): Theme {
       },
       note(rig, t, i, vel) {
         const k = ((i % 15) + 15) % 15
-        kalimba(rig, SCALE[k % 7] + 12 * Math.floor(k / 7), t, 0.1 * vel, rig.sfxBus)
+        kalimba(rig, SCALE[k % 7] + 12 * Math.floor(k / 7) + key, t, 0.1 * vel, rig.sfxBus)
       },
       boot(rig, t) {
         const { ctx } = rig

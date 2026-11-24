@@ -4,7 +4,7 @@
  *  - window.renderPreview(id, seconds): renders a scripted "site visit"
  *    offline and returns a base64 WAV. Used to export preview files.
  */
-import { THEMES, getTheme, createRig, applyFx, type Rig, type Theme } from '../lib/sound'
+import { THEMES, getTheme, createRig, applyFx, Conductor, SCENES, type Rig, type Theme } from '../lib/sound'
 
 /* ----------------------------- Scripted visit ----------------------------- */
 
@@ -87,6 +87,44 @@ function toWavBase64(buf: AudioBuffer) {
 }
 
 ;(window as unknown as { renderPreview: typeof renderPreview }).renderPreview = renderPreview
+
+/**
+ * A scripted scroll through every section of the site: the Conductor
+ * re-arranges the music per section, with transition whooshes + stingers.
+ */
+async function renderTour(id: string, perSection = 6.5): Promise<string> {
+  const sr = 44100
+  const first = 1.2
+  const seconds = first + perSection * SCENES.length + 3
+  const ctx = new OfflineAudioContext(2, Math.ceil(sr * seconds), sr)
+  const rig = createRig(ctx)
+  const theme = getTheme(id).create()
+  applyFx(rig, theme.fx, 0)
+  rig.master.gain.setValueAtTime(0.8, 0)
+  rig.master.gain.setValueAtTime(0.8, seconds - 3.5)
+  rig.master.gain.linearRampToValueAtTime(0, seconds - 0.3)
+  theme.sfx.boot(rig, 0)
+  const c = new Conductor(rig, theme)
+  c.start(0.6)
+  const changeAt = (k: number) => first + perSection * k
+  let energy = 0
+  let next = 1
+  for (let t = 0.6; t < seconds - 2; t += 0.1) {
+    // the visitor scrolls for ~1.4 s before every section change
+    const upcoming = next < SCENES.length ? changeAt(next) : Infinity
+    const push = t > upcoming - 1.4 && t < upcoming + 0.2 ? 0.7 : 0
+    energy = Math.min(1, Math.max(energy * 0.92, push))
+    if (t >= upcoming) {
+      theme.sfx.whoosh(rig, upcoming - 0.75, 0.6)
+      c.setScene(next, upcoming, true)
+      next++
+    }
+    c.tick(t, t + 0.25, energy)
+  }
+  const buf = await ctx.startRendering()
+  return toWavBase64(buf)
+}
+;(window as unknown as { renderTour: typeof renderTour }).renderTour = renderTour
 
 /* ------------------------------ Live audition ------------------------------ */
 
