@@ -15,6 +15,8 @@ import BlogApp from './BlogApp'
 registerBodies(import.meta.glob<{ default: Body }>('./posts/*.mdx', { eager: true }))
 
 export { posts }
+// the portfolio copy, for the landing page's <head>, structured data and share image
+export { profile, ventures, manifesto, education, stack, languages } from '../data/content'
 
 /** Full page body for a URL ("/blog", "/blog/<slug>" or "404"). */
 export function renderPage(url: string) {

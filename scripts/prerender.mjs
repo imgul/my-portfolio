@@ -2,15 +2,19 @@
  * Post-build step (npm run build runs it after `vite build` + the SSR build).
  *
  * Writes into dist/:
+ *   index.html                                           the landing page's <head> (meta, OG, JSON-LD) + a no-JS summary
  *   blog.html, blog/<slug>.html, 404.html               pre-rendered pages (full text, JSON-LD, OG tags)
  *   blog/research.html                                   research & citation page (ORCID, profiles, open-access posts)
  *   blog/<slug>.md                                       clean Markdown copy of each post (for AI tools / notes)
  *   blog/<slug>.pdf                                      PDF version (Google Scholar citation_pdf_url, Zenodo uploads)
- *   og/blog.png, og/<slug>.png                           1200×630 Open Graph images
+ *   og/home.png, og/blog.png, og/research.png,
+ *   og/404.png, og/<slug>.png                            1200×630 Open Graph images, one per page (scripts/og.mjs)
  *   rss.xml, feed.json                                   feeds with full post content
  *   feeds/open-access.xml, feeds/open-access.json        CC BY posts only (register with Rogue Scholar for DOIs)
  *   <INDEXNOW_KEY>.txt                                   IndexNow key (npm run blog:indexnow pings Bing & co.)
  *   sitemap.xml, robots.txt, llms.txt, llms-full.txt     discovery for search engines and AI assistants
+ *
+ * Then audits every page (scripts/seo-check.mjs) and fails the build on missing tags or images.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -18,9 +22,11 @@ import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
-import { Resvg } from '@resvg/resvg-js'
-import { AUTHOR, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, sitemap } from './blog.mjs'
-import { LICENSES, doiUrl } from '../src/blog/scholar.mjs'
+import { createHash } from 'node:crypto'
+import { AUTHOR, CATEGORIES, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, homeHeadTags, homeHtml, homeNoscript, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, setOgVersions, sitemap } from './blog.mjs'
+import { LICENSES, ORCID, doiUrl } from '../src/blog/scholar.mjs'
+import { createOg } from './og.mjs'
+import { checkSeo, report } from './seo-check.mjs'
 import { postPdf } from './pdf.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -80,7 +86,35 @@ function preloadTags(slug) {
     .join('\n    ')
 }
 
+/* -------------------------------------------------------------- og images */
+
+// rendered first: every page's <head> links its image with a content hash (?v=…)
+const SECOND = '#6f8fdc'
+const og = createOg({
+  site: { blogTitle: BLOG_TITLE, host: SITE_URL.replace(/^https?:\/\//, ''), categories: CATEGORIES },
+  colorOf: ssr.categoryColor,
+  coverOf: (p) => ssr.coverSvg(p, 'transparent', SECOND),
+  licenses: LICENSES,
+})
+const content = { profile: ssr.profile, ventures: ssr.ventures, manifesto: ssr.manifesto, education: ssr.education, stack: ssr.stack, languages: ssr.languages }
+const images = {
+  home: og.home({ profile: content.profile, ventures: content.ventures, posts }),
+  blog: og.blog(posts, { title: BLOG_TITLE, description: 'Notes on building companies, shipping software and thinking with AI.' }),
+  research: og.research(posts, { orcid: ORCID }),
+  404: og.notFound(),
+  ...Object.fromEntries(posts.map((p) => [p.slug, og.post(p)])),
+}
+const versions = {}
+for (const [key, buf] of Object.entries(images)) {
+  write(`og/${key}.png`, buf)
+  versions[key] = createHash('sha1').update(buf).digest('hex').slice(0, 8)
+}
+setOgVersions(versions)
+
 /* ------------------------------------------------------------------ pages */
+
+// the landing page: generated <head> (title, description, canonical, OG, JSON-LD) and a no-JS summary
+write('index.html', homeHtml(indexHtml, { head: homeHeadTags(content, posts), noscript: homeNoscript(content, posts) }))
 
 const page = (url, opts, kind) =>
   pageHtml(indexHtml, { head: headTags(opts), preload: preloadTags(opts.post?.slug), body: ssr.renderPage(url) }).replace('data-ssr="1"', `data-ssr="${kind}"`)
@@ -219,106 +253,14 @@ write(
     posts.map((p) => markdown[p.slug].replace(/^---[\s\S]*?---\n\n/, '')).join('\n\n---\n\n'),
 )
 
-/* -------------------------------------------------------------- og images */
-
-const font = (pkg, weight) => {
-  const dir = path.dirname(require.resolve(`${pkg}/package.json`))
-  const sub = fs.readdirSync(dir).find((d) => d.startsWith(weight))
-  return path.join(dir, sub, fs.readdirSync(path.join(dir, sub)).find((f) => f.endsWith('.ttf')))
-}
-const fontFiles = [
-  font('@expo-google-fonts/source-serif-4', '600'),
-  font('@expo-google-fonts/source-serif-4', '700'),
-  font('@expo-google-fonts/inter', '500'),
-  font('@expo-google-fonts/inter', '600'),
-]
-
-const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-/** Rough glyph widths (em) for wrapping without a layout engine. */
-function width(s, size) {
-  let w = 0
-  for (const ch of s) w += /[A-Z]/.test(ch) ? 0.66 : /[mwMW]/.test(ch) ? 0.8 : /[iljtf.,:;'’!| ]/.test(ch) ? 0.3 : /[0-9]/.test(ch) ? 0.55 : 0.52
-  return w * size
-}
-function wrap(text, size, max, maxLines) {
-  const lines = []
-  let line = ''
-  for (const word of text.split(/\s+/)) {
-    const next = line ? `${line} ${word}` : word
-    if (width(next, size) > max && line) {
-      lines.push(line)
-      line = word
-    } else line = next
-  }
-  if (line) lines.push(line)
-  if (lines.length > maxLines) {
-    const cut = lines.slice(0, maxLines)
-    cut[maxLines - 1] = cut[maxLines - 1].replace(/\s+\S+$/, '') + '…'
-    return cut
-  }
-  return lines
-}
-
-const BG = '#17181c'
-// author photo (warm cut-out, from scripts/portrait.mjs)
-const AVATAR = `data:image/png;base64,${fs.readFileSync(path.join(root, 'public/img/gul/avatar-og.png')).toString('base64')}`
-function ogSvg({ kicker, color, title, sub, art }) {
-  let size = 68
-  let lines = wrap(title, size, 760, 3)
-  while (lines.length >= 3 && size > 52 && width(title, size) > 760 * 2.6) lines = wrap(title, (size -= 4), 760, 3)
-  const lh = size * 1.12
-  const top = 200 + (3 - lines.length) * lh * 0.35
-  const subLines = sub ? wrap(sub, 26, 720, 2) : []
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <defs>
-    <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0.35" stop-color="${BG}" stop-opacity="1"/>
-      <stop offset="0.85" stop-color="${BG}" stop-opacity="0.15"/>
-      <stop offset="1" stop-color="${BG}" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="${BG}"/>
-  <g transform="translate(330 0)" opacity="0.95">${art.replace('<svg ', '<svg width="1200" height="630" ')}</g>
-  <rect width="1200" height="630" fill="url(#fade)"/>
-  <rect x="80" y="96" width="10" height="10" rx="5" fill="${color}"/>
-  <text x="102" y="106" font-family="Inter" font-weight="600" font-size="22" letter-spacing="2.5" fill="${color}">${xml(kicker.toUpperCase())}</text>
-  ${lines.map((l, i) => `<text x="80" y="${top + i * lh}" font-family="Source Serif 4" font-weight="700" font-size="${size}" fill="#f2eee6">${xml(l)}</text>`).join('\n  ')}
-  ${subLines.map((l, i) => `<text x="80" y="${top + lines.length * lh + 16 + i * 36}" font-family="Inter" font-weight="500" font-size="26" fill="#b9b4aa">${xml(l)}</text>`).join('\n  ')}
-  <line x1="80" y1="520" x2="1120" y2="520" stroke="#ffffff" stroke-opacity="0.12"/>
-  <clipPath id="av"><circle cx="104" cy="566" r="25"/></clipPath>
-  <circle cx="104" cy="566" r="25" fill="${color}" fill-opacity="0.22"/>
-  <image href="${AVATAR}" x="79" y="541" width="50" height="50" clip-path="url(#av)"/>
-  <circle cx="104" cy="566" r="26" fill="none" stroke="${color}" stroke-opacity="0.75" stroke-width="2"/>
-  <text x="142" y="560" font-family="Inter" font-weight="600" font-size="22" fill="#f2eee6">${xml(AUTHOR.name)}</text>
-  <text x="142" y="588" font-family="Inter" font-weight="500" font-size="19" fill="#9d988f">${xml(BLOG_TITLE)} · ${xml(SITE_URL.replace(/^https?:\/\//, ''))}/blog</text>
-</svg>`
-}
-function png(svg) {
-  return new Resvg(svg, { font: { fontFiles, loadSystemFonts: false, defaultFontFamily: 'Inter' }, fitTo: { mode: 'width', value: 1200 } }).render().asPng()
-}
-
-const SECOND = '#6f8fdc'
-for (const p of posts) {
-  const color = ssr.categoryColor(p)
-  const kicker = `${p.category}${p.series ? ` · ${p.series}` : ''} · ${p.minutes} min read`
-  write(`og/${p.slug}.png`, png(ogSvg({ kicker, color, title: p.title, sub: '', art: ssr.coverSvg(p, 'transparent', SECOND) })))
-}
-const lead = posts.find((p) => p.featured) ?? posts[0]
-write(
-  'og/blog.png',
-  png(
-    ogSvg({
-      kicker: `${posts.length} posts · founders · engineers · AI · writing`,
-      color: '#d4834f',
-      title: BLOG_TITLE,
-      sub: 'Notes on building companies, shipping software and thinking with AI.',
-      art: lead ? ssr.coverSvg({ ...lead, art: 'galaxy' }, 'transparent', SECOND) : '<svg></svg>',
-    }),
-  ),
-)
-
 /* ---------------------------------------------------------------- tidy up */
 
 fs.rmSync(ssrDir, { recursive: true, force: true })
 fs.rmSync(path.dirname(manifestFile), { recursive: true, force: true })
-console.log(`prerender: ${posts.length} posts → pages, Markdown, PDFs, OG images, feeds, sitemap, llms.txt (${Date.now() - t0} ms)`)
+console.log(`prerender: ${posts.length} posts → pages, Markdown, PDFs, ${Object.keys(images).length} OG images, feeds, sitemap, llms.txt (${Date.now() - t0} ms)`)
+
+/* -------------------------------------------------------------- SEO audit */
+
+const audit = checkSeo(dist, { siteUrl: SITE_URL })
+report(audit)
+if (audit.errors.length) process.exit(1)

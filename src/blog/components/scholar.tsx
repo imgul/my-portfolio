@@ -8,6 +8,7 @@ import { Link } from '../router'
 import { formatDate, posts, SITE_URL, type PostMeta } from '../data'
 import { activeProfiles, AUTHOR, citation, citationMeta, CITE_FORMATS, citeKey, doiUrl, LICENSES, OPEN_CATEGORIES, type CiteFormat } from '../scholar.mjs'
 import { copy, Icon, toast } from './ui'
+import { researchHead, setHead } from '../head'
 
 /* ------------------------------------------------------------------ ORCID */
 
@@ -234,7 +235,7 @@ export function ResearchPage() {
   const open = posts.filter((p) => LICENSES[p.license].open)
   const example = open[0]
   useEffect(() => {
-    document.title = 'Research & citation: Muhammad Gulzaib · Gul’s Notebook'
+    setHead(researchHead())
   }, [])
   return (
     <main id="main" className="b-research" tabIndex={-1}>

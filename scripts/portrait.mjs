@@ -6,7 +6,7 @@
  *   mark.webp                       portfolio logo: face on ink, inside the spinning ring
  *   avatar.webp, avatar-og.png      blog: warm-toned cut-out (transparent, the theme shows through)
  *   gulzaib.jpg                     plain profile photo (structured data, link previews)
- *   og-home.jpg                     portfolio share image (1200×630)
+ *   assets/og-person.png            black and white cut-out for the portfolio share image (built by scripts/og.mjs)
  *   /favicon.svg, /favicon-32.png, /apple-touch-icon.png, /icon-192.png, /icon-512.png
  *
  * Not part of the normal build (the outputs are committed). To run it again:
@@ -23,7 +23,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const tools = createRequire(process.env.PORTRAIT_TOOLS ? path.join(process.env.PORTRAIT_TOOLS, 'noop.js') : import.meta.url)
 const sharp = tools('sharp')
 const { removeBackground } = tools('@imgly/background-removal-node')
-const localRequire = createRequire(import.meta.url)
 
 const SRC = path.join(ROOT, 'assets/gulzaib.jpg')
 const OUT = path.join(ROOT, 'public/img/gul')
@@ -118,41 +117,12 @@ await save('apple-touch-icon.png', iconSvg({ size: 180, bleed: true }), 180)
 await save('icon-192.png', iconSvg({ size: 192, bleed: true }), 192)
 await save('icon-512.png', iconSvg({ size: 512, bleed: true }), 512)
 
-// ------------------------------------------------------ portfolio share image
-{
-  const font = (pkg, weight) => {
-    const dir = path.dirname(localRequire.resolve(`${pkg}/package.json`))
-    const sub = fs.readdirSync(dir).find((d) => d.startsWith(weight))
-    return path.join(dir, sub, fs.readdirSync(path.join(dir, sub)).find((f) => f.endsWith('.ttf')))
-  }
-  const fontFiles = [font('@expo-google-fonts/inter', '500'), font('@expo-google-fonts/inter', '800'), font('@expo-google-fonts/inter', '900')]
-  // the cut-out, black and white, 600 px tall on the right
-  const person = await bw(sharp(cut).extract(scale({ left: 40, top: 20, width: 340, height: 380 })))
-    .resize({ height: 600, kernel: 'lanczos3' })
-    .png()
-    .toBuffer()
-  const pm = await sharp(person).metadata()
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-  <defs>
-    <radialGradient id="glow" cx="78%" cy="55%" r="45%"><stop offset="0" stop-color="${LIME}" stop-opacity="0.9"/><stop offset="1" stop-color="${LIME}" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect width="1200" height="630" fill="${INK}"/>
-  <circle cx="${1200 - pm.width / 2 - 40}" cy="${630 - pm.height * 0.52}" r="250" fill="url(#glow)" opacity="0.55"/>
-  <circle cx="${1200 - pm.width / 2 - 40}" cy="${630 - pm.height * 0.52}" r="205" fill="${LIME}"/>
-  <circle cx="86" cy="96" r="7" fill="${LIME}"/>
-  <text x="104" y="104" font-family="Inter" font-weight="500" font-size="22" letter-spacing="3" fill="${LIME}">FOUNDER · SENIOR FULL STACK ENGINEER</text>
-  <text x="80" y="250" font-family="Inter" font-weight="900" font-size="88" letter-spacing="-2" fill="#ecebe6" fill-opacity="0.32">MUHAMMAD</text>
-  <text x="80" y="345" font-family="Inter" font-weight="900" font-size="88" letter-spacing="-2" fill="#ecebe6">GULZAIB</text>
-  <text x="80" y="420" font-family="Inter" font-weight="500" font-size="28" fill="#9d9da8">I build systems that become businesses.</text>
-  <text x="80" y="460" font-family="Inter" font-weight="500" font-size="28" fill="#9d9da8">Laravel · React · RAG · agentic AI</text>
-  <text x="80" y="568" font-family="Inter" font-weight="800" font-size="24" fill="#ecebe6">gulzaib.vercel.app</text>
-</svg>`
-  const base = new Resvg(svg, { font: { fontFiles, loadSystemFonts: false, defaultFontFamily: 'Inter' } }).render().asPng()
-  await sharp(base)
-    .composite([{ input: person, left: 1200 - pm.width - 40, top: 630 - pm.height }])
-    .jpeg({ quality: 86, mozjpeg: true, chromaSubsampling: '4:4:4' })
-    .toFile(path.join(OUT, 'og-home.jpg'))
-}
+// ------------------------------------- share-image cut-out (used by the build)
+// black and white, 600 px tall, transparent: scripts/og.mjs puts it on the lime disc of /og/home.png
+await bw(sharp(cut).extract(scale({ left: 40, top: 20, width: 340, height: 380 })))
+  .resize({ height: 600, kernel: 'lanczos3' })
+  .png({ compressionLevel: 9, palette: true, quality: 90, effort: 10 })
+  .toFile(path.join(ROOT, 'assets/og-person.png'))
 
 for (const f of [...fs.readdirSync(OUT).map((f) => `img/gul/${f}`), 'favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'])
   console.log(f.padEnd(28), `${(fs.statSync(path.join(PUB, f)).size / 1024).toFixed(1)} KB`)

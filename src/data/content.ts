@@ -5,12 +5,15 @@ export const profile = {
   short: 'Gul',
   role: 'Founder & Senior Full Stack Engineer',
   headline: 'Laravel · React · AI Systems · SaaS',
+  /** one-line pitch: share image, page title and search snippet */
+  tagline: 'I build systems that become businesses.',
   email: 'iigulzaib@gmail.com',
   phone: '+92 302 6999 008',
   phoneHref: 'https://wa.me/923026999008',
   location: 'Islamabad, Pakistan',
   timezone: 'Asia/Karachi',
-  website: 'https://gulzaib.dev',
+  // the canonical address (set VITE_SITE_URL when a custom domain is connected)
+  website: ((import.meta.env?.VITE_SITE_URL as string | undefined) || 'https://gulzaib.vercel.app').replace(/\/$/, ''),
   availability: 'Open to remote roles & relocation: UAE / KSA',
   socials: [
     { label: 'LinkedIn', handle: 'gulzaib-ai', url: 'https://www.linkedin.com/in/gulzaib-ai' },

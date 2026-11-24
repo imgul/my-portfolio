@@ -182,7 +182,7 @@ export function internalEntries({ dist } = {}) {
     s: 'Portfolio',
     d: home?.description || 'Founder & CEO of SynergyFlow Labs. Senior Full Stack Engineer building AI-native SaaS.',
     m: ['Founder', 'Full Stack', 'AI systems'],
-    img: '/img/gul/og-home.jpg',
+    img: '/og/home.png',
     i: icon,
     c: '#c6ff3d',
   }
