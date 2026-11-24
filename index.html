@@ -12,6 +12,27 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://gulzaib.dev" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" type="application/rss+xml" title="Gul’s Notebook" href="/rss.xml" />
+    <script>
+      // blog: apply the reader's settings before first paint (no flash of the wrong theme or size)
+      try {
+        if (location.pathname.indexOf('/blog') === 0) {
+          var p = JSON.parse(localStorage.getItem('gul:blog-prefs') || '{}'), t = p.theme || 'auto', d = document.documentElement.dataset
+          if (t === 'dark') t = 'dim'
+          if (t === 'auto') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dim' : 'light'
+          var bg = { light: '#f8f6f1', sepia: '#f3ead8', dim: '#1c1d21', night: '#14110d' }[t] || '#f8f6f1'
+          d.theme = t
+          d.contrast = p.contrast || 'normal'
+          d.size = p.size == null ? '1' : String(p.size)
+          d.font = p.font || 'serif'
+          d.leading = p.leading || 'normal'
+          d.width = p.width || 'normal'
+          d.motion = p.motion || 'auto'
+          document.documentElement.style.background = bg
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', bg)
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

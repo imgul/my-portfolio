@@ -1,0 +1,634 @@
+/**
+ * Blog content pipeline, shared by the Vite plugin (virtual:blog index in dev
+ * and build) and scripts/prerender.mjs (static HTML, feeds, sitemap, llms.txt,
+ * Markdown copies and Open Graph images).
+ *
+ * A post is one MDX file in src/blog/posts/<slug>.mdx with YAML frontmatter:
+ *
+ *   title:        required, aim for 30–65 characters (search results truncate ~60)
+ *   description:  required, 70–160 characters; used for cards, meta description, feeds
+ *   date:         required, YYYY-MM-DD
+ *   updated:      optional, YYYY-MM-DD (shown as "Updated", used as dateModified)
+ *   category:     Founder | Engineering | AI Research | Writing
+ *   tags:         [list, of, tags] (1–8)
+ *   series:       optional series name
+ *   seriesPart:   optional number (1, 2, 3…)
+ *   featured:     optional, true pins it as the featured post
+ *   draft:        optional, true hides it in production builds
+ *   art:          cover art: galaxy | dna | road | city | book | stack | network | tree | mountains | globe
+ *   level:        optional: Beginner | Intermediate | Advanced
+ *   references:   optional list of { id, title, authors, year, venue, url } for <Cite id="…" />
+ *   faq:          optional list of { q, a }: rendered at the end + FAQPage structured data
+ *   license:      optional: CC-BY-4.0 | all-rights-reserved (default: CC BY for AI Research,
+ *                 Engineering and Writing; all rights reserved for Founder; see src/blog/scholar.mjs)
+ *   doi:          optional DOI (e.g. 10.59350/abcde-12345), minted for free by Rogue Scholar
+ *                 for open posts; `npm run blog:dois` fills it in automatically
+ *   references[].doi: optional DOI of a cited work (preferred over url for citation tracking)
+ *
+ * Run `npm run lint:blog` to check posts against the guidelines in docs/BLOG_GUIDELINES.md.
+ */
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import matter from 'gray-matter'
+import GithubSlugger from 'github-slugger'
+import { AUTHOR as PERSON_INFO, BLOG_NAME, DOI_RE, LICENSES, PROFILES, activeProfiles, citationMeta, doiUrl, licenseFor, sameAs } from '../src/blog/scholar.mjs'
+
+export const SITE_URL = (process.env.VITE_SITE_URL || 'https://gulzaib.vercel.app').replace(/\/$/, '')
+/** Author identity lives in src/blog/scholar.mjs (shared with the browser). */
+export const AUTHOR = { ...PERSON_INFO, url: SITE_URL, sameAs: sameAs() }
+const LINKEDIN = PROFILES.find((p) => p.id === 'linkedin')?.url || SITE_URL
+export const BLOG_TITLE = BLOG_NAME
+export const BLOG_DESCRIPTION =
+  'Notes from building AI-native SaaS: founder lessons, engineering deep dives, AI systems research and the craft of technical writing, by Muhammad Gulzaib.'
+export const CATEGORIES = ['Founder', 'Engineering', 'AI Research', 'Writing']
+/** IndexNow (Bing, Yandex, Seznam, Naver): the key file is published at /<key>.txt. */
+export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'f3b9c27e6a5d4e81b0c4d2a97e15b6c8'
+/** URLs under /blog/ that are pages, not posts. */
+export const RESERVED_SLUGS = ['research']
+export const ARTS = ['galaxy', 'dna', 'road', 'city', 'book', 'stack', 'network', 'tree', 'mountains', 'globe']
+
+/** Absolute path of the posts folder (forward slashes). */
+export const POSTS_DIR = fileURLToPath(new URL('../src/blog/posts', import.meta.url)).replace(/\\/g, '/')
+
+const WPM = 230
+const toISO = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : d ? String(d).slice(0, 10) : undefined)
+const stripCode = (src) => src.replace(/^```[\s\S]*?^```/gm, '')
+
+/** Strip MDX/markdown syntax to count words that a reader actually reads. */
+function plainText(src) {
+  return src
+    .replace(/```[\s\S]*?```/g, (m) => ' ' + m.split('\n').slice(1, -1).join(' ').replace(/[^\w\s]/g, ' ') + ' ')
+    // keep visible text that lives in props (step titles, captions, pros/cons, chart labels)
+    .replace(/<[^>]+>/g, (m) => ' ' + (m.match(/"[^"]*"/g) || []).filter((q) => /\s/.test(q)).join(' ').replace(/"/g, ' ') + ' ')
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/[#>*_`~[\](){}|-]/g, ' ')
+}
+
+/** h2/h3 headings with the same ids rehype-slug generates (for the TOC, rendered without JS). */
+function extractHeadings(content) {
+  const slugger = new GithubSlugger()
+  const out = []
+  for (const line of stripCode(content).split('\n')) {
+    const m = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line)
+    if (!m) continue
+    const text = m[2]
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/`([^`]*)`/g, '$1')
+      .replace(/(\*\*|__|\*|_)(.*?)\1/g, '$2')
+      .replace(/<[^>]+>/g, '')
+      .trim()
+    const id = slugger.slug(text)
+    if (m[1].length === 2 || m[1].length === 3) out.push({ depth: m[1].length, text, id })
+  }
+  return out
+}
+
+export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
+  if (!fs.existsSync(dir)) return []
+  const posts = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.mdx'))
+    .map((file) => {
+      const raw = fs.readFileSync(path.join(dir, file), 'utf8')
+      const { data, content } = matter(raw)
+      const slug = file.replace(/\.mdx$/, '')
+      const words = plainText(content).split(/\s+/).filter(Boolean).length
+      const codeBlocks = (content.match(/```/g) || []).length / 2
+      return {
+        slug,
+        title: String(data.title ?? slug),
+        description: String(data.description ?? ''),
+        date: toISO(data.date) ?? '1970-01-01',
+        updated: toISO(data.updated),
+        category: data.category ?? 'Engineering',
+        tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+        series: data.series ? String(data.series) : undefined,
+        seriesPart: data.seriesPart ? Number(data.seriesPart) : undefined,
+        featured: !!data.featured,
+        draft: !!data.draft,
+        art: data.art ?? 'galaxy',
+        level: data.level,
+        references: Array.isArray(data.references)
+          ? data.references.map((r) => ({
+              id: String(r.id),
+              title: String(r.title ?? ''),
+              authors: r.authors ? String(r.authors) : undefined,
+              year: r.year ? String(r.year) : undefined,
+              venue: r.venue ? String(r.venue) : undefined,
+              url: r.url ? String(r.url) : undefined,
+              doi: r.doi ? String(r.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//, '') : undefined,
+            }))
+          : [],
+        license: licenseFor(data.category ?? 'Engineering', data.license),
+        doi: data.doi ? String(data.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//, '').trim() : undefined,
+        faq: Array.isArray(data.faq) ? data.faq.filter((f) => f && f.q && f.a).map((f) => ({ q: String(f.q), a: String(f.a) })) : [],
+        headings: extractHeadings(content),
+        words,
+        // code takes longer to read than prose
+        minutes: Math.max(1, Math.round(words / WPM + codeBlocks * 0.4)),
+      }
+    })
+    .filter((p) => includeDrafts || !p.draft)
+  return posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.title.localeCompare(b.title)))
+}
+
+/* ------------------------------------------------------------------- lint */
+
+/**
+ * Checks every post against docs/BLOG_GUIDELINES.md. Returns { errors, warnings }.
+ * Errors break things (bad frontmatter, broken links); warnings are advice.
+ */
+export function lintPosts(dir = POSTS_DIR) {
+  const errors = []
+  const warnings = []
+  const posts = loadPosts(dir, { includeDrafts: true })
+  const slugs = new Set(posts.map((p) => p.slug))
+  const descs = new Map()
+  for (const p of posts) {
+    const err = (m) => errors.push(`${p.slug}: ${m}`)
+    const warn = (m) => warnings.push(`${p.slug}: ${m}`)
+    const { content } = matter(fs.readFileSync(path.join(dir, `${p.slug}.mdx`), 'utf8'))
+    const body = stripCode(content)
+
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(p.slug)) err('file name must be lowercase-with-hyphens (it becomes the URL)')
+    if (RESERVED_SLUGS.includes(p.slug)) err(`"${p.slug}" is a reserved page URL; rename the file`)
+    if (!p.title || p.title === p.slug) err('missing title')
+    else if (p.title.length > 70) warn(`title is ${p.title.length} chars; search results show ~60`)
+    else if (p.title.length < 20) warn(`title is only ${p.title.length} chars; be more specific`)
+    if (!p.description) err('missing description')
+    else if (p.description.length < 70 || p.description.length > 170) warn(`description is ${p.description.length} chars; aim for 70–160`)
+    if (descs.has(p.description)) warn(`same description as ${descs.get(p.description)}`)
+    descs.set(p.description, p.slug)
+    if (p.date === '1970-01-01' || Number.isNaN(Date.parse(p.date))) err('missing or invalid date (YYYY-MM-DD)')
+    if (p.updated && p.updated < p.date) err('updated is before date')
+    if (!CATEGORIES.includes(p.category)) err(`category must be one of ${CATEGORIES.join(', ')}`)
+    if (!ARTS.includes(p.art)) err(`art must be one of ${ARTS.join(', ')}`)
+    const fm = matter(fs.readFileSync(path.join(dir, `${p.slug}.mdx`), 'utf8')).data
+    if (fm.license && !LICENSES[fm.license]) err(`license must be one of ${Object.keys(LICENSES).join(', ')}`)
+    if (p.doi && !DOI_RE.test(p.doi)) err(`doi "${p.doi}" is not a DOI (10.xxxx/…)`)
+    if (p.doi && !LICENSES[p.license].open) warn('has a DOI but is not open access; DOI registries expect an open licence')
+    for (const r of p.references) {
+      if (r.doi && !DOI_RE.test(r.doi)) err(`reference "${r.id}" has an invalid doi "${r.doi}"`)
+      if (!r.doi && !r.url && !r.venue) warn(`reference "${r.id}" has no doi or url; citation trackers (Crossref, Rogue Scholar) only see linked references`)
+    }
+    if (!p.tags.length) warn('add 1–8 tags')
+    if (p.tags.length > 8) warn('more than 8 tags dilutes topics')
+    if (p.tags.some((t) => t !== t.toLowerCase())) warn('use lowercase tags')
+    if (!/<(TLDR|Abstract)>/.test(content)) warn('start with a <TLDR> (or <Abstract>): an answer-first summary helps readers, search snippets and AI answers')
+    if (/^# /m.test(body)) err('do not use "# " (h1) in the body; the title is the only h1')
+
+    let last = 1
+    for (const line of body.split('\n')) {
+      const m = /^(#{2,6})\s/.exec(line)
+      if (!m) continue
+      const d = m[1].length
+      if (d > last + 1) warn(`heading level jumps from h${last} to h${d}: "${line.trim()}"`)
+      last = d
+    }
+    if (p.headings.filter((h) => h.depth === 2).length < 2 && p.words > 600) warn('long post with fewer than 2 sections (## headings)')
+
+    for (const m of body.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)) if (!m[1].trim()) err(`image without alt text: ${m[2]}`)
+    for (const m of body.matchAll(/<(img|Figure)\b[^>]*\bsrc=/g)) {
+      const tag = body.slice(m.index, body.indexOf('>', m.index) + 1)
+      if (!/\balt="[^"]+"/.test(tag)) err(`<${m[1]}> without alt text`)
+    }
+    for (const m of body.matchAll(/\]\((\/blog\/[^)#?\s]+)/g)) if (!slugs.has(m[1].slice(6))) err(`broken internal link ${m[1]}`)
+    for (const m of body.matchAll(/<PostLink\s+slug="([^"]+)"/g)) if (!slugs.has(m[1])) err(`<PostLink> to missing post "${m[1]}"`)
+    for (const m of body.matchAll(/\]\((https?:\/\/[^)]+)\)/g)) if (m[1].startsWith('http://')) warn(`insecure link ${m[1]}`)
+    for (const m of body.matchAll(/\[(here|click here|this|link)\]\(/gi)) warn(`vague link text "${m[1]}": describe where the link goes`)
+
+    const refIds = new Set(p.references.map((r) => r.id))
+    const cited = new Set([...body.matchAll(/<Cite\s+id="([^"]+)"/g)].map((m) => m[1]))
+    for (const id of cited) if (!refIds.has(id)) err(`<Cite id="${id}"> has no matching reference`)
+    for (const id of refIds) if (!cited.has(id)) warn(`reference "${id}" is never cited`)
+
+    if (p.series && p.seriesPart && posts.some((q) => q !== p && q.series === p.series && q.seriesPart === p.seriesPart)) err(`duplicate seriesPart ${p.seriesPart} in "${p.series}"`)
+    if (p.words < 300 && !p.draft) warn(`only ${p.words} words; thin pages rank and get cited less`)
+  }
+  return { errors, warnings, count: posts.length }
+}
+
+/* ------------------------------------------------------------------ feeds */
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const cdata = (s) => `<![CDATA[${String(s).replace(/]]>/g, ']]]]><![CDATA[>')}]]>`
+export const postUrl = (p) => `${SITE_URL}/blog/${p.slug}`
+export const ogImage = (p) => `${SITE_URL}/og/${p ? p.slug : 'blog'}.png`
+
+export function rss(posts, html = {}) {
+  const items = posts
+    .map(
+      (p) => `    <item>
+      <title>${esc(p.title)}</title>
+      <link>${postUrl(p)}</link>
+      <guid isPermaLink="true">${postUrl(p)}</guid>
+      <pubDate>${new Date(p.date + 'T09:00:00Z').toUTCString()}</pubDate>
+      <dc:creator>${esc(AUTHOR.name)}</dc:creator>
+      <description>${esc(p.description)}</description>
+      <dc:rights>${esc(rightsText(p))}</dc:rights>${LICENSES[p.license].open ? `\n      <cc:license>${LICENSES[p.license].url}</cc:license>` : ''}${
+        p.doi ? `\n      <dc:identifier>${doiUrl(p.doi)}</dc:identifier>` : ''
+      }
+      <category>${esc(p.category)}</category>${p.tags.map((t) => `\n      <category>${esc(t)}</category>`).join('')}${
+        html[p.slug] ? `\n      <content:encoded>${cdata(html[p.slug])}</content:encoded>` : ''
+      }
+      <enclosure url="${ogImage(p)}" type="image/png" length="0" />
+    </item>`,
+    )
+    .join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://web.resource.org/cc/">
+  <channel>
+    <title>${esc(BLOG_TITLE)}</title>
+    <link>${SITE_URL}/blog</link>
+    <description>${esc(BLOG_DESCRIPTION)}</description>
+    <language>en</language>
+    <copyright>© ${new Date().getFullYear()} ${esc(AUTHOR.name)}. AI Research, Engineering and Writing posts: CC BY 4.0. Founder posts: all rights reserved. Code: MIT.</copyright>
+    <managingEditor>${AUTHOR.email} (${esc(AUTHOR.name)})</managingEditor>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <image><url>${ogImage()}</url><title>${esc(BLOG_TITLE)}</title><link>${SITE_URL}/blog</link></image>
+    <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />
+${items}
+  </channel>
+</rss>
+`
+}
+
+const rightsText = (p) => {
+  const lic = LICENSES[p.license]
+  return lic.open ? `© ${p.date.slice(0, 4)} ${AUTHOR.name}. ${lic.name} (${lic.url})` : `© ${p.date.slice(0, 4)} ${AUTHOR.name}. All rights reserved.`
+}
+
+/**
+ * Atom feed of open-access (CC BY) posts only, with full text, ORCID, licence and
+ * DOIs. This is the feed to register with Rogue Scholar (rogue-scholar.org), which
+ * archives each post, mints a free Crossref DOI and pushes it to ORCID, OpenAlex,
+ * Semantic Scholar and other indexes.
+ */
+export function openAccessAtom(posts, html = {}) {
+  const open = posts.filter((p) => LICENSES[p.license].open)
+  const updated = open.map((p) => p.updated ?? p.date).sort().at(-1) ?? new Date().toISOString().slice(0, 10)
+  const lic = LICENSES['CC-BY-4.0']
+  const author = `<author><name>${esc(AUTHOR.name)}</name><uri>${AUTHOR.orcidUrl}</uri></author>`
+  const entries = open
+    .map(
+      (p) => `  <entry>
+    <id>${postUrl(p)}</id>
+    <title>${esc(p.title)}</title>
+    <link rel="alternate" type="text/html" href="${postUrl(p)}" />${p.doi ? `\n    <link rel="related" href="${doiUrl(p.doi)}" title="DOI" />` : ''}
+    <link rel="alternate" type="application/pdf" href="${postUrl(p)}.pdf" />
+    <link rel="license" href="${lic.url}" />
+    <published>${p.date}T09:00:00+05:00</published>
+    <updated>${p.updated ?? p.date}T09:00:00+05:00</updated>
+    ${author}
+    <rights>${esc(rightsText(p))}</rights>
+    <summary>${esc(p.description)}</summary>
+    <category term="${esc(p.category)}" />${p.tags.map((t) => `\n    <category term="${esc(t)}" />`).join('')}${
+      html[p.slug] ? `\n    <content type="html">${esc(html[p.slug])}</content>` : ''
+    }
+  </entry>`,
+    )
+    .join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <id>${SITE_URL}/blog</id>
+  <title>${esc(BLOG_TITLE)}: open-access research &amp; engineering notes</title>
+  <subtitle>${esc(BLOG_DESCRIPTION)} Posts in this feed are licensed ${lic.short}.</subtitle>
+  <link rel="self" type="application/atom+xml" href="${SITE_URL}/feeds/open-access.xml" />
+  <link rel="alternate" type="text/html" href="${SITE_URL}/blog" />
+  <link rel="license" href="${lic.url}" />
+  <icon>${SITE_URL}/favicon.svg</icon>
+  <logo>${ogImage()}</logo>
+  <updated>${updated}T09:00:00+05:00</updated>
+  ${author}
+  <rights>© ${esc(AUTHOR.name)}. ${lic.name} (${lic.url})</rights>
+  <generator uri="${SITE_URL}/blog">Gul’s Notebook prerender</generator>
+${entries}
+</feed>
+`
+}
+
+export function jsonFeed(posts, html = {}, { feedPath = '/feed.json', title = BLOG_TITLE } = {}) {
+  return JSON.stringify(
+    {
+      version: 'https://jsonfeed.org/version/1.1',
+      title,
+      home_page_url: `${SITE_URL}/blog`,
+      feed_url: `${SITE_URL}${feedPath}`,
+      description: BLOG_DESCRIPTION,
+      language: 'en',
+      authors: [{ name: AUTHOR.name, url: AUTHOR.orcidUrl }],
+      items: posts.map((p) => ({
+        id: postUrl(p),
+        url: postUrl(p),
+        title: p.title,
+        summary: p.description,
+        content_html: html[p.slug],
+        image: ogImage(p),
+        date_published: `${p.date}T09:00:00Z`,
+        date_modified: `${p.updated ?? p.date}T09:00:00Z`,
+        tags: [p.category, ...p.tags],
+        language: 'en',
+        ...(p.doi ? { external_url: doiUrl(p.doi) } : {}),
+        attachments: [{ url: `${postUrl(p)}.pdf`, mime_type: 'application/pdf', title: 'PDF version' }],
+        _scholarly: { license: LICENSES[p.license].url || 'all-rights-reserved', rights: rightsText(p), doi: p.doi ?? null, orcid: AUTHOR.orcidUrl },
+      })),
+    },
+    null,
+    2,
+  )
+}
+
+export function sitemap(posts) {
+  const urls = [
+    { loc: `${SITE_URL}/`, lastmod: posts[0]?.date },
+    { loc: `${SITE_URL}/blog`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogImage() },
+    { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1) },
+    ...posts.map((p) => ({ loc: postUrl(p), lastmod: p.updated ?? p.date, image: ogImage(p) })),
+  ]
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${urls
+  .map(
+    (u) =>
+      `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}${u.image ? `<image:image><image:loc>${u.image}</image:loc></image:image>` : ''}</url>`,
+  )
+  .join('\n')}
+</urlset>
+`
+}
+
+/** Search engines and AI assistants are explicitly welcome to read and cite the blog. */
+export function robots() {
+  const ai = [
+    'GPTBot',
+    'OAI-SearchBot',
+    'ChatGPT-User',
+    'ClaudeBot',
+    'Claude-User',
+    'Claude-SearchBot',
+    'PerplexityBot',
+    'Perplexity-User',
+    'Google-Extended',
+    'Applebot-Extended',
+    'Bingbot',
+    'DuckAssistBot',
+    'Amazonbot',
+    'meta-externalagent',
+    'CCBot',
+  ]
+  return `# Search engines and AI assistants are welcome to read, quote and cite this site.
+# A plain-text guide for language models lives at ${SITE_URL}/llms.txt
+
+User-agent: *
+Allow: /
+
+${ai.map((a) => `User-agent: ${a}`).join('\n')}
+Allow: /
+
+Sitemap: ${SITE_URL}/sitemap.xml
+`
+}
+
+/** https://llmstxt.org: a Markdown map of the site for language models. */
+export function llmsTxt(posts) {
+  const byCat = CATEGORIES.map((c) => [c, posts.filter((p) => p.category === c)]).filter(([, ps]) => ps.length)
+  return `# ${BLOG_TITLE}: Muhammad Gulzaib
+
+> ${BLOG_DESCRIPTION}
+
+Written by Muhammad Gulzaib (Gul), Founder & CEO of SynergyFlow Labs and a senior full stack engineer in Islamabad, Pakistan. Posts are first-hand notes from building SaaS products (Laravel, React), AI systems (RAG, agents) and early-stage companies. Every post has a clean Markdown version (the links below) and the full corpus is at ${SITE_URL}/llms-full.txt.
+
+Citing: please cite posts by author, title, date and URL (or DOI when a post has one), e.g. “Gulzaib, M. (2026). <title>. Gul’s Notebook. <url>”. Author ORCID iD: ${AUTHOR.orcidUrl}. AI Research, Engineering and Writing posts are licensed CC BY 4.0 (reuse with credit); Founder posts are all rights reserved (quote with a link). Each post page offers APA, MLA, Chicago, IEEE, Harvard, BibTeX and RIS citations, and a PDF version.
+
+${byCat
+  .map(
+    ([c, ps]) => `## ${c}
+
+${ps.map((p) => `- [${p.title}](${postUrl(p)}.md): ${p.description}`).join('\n')}`,
+  )
+  .join('\n\n')}
+
+## Optional
+
+- [Portfolio](${SITE_URL}/): Muhammad Gulzaib's experience, ventures and skills
+- [RSS feed](${SITE_URL}/rss.xml): every post with full content
+- [JSON feed](${SITE_URL}/feed.json)
+- [Research & citation](${SITE_URL}/blog/research): author identifiers (ORCID${activeProfiles(true).length > 1 ? ', ' + activeProfiles(true).slice(1).map((x) => x.label).join(', ') : ''}), open-access posts and how to cite them
+- [Open-access feed](${SITE_URL}/feeds/open-access.xml): CC BY posts with full text (Atom)
+`
+}
+
+/* ------------------------------------------------------------------- head */
+
+const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c')
+
+const PERSON = {
+  '@type': 'Person',
+  '@id': `${SITE_URL}/#person`,
+  name: AUTHOR.name,
+  givenName: AUTHOR.givenName,
+  familyName: AUTHOR.familyName,
+  alternateName: 'Gul',
+  url: SITE_URL,
+  email: `mailto:${AUTHOR.email}`,
+  jobTitle: AUTHOR.jobTitle,
+  worksFor: { '@type': 'Organization', name: AUTHOR.affiliation },
+  homeLocation: { '@type': 'Place', name: AUTHOR.location },
+  knowsAbout: AUTHOR.knowsAbout,
+  identifier: { '@type': 'PropertyValue', propertyID: 'ORCID', value: AUTHOR.orcid, url: AUTHOR.orcidUrl },
+  sameAs: AUTHOR.sameAs,
+}
+const BLOG = {
+  '@type': 'Blog',
+  '@id': `${SITE_URL}/blog#blog`,
+  name: BLOG_TITLE,
+  description: BLOG_DESCRIPTION,
+  url: `${SITE_URL}/blog`,
+  inLanguage: 'en',
+  author: { '@id': PERSON['@id'] },
+  publisher: { '@id': PERSON['@id'] },
+}
+
+function postGraph(p) {
+  const url = postUrl(p)
+  const crumbs = [
+    { name: 'Home', item: `${SITE_URL}/` },
+    { name: BLOG_TITLE, item: `${SITE_URL}/blog` },
+    { name: p.category, item: `${SITE_URL}/blog?category=${encodeURIComponent(p.category)}` },
+    { name: p.title, item: url },
+  ]
+  const lic = LICENSES[p.license]
+  const year = Number(p.date.slice(0, 4))
+  const graph = [
+    {
+      // open posts are also scholarly articles (Google Scholar, Semantic Scholar and Zotero read this)
+      '@type': lic.open ? ['BlogPosting', 'ScholarlyArticle'] : 'BlogPosting',
+      '@id': `${url}#article`,
+      headline: p.title,
+      description: p.description,
+      image: { '@type': 'ImageObject', url: ogImage(p), width: 1200, height: 630 },
+      datePublished: `${p.date}T09:00:00+05:00`,
+      dateModified: `${p.updated ?? p.date}T09:00:00+05:00`,
+      author: { '@id': PERSON['@id'] },
+      publisher: { '@id': PERSON['@id'] },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      isPartOf: { '@id': BLOG['@id'] },
+      articleSection: p.category,
+      keywords: p.tags,
+      wordCount: p.words,
+      timeRequired: `PT${p.minutes}M`,
+      inLanguage: 'en',
+      isAccessibleForFree: true,
+      abstract: p.description,
+      copyrightHolder: { '@id': PERSON['@id'] },
+      copyrightYear: year,
+      ...(lic.open
+        ? { license: lic.url, encoding: { '@type': 'MediaObject', encodingFormat: 'application/pdf', contentUrl: `${url}.pdf` } }
+        : { copyrightNotice: `© ${year} ${AUTHOR.name}. All rights reserved.` }),
+      ...(p.doi ? { identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: p.doi, url: doiUrl(p.doi) }, sameAs: doiUrl(p.doi) } : {}),
+      ...(p.level ? { educationalLevel: p.level } : {}),
+      ...(p.series ? { isPartOf: [{ '@id': BLOG['@id'] }, { '@type': 'CreativeWorkSeries', name: p.series }], position: p.seriesPart } : {}),
+      ...(p.references.length
+        ? { citation: p.references.map((r) => ({ '@type': 'CreativeWork', name: r.title, ...(r.authors ? { author: r.authors } : {}), ...(r.doi ? { url: doiUrl(r.doi), identifier: r.doi } : r.url ? { url: r.url } : {}), ...(r.year ? { datePublished: r.year } : {}), ...(r.venue ? { isPartOf: r.venue } : {}) })) }
+        : {}),
+      speakable: { '@type': 'SpeakableSpecification', cssSelector: ['.b-post__dek', '.b-tldr', '.b-abstract', '.b-takeaways'] },
+      accessMode: ['textual', 'visual'],
+      accessModeSufficient: ['textual'],
+      accessibilityFeature: ['alternativeText', 'tableOfContents', 'readingOrder', 'structuralNavigation', 'displayTransformability', 'highContrastDisplay', 'largePrint'],
+      accessibilityHazard: 'none',
+    },
+    { '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.item })) },
+    PERSON,
+    BLOG,
+  ]
+  if (p.faq.length)
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${url}#faq`,
+      mainEntity: p.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    })
+  return { '@context': 'https://schema.org', '@graph': graph }
+}
+
+function indexGraph(posts) {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { ...BLOG, blogPost: posts.map((p) => ({ '@id': `${postUrl(p)}#article` })) },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${SITE_URL}/blog#page`,
+        url: `${SITE_URL}/blog`,
+        name: BLOG_TITLE,
+        description: BLOG_DESCRIPTION,
+        isPartOf: { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, url: `${SITE_URL}/`, name: AUTHOR.name },
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: posts.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: postUrl(p), name: p.title })),
+        },
+      },
+      PERSON,
+    ],
+  }
+}
+
+function researchGraph(posts) {
+  const open = posts.filter((p) => LICENSES[p.license].open)
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'ProfilePage',
+        '@id': `${SITE_URL}/blog/research#page`,
+        url: `${SITE_URL}/blog/research`,
+        name: `Research & citation · ${BLOG_TITLE}`,
+        description: RESEARCH_DESCRIPTION,
+        mainEntity: { '@id': PERSON['@id'] },
+        isPartOf: { '@id': BLOG['@id'] },
+        dateModified: open.map((p) => p.updated ?? p.date).sort().at(-1),
+        hasPart: open.map((p) => ({ '@id': `${postUrl(p)}#article` })),
+      },
+      PERSON,
+      BLOG,
+    ],
+  }
+}
+export const RESEARCH_DESCRIPTION =
+  'How to cite Muhammad Gulzaib’s writing: ORCID iD, research profiles, open-access (CC BY 4.0) posts with DOIs and PDFs, and citation formats for APA, IEEE, BibTeX and more.'
+
+/** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
+export function headTags({ post, posts, notFound, research }) {
+  const title = notFound
+    ? `Page not found · ${BLOG_TITLE}`
+    : post
+      ? `${post.title} · ${BLOG_TITLE}`
+      : research
+        ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
+        : `${BLOG_TITLE}: founder, engineering and AI notes by Muhammad Gulzaib`
+  const description = notFound ? 'This page does not exist.' : post ? post.description : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
+  const url = post ? postUrl(post) : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
+  const lic = post ? LICENSES[post.license] : null
+  const img = ogImage(post)
+  const imgAlt = post ? `${post.title}, by Muhammad Gulzaib` : `${BLOG_TITLE} by Muhammad Gulzaib`
+  const t = [
+    `<title>${esc(title)}</title>`,
+    `<meta name="description" content="${esc(description)}" />`,
+    `<meta name="author" content="${esc(AUTHOR.name)}" />`,
+    notFound ? `<meta name="robots" content="noindex" />` : `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+    notFound ? '' : `<link rel="canonical" href="${url}" />`,
+    `<link rel="alternate" type="application/rss+xml" title="${esc(BLOG_TITLE)}" href="${SITE_URL}/rss.xml" />`,
+    `<link rel="alternate" type="application/feed+json" title="${esc(BLOG_TITLE)}" href="${SITE_URL}/feed.json" />`,
+    `<link rel="alternate" type="application/atom+xml" title="${esc(BLOG_TITLE)}: open-access posts" href="${SITE_URL}/feeds/open-access.xml" />`,
+    post ? `<link rel="alternate" type="text/markdown" title="Markdown version" href="${url}.md" />` : `<link rel="alternate" type="text/plain" title="llms.txt" href="${SITE_URL}/llms.txt" />`,
+    post ? `<link rel="alternate" type="application/pdf" title="PDF version" href="${url}.pdf" />` : '',
+    ...sameAs().map((u) => `<link rel="me" href="${u}" />`),
+    lic?.open ? `<link rel="license" href="${lic.url}" />` : '',
+    post?.doi ? `<link rel="cite-as" href="${doiUrl(post.doi)}" />` : '',
+    // Highwire Press + Dublin Core tags for Google Scholar, Zotero, Mendeley, Semantic Scholar (open posts only)
+    ...(post ? citationMeta(post, SITE_URL).map(([n, c]) => `<meta name="${n}" content="${esc(c)}" />`) : []),
+    `<meta property="og:site_name" content="${esc(BLOG_TITLE)}" />`,
+    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:type" content="${post ? 'article' : 'website'}" />`,
+    `<meta property="og:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_TITLE)}" />`,
+    `<meta property="og:description" content="${esc(description)}" />`,
+    `<meta property="og:url" content="${url}" />`,
+    `<meta property="og:image" content="${img}" />`,
+    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${esc(imgAlt)}" />`,
+    ...(post
+      ? [
+          `<meta property="article:published_time" content="${post.date}T09:00:00+05:00" />`,
+          `<meta property="article:modified_time" content="${post.updated ?? post.date}T09:00:00+05:00" />`,
+          `<meta property="article:author" content="${LINKEDIN}" />`,
+          `<meta property="article:section" content="${esc(post.category)}" />`,
+          ...post.tags.map((tag) => `<meta property="article:tag" content="${esc(tag)}" />`),
+        ]
+      : []),
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_TITLE)}" />`,
+    `<meta name="twitter:description" content="${esc(description)}" />`,
+    `<meta name="twitter:image" content="${img}" />`,
+    `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
+    notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
+  ]
+  return t.filter(Boolean).join('\n    ')
+}
+
+/**
+ * Turn the built index.html into a blog page: page-specific head, the blog's
+ * CSS/JS preloaded (no flash of unstyled content) and pre-rendered HTML in #root.
+ */
+export function pageHtml(indexHtml, { head, preload = '', body = '' }) {
+  return indexHtml
+    .replace(/<title>[\s\S]*?<\/title>/, '')
+    .replace(/\s*<meta name="description"[^>]*>/, '')
+    .replace(/\s*<meta property="og:[^>]*>/g, '')
+    .replace(/\s*<meta name="twitter:[^>]*>/g, '')
+    .replace(/\s*<link rel="alternate"[^>]*>/g, '')
+    .replace(/\s*<noscript>[\s\S]*?<\/noscript>/, '')
+    .replace('</head>', `    ${head}\n    ${preload}\n  </head>`)
+    .replace('<div id="root"></div>', `<div id="root" data-ssr="1">${body}</div>`)
+}

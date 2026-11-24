@@ -36,12 +36,97 @@ The keyboard sounds (the playable stack synth, the hold-to-copy charge) follow t
 
 **Other tracks.** Press **N** or tap the chip to switch between Soundtrack, Deep Focus (one calm pad and piano piece), Original, A · Neon Pulse, B · Margalla Dawn and C · Night Shift (lo-fi). Those share one score that re-arranges itself per section (`scenes.ts` and `conductor.ts`): layers, key, tone, reverb and ambience change with each section. Audition any track with `/?sound=soundtrack|focus|original|pulse|dawn|lofi`.
 
+## Blog: Gul’s Notebook (`/blog`)
+
+A reading-first blog for founders, engineers, technical writers and AI researchers, kept separate from the portfolio. It has its own small bundle and calm styles, with no 3D, custom cursor or smooth-scroll hijacking. Every page is **pre-rendered to static HTML** at build time, so readers, search engines and AI assistants get the full text without running JavaScript. React then hydrates it.
+
+**Write a post:** add `src/blog/posts/my-slug.mdx`. The file name is the URL (`/blog/my-slug`). Then run `npm run lint:blog`, which checks the post against [`docs/BLOG_GUIDELINES.md`](docs/BLOG_GUIDELINES.md): title and description length, heading order, alt text, broken links, citations and more.
+
+```mdx
+---
+title: "Post title"              # 30–65 characters
+description: "One or two sentences, 70–160 characters. Cards, feeds, search results."
+date: 2026-11-24
+updated: 2026-12-01              # optional; shown as "Updated" and used as dateModified
+category: Founder                # Founder | Engineering | AI Research | Writing
+tags: [saas, validation]
+series: Founder lessons          # optional; posts in a series link to each other
+seriesPart: 4
+featured: true                   # optional; shown as "Start here" on the index
+draft: true                      # optional; visible in dev only
+art: city                        # galaxy | dna | road | city | book | stack | network | tree | mountains | globe
+level: Beginner                  # optional: Beginner | Intermediate | Advanced
+references:                      # optional; cite with <Cite id="lewis2020" />
+  - { id: lewis2020, authors: "Lewis, P. et al.", title: "Retrieval-Augmented Generation…", year: 2020, url: "https://arxiv.org/abs/2005.11401" }
+faq:                             # optional; rendered at the end and as FAQPage structured data
+  - q: "A question readers actually ask?"
+    a: "A short, self-contained answer."
+---
+```
+
+### Reading experience and accessibility
+
+- **Easy on the eyes:** no pure white or pure black. Five themes: Auto, Light (warm paper), Sepia, Dim (soft charcoal) and Night (very dark, warm amber text with less blue light). Body text is 11–15:1 contrast and secondary text is at least 4.5:1 in every theme (WCAG AA, and AAA for body text). A **High contrast** switch is also available.
+- **Reader settings (saved per device):** text size in 5 steps, typeface (Source Serif 4 with optical sizes, Inter, or **Atkinson Hyperlegible** for low-vision and dyslexic readers), line spacing, line length (58/68/80 characters), reduced motion, plus optional quiet focus music. The settings are applied before first paint, so the page never flashes the wrong theme.
+- **Keyboard:** skip link, visible focus rings, roving radio groups, and shortcuts (press `?`): `/` search, `j`/`k` next or previous section, `s` save, `f` focus mode, `l` listen, `t` theme, `+`/`−` text size, `g h` blog home.
+- **Screen readers:** landmarks, an ordered breadcrumb, one `h1` per page, `aria-pressed` toggles, live-region announcements (search results, votes, toasts), focus moved to the new page after client-side navigation, and labelled code regions and tables. It also respects `prefers-reduced-motion`, forced colours (Windows High Contrast) and print.
+- **Features:** reading progress with minutes left, **resume where you left off**, **Continue reading** and **Saved** posts on the index (both stored locally), **Listen** (text-to-speech with a read-along highlight), focus mode, a sticky TOC with scrollspy, wrap and copy on code blocks, series progress and **Next in series**, a per-post FAQ, Cite this post (APA/MLA/BibTeX), share (LinkedIn, X, WhatsApp, email, native), the post as Markdown, Suggest an edit, an author card and a newsletter.
+- **Index:** weighted search across titles, tags, descriptions and section headings, with match highlighting (press `/`). Also category, tag and saved filters, sorting (newest, oldest, quickest, most useful), grid or list view, "Pick your path" by audience, series and topics.
+
+### Likes / dislikes (Supabase)
+
+Each post ends with **“Was this post useful?”** (Useful / Not really). After voting, the reader can leave an optional, anonymous note (“What could be better?”). Votes are stored in the free Supabase project **gul-blog** (`okcynutijcqzftegrsci`, region ap-south-1). The schema is in [`supabase/migrations/20261124173500_blog_reactions.sql`](supabase/migrations/20261124173500_blog_reactions.sql):
+
+- Table `post_reactions`: one row per (post, anonymous browser id), with `value` ±1 and an optional `reason` up to 600 characters. RLS is on with no policies, so the public key cannot read or write the table directly.
+- The browser can only call two functions: `reaction_counts(slugs[])` and `react(slug, visitor, value, reason)`. Value 0 removes a vote, there is a limit of 60 votes per IP per hour, and only a salted hash of the IP is stored.
+- The publishable key and URL are defaults in `src/blog/reactions.ts`, so no env vars are needed. Override them with `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, or set either to an empty string to turn shared counts off.
+
+**Read the feedback** in the Supabase dashboard → SQL editor:
+
+```sql
+select slug, case value when 1 then 'useful' else 'not useful' end as vote, reason, updated_at
+from post_reactions where reason is not null order by updated_at desc;
+
+select * from reaction_summary;   -- likes, dislikes, notes and last vote per post
+```
+
+### SEO, GEO and AI-readiness
+
+Built with the build step (`vite build` → SSR build → [`scripts/prerender.mjs`](scripts/prerender.mjs)):
+
+- `blog.html`, `blog/<slug>.html` and `404.html`: full pre-rendered HTML with a unique title and description, canonical URL, Open Graph and Twitter tags, `article:*` metadata and JSON-LD (`BlogPosting` with author `Person`, `BreadcrumbList`, `Blog`/`CollectionPage`, and `FAQPage` when a post has `faq`). The blog's CSS and JS are preloaded.
+- `og/<slug>.png` and `og/blog.png`: 1200×630 social images rendered from each post's generative cover with real fonts (resvg).
+- `blog/<slug>.md`: a clean Markdown copy of every post, linked from the page with `rel="alternate"` and served with a canonical `Link` header.
+- `llms.txt` and `llms-full.txt` ([llmstxt.org](https://llmstxt.org)): a map of the blog, plus the full text, for language models.
+- `rss.xml` and `feed.json` with full post content; `sitemap.xml` with `lastmod` and images.
+- `robots.txt`: explicitly welcomes search engines and AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended and others).
+- Writing guidance for answer engines (answer-first TL;DR, question-shaped headings, FAQ, citations, an updated date) is in [`docs/BLOG_GUIDELINES.md`](docs/BLOG_GUIDELINES.md).
+
+### Research, citations and indexing
+
+Posts are set up to be cited and indexed like scholarly work. The step-by-step setup for ORCID, Rogue Scholar DOIs, Google Scholar, Zenodo, IEEE, Semantic Scholar and OpenAlex is in [`docs/SCHOLARLY_INDEXING.md`](docs/SCHOLARLY_INDEXING.md).
+
+- **Identity:** [`src/blog/scholar.mjs`](src/blog/scholar.mjs) holds the author (ORCID [0009-0000-8709-6989](https://orcid.org/0009-0000-8709-6989)), the research `PROFILES` (paste a URL and it appears everywhere), the licence rules and the citation formats. The build and the browser share it.
+- **Licences:** AI Research, Engineering and Writing posts are **CC BY 4.0**. Founder posts are all rights reserved. Override with `license:` in a post's frontmatter.
+- **On open posts:** Highwire Press `citation_*` and Dublin Core tags (Google Scholar, Zotero, Mendeley), `ScholarlyArticle` JSON-LD with ORCID, `rel="license"`, an "Open access" badge, and `rel="cite-as"` plus `citation_doi` once a post has a `doi:`.
+- **Every post:** an "Article information" panel (author + ORCID, dates, DOI or permanent link, licence, downloads), "Cite this post" in APA, MLA, Chicago, IEEE, Harvard, BibTeX and RIS (`.bib`/`.ris` downloads), and a **PDF** (`/blog/<slug>.pdf`, generated with pdfkit by [`scripts/pdf.mjs`](scripts/pdf.mjs)).
+- **`/blog/research`:** identifiers, open-access posts, how to cite, reuse policy (schema.org `ProfilePage`).
+- **`/feeds/open-access.xml`** (Atom) and **`/feeds/open-access.json`:** CC BY posts only, full text, ORCID and licence. Register the Atom feed with [Rogue Scholar](https://rogue-scholar.org) for free Crossref DOIs.
+- `npm run blog:dois` writes Rogue Scholar DOIs into post frontmatter. `npm run blog:indexnow` pings Bing and other IndexNow engines after a deploy. Both need internet, so run them on your machine.
+
+Set `VITE_SITE_URL` to change the canonical domain (default `https://gulzaib.vercel.app`). Set `VITE_NEWSLETTER_ENDPOINT` to a URL that accepts `POST {email}` to collect signups; without it, the form falls back to a pre-filled email.
+
+**Components available in every post (no imports):** `TLDR`, `Abstract`, `Takeaways`, `Callout` (note/tip/warning/danger/insight/success), `Update`, `PullQuote`, `Stats`/`Stat`, `Timeline`/`Event`, `Decision` (ADR), `ProsCons`, `Steps`/`Step`, `Tabs`/`Tab`, `FileTree`, `Kbd`, `Cite` with automatic references, `BarChart`, `Flow`, `Sidenote`, `Term`, `Details`, `Figure`, `YouTube`, `LinkCard`, `PostLink`. Markdown extras: GFM tables, task lists and footnotes, KaTeX math (`$…$`, `$$…$$`), and Shiki code blocks with `title="file.ts"`, `showLineNumbers`, `{2-4}` line highlights, and wrap and copy buttons. The post [`how-i-write-technical-posts.mdx`](src/blog/posts/how-i-write-technical-posts.mdx) shows every component in use.
+
 ## Develop
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # type-check + production build to dist/
+npm run build    # type-check, build, pre-render the blog into dist/
+npm run lint:blog  # check posts against docs/BLOG_GUIDELINES.md
+npm run blog:dois  # fetch Rogue Scholar DOIs into post frontmatter (after registering the blog)
+npm run blog:indexnow  # tell Bing & co. that pages changed (after a deploy)
 npm run preview
 ```
 
@@ -61,8 +146,30 @@ src/
   lib/haptics.ts          vibration / iOS haptics
   lib/scroll.ts           Lenis + ScrollTrigger wiring
   components/             one file per section + HUD, cursor, loader
+  main.tsx                entry: loads the blog for /blog*, the portfolio otherwise
+  blog/
+    posts/*.mdx           blog posts (frontmatter + MDX)
+    BlogIndex.tsx         /blog: search, filters, paths, continue reading, saved, series
+    PostPage.tsx          /blog/:slug: TOC, progress/resume, actions, FAQ, reactions, cite
+    scholar.mjs           author/ORCID, research profiles, licences, citation formats, Scholar meta tags
+    components/scholar.tsx  ORCID iD, article info, Cite this post, /blog/research page
+    components/mdx.tsx    every component available inside posts
+    components/reactions.tsx  "Was this useful?" + optional feedback (Supabase)
+    components/listen.tsx text-to-speech read-along
+    prefs.ts / store.ts   reader settings / saved posts, progress, votes (localStorage)
+    reactions.ts          Supabase RPC client (counts, votes)
+    ssr.tsx               server renderer used by the pre-render step
+    blog.css              reading-first themes and typography
+scripts/blog.mjs          frontmatter loader, lint, feeds, sitemap, robots, llms.txt, head tags/JSON-LD
+scripts/prerender.mjs     static pages, Markdown copies, PDFs, OG images, feeds (runs after vite build)
+scripts/pdf.mjs           PDF version of each post (pdfkit)
+scripts/blog-dois.mjs     npm run blog:dois (Rogue Scholar DOI lookup)
+scripts/indexnow.mjs      npm run blog:indexnow
+supabase/migrations/      likes/dislikes schema
+docs/BLOG_GUIDELINES.md   how to write posts that read well, rank and get cited
+docs/SCHOLARLY_INDEXING.md  free setup: ORCID, Rogue Scholar DOIs, Google Scholar, Zenodo, IEEE…
 ```
 
 ## Deploy
 
-It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`).
+It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`). `vercel.json` turns on clean URLs (so `blog/<slug>.html` is served at `/blog/<slug>`) and sets content types for feeds, Markdown and `llms.txt` (PDFs get a canonical `Link` header pointing to the HTML post). Unknown URLs get the pre-rendered `404.html` with a real 404 status.

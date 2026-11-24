@@ -1,0 +1,94 @@
+---
+title: "Write a README people actually read"
+description: "Your README is the landing page of your code. A simple structure that works for open-source projects, client handovers and internal tools."
+date: 2025-11-20
+category: Writing
+tags: [writing, documentation, open-source]
+art: mountains
+level: Beginner
+---
+
+<TLDR>
+
+A good README answers four questions in order: what is this, why should I care, how do I run it, and where do I go next. Everything else is optional.
+
+</TLDR>
+
+I’ve handed over a lot of client projects, and I’ve inherited even more. The difference between a two-hour onboarding and a two-day one is almost always the README.
+
+## The four questions
+
+<Steps>
+<Step title="What is this?">
+
+One sentence, at the very top, that a non-engineer could understand. *“A multi-tenant school management system built with Laravel and React.”*
+
+</Step>
+<Step title="Why should I care?">
+
+Two or three bullet points on what it does or what problem it solves. A screenshot is worth a thousand words here.
+
+</Step>
+<Step title="How do I run it?">
+
+The exact commands, copy-pasteable, from a fresh clone to a running app. Test them on a clean machine.
+
+```bash
+git clone https://github.com/you/project && cd project
+cp .env.example .env
+composer install && npm install
+php artisan key:generate && php artisan migrate --seed
+composer run dev
+```
+
+</Step>
+<Step title="Where next?">
+
+Links to deeper docs, the architecture overview, how to contribute and who to ask.
+
+</Step>
+</Steps>
+
+## What to leave out
+
+- **History.** How the project evolved belongs in a changelog or a blog post.
+- **Every config option.** Link to a reference doc instead.
+- **Badges for the sake of badges.** Keep the ones that tell the reader something, like build status.
+
+<Callout type="tip" title="The new-hire test">
+
+Ask the newest person on the team to set the project up using only the README, and sit beside them without helping. Every question they ask is a missing line.
+
+</Callout>
+
+## A template
+
+```md title="README.md"
+# Project name
+
+One sentence: what it is and who it is for.
+
+![Screenshot](docs/screenshot.png)
+
+## Features
+- The three things it does best
+
+## Quick start
+(exact commands)
+
+## Configuration
+Required environment variables, with examples.
+
+## Architecture
+A short paragraph and a link to docs/architecture.md
+
+## Contributing · License · Contact
+```
+
+<Takeaways>
+
+- What, why, how to run, where next. In that order.
+- Commands must be copy-pasteable and tested on a clean machine.
+- Run the new-hire test before every handover.
+
+</Takeaways>

@@ -1,0 +1,237 @@
+---
+title: "Multi-tenant Laravel SaaS: the architecture I actually use"
+description: "Single database or one per tenant? A production-tested multi-tenant setup for Laravel SaaS: global scopes, tenant resolution, queues and the mistakes to avoid."
+date: 2026-08-10
+updated: 2026-11-02
+category: Engineering
+tags: [laravel, saas, architecture, php, multi-tenancy]
+art: stack
+level: Advanced
+faq:
+  - q: "Should a Laravel SaaS use one database or a database per tenant?"
+    a: "For most early SaaS products, one database with a tenant_id column enforced by a global scope is simpler to run, cheaper to host and easy to migrate later."
+  - q: "When should you move to a database per tenant?"
+    a: "When a contract requires physical separation or data residency, when one tenant is large enough to slow everyone else down, or when per-tenant backups and restores are a product feature."
+  - q: "Where do multi-tenant data leaks usually happen?"
+    a: "In queued jobs and raw queries, where the global scope or tenant context may be missing. Fail closed, so no tenant means no data, and test those paths explicitly."
+---
+
+<TLDR>
+
+For most early SaaS products I use **one database with a `tenant_id` column**, enforced by a global scope and a tenant context resolved from the subdomain. It is simple to run, cheap to host and easy to migrate later. Below is the full setup, plus when I would choose a database per tenant instead.
+
+</TLDR>
+
+Every SaaS I’ve built, from the POS to Oxygen LMS, has had to answer the same question on day one: how do we keep each customer’s data separate? Get it wrong and you either leak data between customers or drown in operational complexity.
+
+## The three options
+
+| Strategy | Isolation | Ops cost | Good for |
+| --- | --- | --- | --- |
+| Shared DB, `tenant_id` column | Logical | Low | Most early-stage SaaS |
+| Schema per tenant | Medium | Medium | Postgres shops, moderate tenant counts |
+| Database per tenant | Strong | High | Enterprise, compliance, noisy neighbours |
+
+<Decision title="Start with a shared database and a tenant_id column" status="Accepted">
+
+**Context.** Small team, hundreds of tenants expected, low budget, fast iteration needed.
+
+**Decision.** One MySQL database; every tenant-owned table has an indexed `tenant_id`; isolation enforced in the application layer with a global scope.
+
+**Consequences.** Cheap and simple. The cost is discipline: every query must be scoped, so we enforce it automatically and test it.
+
+</Decision>
+
+## Project layout
+
+<FileTree>
+
+- app/
+  - **Tenancy/**
+    - TenantContext.php
+    - BelongsToTenant.php
+    - TenantScope.php
+  - Http/Middleware/
+    - **ResolveTenant.php**
+  - Models/
+    - Tenant.php
+    - Student.php
+- database/migrations/
+- tests/Feature/
+  - **TenantIsolationTest.php**
+
+</FileTree>
+
+## Step by step
+
+<Steps>
+<Step title="Hold the current tenant in one place">
+
+A tiny singleton that knows who the current tenant is. Everything else asks it.
+
+```php title="app/Tenancy/TenantContext.php"
+final class TenantContext
+{
+    private ?Tenant $tenant = null;
+
+    public function set(Tenant $tenant): void { $this->tenant = $tenant; }
+
+    public function get(): ?Tenant { return $this->tenant; }
+
+    public function id(): ?int { return $this->tenant?->id; }
+}
+```
+
+Register it as a singleton in a service provider: `$this->app->singleton(TenantContext::class);`
+
+</Step>
+<Step title="Resolve the tenant from the request">
+
+I use subdomains (`school-a.oxygenlms.com`). Resolve once per request in middleware and fail closed if the tenant is unknown.
+
+```php title="app/Http/Middleware/ResolveTenant.php" {5-8}
+public function handle(Request $request, Closure $next)
+{
+    $sub = explode('.', $request->getHost())[0];
+
+    $tenant = Tenant::query()
+        ->where('subdomain', $sub)
+        ->where('active', true)
+        ->firstOrFail(); // fail closed: never fall back to "no tenant"
+
+    app(TenantContext::class)->set($tenant);
+
+    return $next($request);
+}
+```
+
+</Step>
+<Step title="Scope every query automatically">
+
+A global scope plus a trait means developers can’t forget the `where tenant_id = ?` clause.
+
+<Tabs>
+<Tab label="BelongsToTenant.php">
+
+```php showLineNumbers
+trait BelongsToTenant
+{
+    protected static function bootBelongsToTenant(): void
+    {
+        static::addGlobalScope(new TenantScope);
+
+        static::creating(function ($model) {
+            $model->tenant_id ??= app(TenantContext::class)->id()
+                ?? throw new LogicException('No tenant in context');
+        });
+    }
+}
+```
+
+</Tab>
+<Tab label="TenantScope.php">
+
+```php showLineNumbers
+final class TenantScope implements Scope
+{
+    public function apply(Builder $builder, Model $model): void
+    {
+        $id = app(TenantContext::class)->id();
+
+        // Fail closed: no tenant means no rows, never all rows.
+        $builder->where($model->qualifyColumn('tenant_id'), $id ?? 0);
+    }
+}
+```
+
+</Tab>
+<Tab label="Student.php">
+
+```php
+class Student extends Model
+{
+    use BelongsToTenant;
+}
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step title="Carry the tenant into queued jobs">
+
+Queues are where tenancy bugs hide. A job runs in a different process, so the context is empty. Store the tenant ID on the job and restore it before `handle()`.
+
+```php title="app/Jobs/SendFeeReminders.php" {3,8}
+class SendFeeReminders implements ShouldQueue
+{
+    public function __construct(public int $tenantId) {}
+
+    public function handle(TenantContext $ctx): void
+    {
+        $ctx->set(Tenant::findOrFail($this->tenantId));
+        // ... scoped queries are safe from here
+    }
+}
+```
+
+</Step>
+<Step title="Prove isolation with a test">
+
+This is the most important test in the codebase. It runs on every push.
+
+```php title="tests/Feature/TenantIsolationTest.php"
+it('never returns another tenant’s students', function () {
+    [$a, $b] = Tenant::factory()->count(2)->create();
+    Student::factory()->for($b)->create();
+
+    app(TenantContext::class)->set($a);
+
+    expect(Student::count())->toBe(0);
+});
+```
+
+</Step>
+</Steps>
+
+<Callout type="warning" title="Watch out for raw queries">
+
+Global scopes don’t apply to `DB::table()` or raw SQL. Ban them for tenant tables in code review, or wrap them in a helper that adds the tenant clause.
+
+</Callout>
+
+## Indexes matter more than you think
+
+With a shared database, almost every query filters by `tenant_id` first. Put it at the front of your composite indexes:
+
+```sql
+-- good: matches "where tenant_id = ? and class_id = ? order by name"
+CREATE INDEX students_tenant_class_name ON students (tenant_id, class_id, name);
+```
+
+## When I’d choose a database per tenant
+
+<Details summary="Signals that it’s time to move to stronger isolation">
+
+- A customer contract requires physical data separation or data residency.
+- One tenant is so large that it slows everyone else down (noisy neighbour).
+- You need per-tenant backups and restores as a product feature.
+
+Because every model already carries `tenant_id`, moving a large tenant to its own database later is a data migration, not a rewrite.
+
+</Details>
+
+<Takeaways>
+
+- Start simple: one database, a `tenant_id` column, a global scope.
+- Fail closed everywhere: no tenant means no data.
+- Queues and raw queries are where leaks happen. Test them.
+- Put `tenant_id` first in composite indexes.
+
+</Takeaways>
+
+<Update date="2 Nov 2026">
+
+Added the queued jobs section after a reader asked how the context survives in workers.
+
+</Update>
