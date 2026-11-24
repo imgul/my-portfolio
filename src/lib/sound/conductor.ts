@@ -68,7 +68,7 @@ export class Conductor {
     this.index = next
     if (this.started) {
       this.apply(t, 1.2)
-      if (stinger) this.stinger(next, t)
+      if (stinger && this.theme.stingers !== false) this.stinger(next, t)
     }
     return true
   }
@@ -88,7 +88,10 @@ export class Conductor {
   private apply(t: number, tau: number) {
     const sc = this.scene
     this.theme.scene(this.rig, sc, t)
-    this.ambience.set(sc.amb, t)
+    const amt = this.theme.ambience ?? 0.6
+    const amb: Scene['amb'] = {}
+    for (const [k, v] of Object.entries(sc.amb)) amb[k as keyof Scene['amb']] = (v ?? 0) * amt
+    this.ambience.set(amb, t)
     const tone = this.rig.musicTone.frequency
     tone.cancelScheduledValues(t)
     tone.setTargetAtTime(brightToHz(sc.bright), t, tau * 1.3)

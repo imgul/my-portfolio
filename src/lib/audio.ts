@@ -9,7 +9,8 @@
  */
 import { applyFx, Conductor, createRig, getTheme, mtof, noiseBuffer, osc, perc, SCENES, THEMES, type Rig, type Theme } from './sound'
 
-const STORAGE_KEY = 'gul:sound-theme'
+// v2: everyone starts on the calm Deep Focus track (older picks are not carried over)
+const STORAGE_KEY = 'gul:sound-theme-v2'
 
 function initialThemeId() {
   try {
@@ -179,7 +180,7 @@ class AudioEngine {
   hover() {
     if (!this.ready()) return
     const now = performance.now()
-    if (now - this.lastHover < 45) return
+    if (now - this.lastHover < 140) return
     this.lastHover = now
     this.theme.sfx.hover(this.rig, this.now)
   }

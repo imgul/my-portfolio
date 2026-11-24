@@ -478,9 +478,12 @@ export function mountains(n: number) {
       const r = Math.random() < 0.55 ? 0.85 + gauss() * 0.02 : 0.85 * Math.sqrt(Math.random())
       const a = Math.random() * Math.PI * 2
       put(2.6 + Math.cos(a) * r, 1.3 + Math.sin(a) * r, -3.8, 3)
-    } else {
+    } else if (Math.random() < 0.4) {
       // valley mist
       put(rand(-6, 6), BASE + Math.random() * 0.35, rand(-3, 2))
+    } else {
+      // a few stars above the ridgeline
+      put(rand(-6.5, 6.5), rand(0.9, 3.2), -4.4 + gauss() * 0.3)
     }
   })
 }

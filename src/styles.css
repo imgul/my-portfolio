@@ -6,7 +6,7 @@
   --bg: #07070a;
   --bg-2: #0e0e13;
   --fg: #ecebe6;
-  --muted: #8b8b95;
+  --muted: #9d9da8;
   --line: rgba(236, 235, 230, 0.12);
   --accent: #c6ff3d;
   --blue: #5b8cff;
@@ -238,7 +238,7 @@ main:not(.is-entered) {
 .chip--static em {
   font-family: var(--mono);
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 .vib {
   font-size: 14px;
@@ -361,7 +361,7 @@ main:not(.is-entered) {
 .cursor-ring span {
   position: relative;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   color: #000;
   font-weight: 500;
@@ -497,7 +497,7 @@ main:not(.is-entered) {
   letter-spacing: -0.02em;
 }
 .hud__logo sup {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
 }
 .logo-mark {
@@ -611,7 +611,7 @@ main:not(.is-entered) {
   transform: translateX(8px);
   transition: opacity 0.3s, transform 0.4s var(--ease);
   color: var(--fg);
-  font-size: 10px;
+  font-size: 11px;
 }
 .hud__dot:hover span {
   opacity: 1;
@@ -721,7 +721,7 @@ main:not(.is-entered) {
 .np__theme {
   display: block;
   animation: roll 0.6s var(--ease);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
 }
 .np__theme em {
@@ -847,7 +847,7 @@ section {
 }
 .tags li {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   padding: 5px 10px;
   border: 1px solid var(--line);
@@ -1171,7 +1171,7 @@ section {
   left: 50%;
   transform: translateX(-50%);
   font-weight: 400;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
 }
 
@@ -1232,7 +1232,7 @@ section {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--fg);
-  font-size: 10px;
+  font-size: 11px;
 }
 .badge .pulse-dot {
   background: var(--h1);
@@ -1559,7 +1559,7 @@ section {
   animation: spin 14s linear infinite;
 }
 .agent-core .mono {
-  font-size: 9px;
+  font-size: 10.5px;
   color: var(--muted);
 }
 .agent-core strong {
@@ -1594,7 +1594,7 @@ section {
   font-size: 14px;
 }
 .agent-node__role {
-  font-size: 9px;
+  font-size: 10.5px;
   color: var(--muted);
 }
 .terminal {
@@ -1657,7 +1657,7 @@ section {
   border-top: 1px solid var(--line);
 }
 .terminal__foot span {
-  font-size: 10px;
+  font-size: 11px;
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
@@ -1779,7 +1779,7 @@ section {
   font-size: 15px;
 }
 .cert__meta {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
   text-transform: none;
 }
@@ -1994,7 +1994,7 @@ section {
 .hold__txt small {
   font-family: var(--mono);
   font-weight: 500;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -2320,7 +2320,15 @@ section {
   }
   .hud__clock {
     bottom: 14px;
-    font-size: 10px;
+    font-size: 11px;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  /* on phones the clock steps aside once you start reading; the now-playing chip stays */
+  .hud.is-scrolled .hud__clock {
+    /* !important: GSAP's entrance tween leaves inline opacity/transform on HUD items */
+    opacity: 0 !important;
+    transform: translateY(8px) !important;
+    pointer-events: none;
   }
   .hud__hint {
     display: none;
@@ -2458,4 +2466,11 @@ section {
 .vib svg {
   width: 14px;
   height: 14px;
+}
+
+/* Reading comfort: a soft dark halo behind running text keeps it crisp when
+   particles drift underneath (invisible on plain background). */
+main p,
+main li {
+  text-shadow: 0 1px 12px rgba(7, 7, 10, 0.9), 0 0 2px rgba(7, 7, 10, 0.6);
 }

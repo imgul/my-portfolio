@@ -6,9 +6,9 @@ A portfolio you can see, hear and feel, built for Muhammad Gulzaib (Gul): Founde
 
 | Layer | Tech |
 | --- | --- |
-| 3D | **Three.js**. A single GPU particle system (up to 20k points) with its own animated shape for every section: galaxy (Intro) → DNA (Manifesto) → winding road with milestones (Journey) → city of boxes (Ventures) → open book with a turning page (Notes) → floating stack layers (Stack) → neural network (Agents) → tree with roots (Learning) → Margalla Hills with a trail and sun (Beyond) → globe with arcs from Islamabad (Contact). Custom GLSL crossfades the shapes and adds per-shape motion, mouse repulsion, scroll turbulence and audio reactivity. |
+| 3D | **Three.js**. A single GPU particle system (up to 20k points) with its own animated shape for every section: galaxy (Intro) → DNA (Manifesto) → winding road with milestones (Journey) → city of boxes (Ventures) → open book with a turning page (Notes) → floating stack layers (Stack) → neural network (Agents) → tree with roots (Learning) → Margalla Hills with a trail and sun (Beyond) → globe with arcs from Islamabad (Contact). Custom GLSL morphs the shapes in a staggered wave and adds per-shape motion, gentle mouse repulsion and scroll turbulence. Each shape sits beside its section's text, and a "reading mode" slows and dims the scene while you read, then wakes it when you scroll. |
 | Motion | **GSAP + ScrollTrigger** (pinned manifesto, horizontal journey, stacking venture cards, counters, split-letter reveals) and **Lenis** smooth scroll |
-| Sound | **Web Audio API**, fully generative with no audio files: evolving ambient pad, pentatonic "music box", hover/click/whoosh SFX. Scroll speed opens the filter. |
+| Sound | **Web Audio API**, fully generative with no audio files. The default track, **Deep Focus**, is a quiet, slow, warm pad with sparse felt-piano notes and no drums or noise, so it supports reading instead of competing with it. Soft UI sounds. |
 | Haptics | **Vibration API** on Android, plus the iOS 18+ Safari switch-checkbox haptic trick |
 | Interaction | Magnetic buttons, custom cursor, 3D tilt cards, a playable "stack synth", a clickable multi-agent orchestrator with a live terminal, velocity-reactive marquees |
 | App | React 19 + TypeScript + Vite |
@@ -32,7 +32,7 @@ The music re-arranges itself for every section (`src/lib/sound/scenes.ts`, run b
 | Beyond | Open air | sparse and spacious, wind + synthesized birdsong |
 | Contact | Home | back to the home key, warm full mix |
 
-Each change crossfades the layers, queues the key change for the next chord, glides the tone and reverb, swaps the ambience, and plays a short signature motif. Four tracks share the same score: Original, A · Neon Pulse, B · Margalla Dawn, C · Night Shift (lo-fi). Tap the "now playing" chip (bottom-right) to switch. Rendered tours of every section are in `sound-previews/tour-*.mp3`.
+Each change crossfades the layers, queues the key change for the next chord, glides the tone and reverb, swaps the ambience, and plays a short signature motif. Five tracks share the same score: **Deep Focus** (default; `src/lib/sound/themes/focus.ts`), Original, A · Neon Pulse, B · Margalla Dawn, C · Night Shift (lo-fi). Deep Focus keeps the section changes subtle: it only shifts key, colour and piano density, with no ambience beds, stingers or percussion. Tap the "now playing" chip (bottom-right) to switch. Rendered tours of every section are in `sound-previews/tour-*.mp3` (`tour-deep-focus.mp3` is the default). Audition any track with `/?sound=focus|original|pulse|dawn|lofi`.
 
 ## Develop
 

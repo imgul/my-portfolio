@@ -32,32 +32,38 @@ type ShapeConfig = {
   face?: { yaw: number; sway: number }
   opacity: number
   scale: number
+  /** where the shape sits (world units, desktop) so it stays clear of the section's text */
+  pos: [number, number]
 }
 
 const CONFIG: ShapeConfig[] = [
-  { pal: ['#ff9d5c', '#8a6bff'], hc: 0, tilt: 0.55, spin: 0.03, opacity: 1, scale: 1 }, // galaxy
-  { pal: ['#3dd6ff', '#c6ff3d'], hc: 0, tilt: 0, spin: 0, face: { yaw: 0, sway: 0 }, opacity: 1, scale: 1 }, // DNA
-  { pal: ['#5b8cff', '#c6ff3d'], hc: 0.35, tilt: 0.42, spin: 0, face: { yaw: 0.5, sway: 0.22 }, opacity: 1, scale: 1 }, // road
-  { pal: ['#5b8cff', '#c46bff'], hc: 0.6, tilt: 0.38, spin: 0.07, opacity: 1, scale: 1 }, // city
-  { pal: ['#f2efe4', '#c6ff3d'], hc: 0, tilt: 0.8, spin: 0, face: { yaw: 0, sway: 0.12 }, opacity: 1, scale: 1.05 }, // book
-  { pal: ['#3dffb5', '#5b8cff'], hc: 0.8, tilt: 0.42, spin: 0.06, opacity: 1, scale: 0.95 }, // stack
-  { pal: ['#c46bff', '#3dd6ff'], hc: 0, tilt: 0.08, spin: 0, face: { yaw: 0.45, sway: 0.2 }, opacity: 1, scale: 1 }, // neural
-  { pal: ['#ff9d5c', '#c6ff3d'], hc: 1, tilt: 0.08, spin: 0.08, opacity: 1, scale: 1 }, // tree
-  { pal: ['#7a8cff', '#ffb36b'], hc: 0.9, tilt: 0.16, spin: 0, face: { yaw: 0, sway: 0.18 }, opacity: 1, scale: 1 }, // mountains
-  { pal: ['#c6ff3d', '#5b8cff'], hc: 0, tilt: 0.42, spin: 0, face: { yaw: 0, sway: 0.45 }, opacity: 0.7, scale: 1 }, // globe (behind contact copy)
+  { pal: ['#ff9d5c', '#8a6bff'], hc: 0, tilt: 0.55, spin: 0.03, opacity: 1, scale: 1, pos: [0.6, 0.1] }, // galaxy
+  { pal: ['#3dd6ff', '#c6ff3d'], hc: 0, tilt: 0, spin: 0, face: { yaw: 0, sway: 0 }, opacity: 0.42, scale: 0.85, pos: [3.7, 0] }, // DNA
+  { pal: ['#5b8cff', '#c6ff3d'], hc: 0.35, tilt: 0.42, spin: 0, face: { yaw: 0.5, sway: 0.22 }, opacity: 0.8, scale: 1, pos: [0.4, -0.3] }, // road
+  { pal: ['#5b8cff', '#c46bff'], hc: 0.6, tilt: 0.38, spin: 0.07, opacity: 0.85, scale: 0.95, pos: [2.2, 0.2] }, // city
+  { pal: ['#f2efe4', '#c6ff3d'], hc: 0, tilt: 0.8, spin: 0, face: { yaw: -0.25, sway: 0.1 }, opacity: 0.55, scale: 0.9, pos: [2.4, 0.3] }, // book
+  { pal: ['#3dffb5', '#5b8cff'], hc: 0.8, tilt: 0.42, spin: 0.06, opacity: 0.6, scale: 0.85, pos: [2.8, 0.4] }, // stack
+  { pal: ['#c46bff', '#3dd6ff'], hc: 0, tilt: 0.08, spin: 0, face: { yaw: 0.45, sway: 0.2 }, opacity: 0.8, scale: 0.85, pos: [2.1, 0.7] }, // neural
+  { pal: ['#ff9d5c', '#c6ff3d'], hc: 1, tilt: 0.08, spin: 0.08, opacity: 0.7, scale: 0.9, pos: [2.9, 0.2] }, // tree
+  { pal: ['#7a8cff', '#ffb36b'], hc: 0.9, tilt: 0.16, spin: 0, face: { yaw: 0, sway: 0.18 }, opacity: 0.95, scale: 1, pos: [0.6, -0.25] }, // mountains
+  { pal: ['#c6ff3d', '#5b8cff'], hc: 0, tilt: 0.42, spin: 0, face: { yaw: 0, sway: 0.45 }, opacity: 0.5, scale: 0.9, pos: [2.9, -0.4] }, // globe (behind contact copy)
 ]
 
 const attrs = Array.from({ length: SHAPES }, (_, i) => `attribute vec4 aS${i};`).join('\n')
 const blend = Array.from(
   { length: SHAPES },
-  (_, i) => `  if (uW[${i}] > 0.001) { float g = 0.0; p += uW[${i}] * shape${i}(aS${i}, g); glow += uW[${i}] * g; }`,
+  (_, i) =>
+    `  { float wf = uWFrom[${i}]; float wt = step(abs(uTo - ${i}.0), 0.5);
+    if (wf + wt > 0.001) { float g = 0.0; vec3 q = shape${i}(aS${i}, g); pFrom += wf * q; pTo += wt * q; gFrom += wf * g; gTo += wt * g; } }`,
 ).join('\n')
 
 const vertex = /* glsl */ `
   uniform float uTime;
   uniform float uAspect;
-  uniform float uW[${SHAPES}];
-  uniform float uTrans;
+  uniform float uWFrom[${SHAPES}];
+  uniform float uTo;
+  uniform float uE;
+  uniform float uTransAmt;
   uniform float uHC;
   uniform vec3 uColA;
   uniform vec3 uColB;
@@ -78,7 +84,7 @@ const vertex = /* glsl */ `
 
   // 0 galaxy: differential rotation (inner stars orbit faster)
   vec3 shape0(vec4 s, inout float g) {
-    g += 0.25 * smoothstep(0.8, 0.0, s.w);
+    g += 0.5 * smoothstep(0.7, 0.0, s.w);
     return rotY(s.xyz, uTime * 0.28 / (0.45 + s.w * 0.5));
   }
   // 1 DNA: spins on its own axis, tilted; a light wave runs up the base pairs
@@ -182,9 +188,15 @@ const vertex = /* glsl */ `
   }
 
   void main() {
-    vec3 p = vec3(0.0);
-    float glow = 0.0;
+    vec3 pFrom = vec3(0.0), pTo = vec3(0.0);
+    float gFrom = 0.0, gTo = 0.0;
 ${blend}
+    // Staggered morph: each particle leaves a little later than the last, so shapes
+    // dissolve and re-form as a flowing wave rather than all at once.
+    float el = smoothstep(0.0, 1.0, clamp(uE * 1.7 - aRnd.x * 0.7, 0.0, 1.0));
+    vec3 p = mix(pFrom, pTo, el);
+    float glow = mix(gFrom, gTo, el);
+    float trans = sin(el * 3.14159) * uTransAmt;
 
     // Transition turbulence: particles scatter mid-morph and re-form.
     float t = uTime * 0.6 + aRnd.x * 6.2831;
@@ -193,8 +205,8 @@ ${blend}
       sin(p.z * 1.3 + t * 1.1) + cos(p.x * 1.1 - t * 0.6),
       sin(p.x * 1.5 + t * 0.9) + cos(p.y * 1.2 + t * 0.8)
     );
-    float idle = 0.02 + uTurb * 0.25 + uAudio * 0.2;
-    p += swirl * (idle + uTrans * 0.6 * (0.4 + aRnd.y));
+    float idle = 0.012 + uTurb * 0.12 + uAudio * 0.03;
+    p += swirl * (idle + trans * 0.55 * (0.4 + aRnd.y));
 
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
 
@@ -208,13 +220,14 @@ ${blend}
     mv.z += force * 0.6;
 
     gl_Position = projectionMatrix * mv;
-    float size = uSize * (0.35 + aRnd.z) * (1.0 + uAudio * 1.4 + force * 1.5 + glow * 0.7);
+    float size = uSize * (0.35 + aRnd.z) * (1.0 + uAudio * 0.25 + force * 1.2 + glow * 0.55);
     gl_PointSize = size * uPixelRatio / depth;
 
     float rndMix = clamp(aRnd.y * 0.7 + (p.y + 2.0) * 0.12, 0.0, 1.0);
     float hMix = clamp((p.y + 2.4) / 5.0 + (aRnd.y - 0.5) * 0.25, 0.0, 1.0);
     vColor = mix(uColA, uColB, mix(rndMix, hMix, uHC)) * (1.0 + glow * 0.9) + force * 0.6 + glow * 0.12;
-    vAlpha = (0.35 + aRnd.z * 0.65) * smoothstep(22.0, 3.0, depth) * (1.0 + glow * 0.5);
+    float twinkle = 0.88 + 0.12 * sin(uTime * (0.8 + aRnd.y * 1.6) + aRnd.x * 40.0);
+    vAlpha = (0.35 + aRnd.z * 0.65) * smoothstep(22.0, 4.0, depth) * smoothstep(2.4, 4.6, depth) * (1.0 + glow * 0.5) * twinkle;
   }
 `
 
@@ -226,9 +239,10 @@ const fragment = /* glsl */ `
     vec2 c = gl_PointCoord - 0.5;
     float r = length(c);
     if (r > 0.5) discard;
-    float glow = smoothstep(0.5, 0.0, r);
-    float core = smoothstep(0.18, 0.0, r);
-    gl_FragColor = vec4(vColor * (glow * 0.8 + core * 0.9) * uOpacity, (glow * 0.6 + core) * vAlpha * uOpacity);
+    float glow = smoothstep(0.5, 0.05, r);
+    float core = smoothstep(0.2, 0.0, r);
+    float a = (glow * 0.5 + core) * vAlpha * uOpacity;
+    gl_FragColor = vec4(vColor * (glow * 0.6 + core) * uOpacity, a);
   }
 `
 
@@ -258,6 +272,7 @@ export class ParticleField {
   private fitScale = 1
   private shapeScale = CONFIG[0].scale
   private time = 0
+  private activity = 1
 
   constructor(canvas: HTMLCanvasElement) {
     const mobile = window.innerWidth < 768
@@ -297,12 +312,14 @@ export class ParticleField {
       blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: { value: 0 },
-        uW: { value: Array.from(this.weights) },
-        uTrans: { value: 0 },
+        uWFrom: { value: Array.from(this.weights) },
+        uTo: { value: 0 },
+        uE: { value: 1 },
+        uTransAmt: { value: 0 },
         uHC: { value: CONFIG[0].hc },
         uColA: { value: this.palA[0].clone() },
         uColB: { value: this.palB[0].clone() },
-        uSize: { value: mobile ? 44 : 42 },
+        uSize: { value: mobile ? 40 : 38 },
         uPixelRatio: { value: this.renderer.getPixelRatio() },
         uAudio: { value: 0 },
         uOpacity: { value: 1 },
@@ -373,23 +390,28 @@ export class ParticleField {
   setShape(i: number) {
     i = Math.max(0, Math.min(SHAPES - 1, Math.round(i)))
     if (i === this.current) return
+    const u = this.material.uniforms
+    // snapshot where we are now (approximate if we were still mid-morph)
+    const e0 = u.uE.value as number
+    const prevTo = u.uTo.value as number
+    const from = u.uWFrom.value as number[]
+    for (let k = 0; k < SHAPES; k++) from[k] = from[k] * (1 - e0) + (k === prevTo ? e0 : 0)
+    u.uTo.value = i
+    u.uE.value = 0
+    u.uTransAmt.value = 1 - from[i]
     this.current = i
     this.morphTween?.kill()
-    const from = Float32Array.from(this.weights)
-    const u = this.material.uniforms
-    const state = { e: 0 }
-    this.morphTween = gsap.to(state, {
-      e: 1,
-      duration: 1.9,
-      ease: 'power2.inOut',
+    const start = Float32Array.from(from)
+    this.morphTween = gsap.to(u.uE, {
+      value: 1,
+      duration: 2.2,
+      ease: 'power1.inOut',
       onUpdate: () => {
-        const e = state.e
-        for (let k = 0; k < SHAPES; k++) this.weights[k] = from[k] * (1 - e) + (k === i ? e : 0)
-        u.uTrans.value = Math.sin(e * Math.PI) * (1 - from[i])
+        const e = u.uE.value as number
+        for (let k = 0; k < SHAPES; k++) this.weights[k] = start[k] * (1 - e) + (k === i ? e : 0)
         this.applyWeights()
       },
     })
-    gsap.to(u.uOpacity, { value: CONFIG[i].opacity, duration: 1.2, overwrite: true })
   }
 
   private applyWeights() {
@@ -401,7 +423,6 @@ export class ParticleField {
     let hc = 0
     for (let k = 0; k < SHAPES; k++) {
       const w = this.weights[k]
-      ;(u.uW.value as number[])[k] = w
       if (w <= 0) continue
       a.r += this.palA[k].r * w
       a.g += this.palA[k].g * w
@@ -431,12 +452,18 @@ export class ParticleField {
     const dt = Math.min(this.clock.getDelta(), 0.05)
     this.time += dt
     const u = this.material.uniforms
-    u.uTime.value += dt
+
+    // Reading mode: while the visitor isn't scrolling, the scene calms down
+    // (slower motion, dimmer) so the text gets the attention. Scrolling wakes it up.
+    const vel = Math.min(Math.abs(scrollState.velocity) / 30, 1)
+    const morphing = (u.uE.value as number) < 1
+    const awake = Math.min(1, Math.max(vel * 2.5, this.chargeLevel, morphing ? 1 : 0))
+    this.activity += (awake - this.activity) * (awake > this.activity ? 0.08 : 0.012)
+    u.uTime.value += dt * (0.45 + 0.55 * this.activity)
 
     this.mouse.lerp(this.mouseTarget, 0.08)
     u.uMouseStrength.value *= 0.985
 
-    const vel = Math.min(Math.abs(scrollState.velocity) / 30, 1)
     u.uTurb.value += (Math.max(vel * 0.9, this.chargeLevel * 1.3) - u.uTurb.value) * (this.chargeLevel > 0 ? 0.12 : 0.05)
     const level = audio.level()
     u.uAudio.value += (level * 0.9 - u.uAudio.value) * 0.15
@@ -454,6 +481,13 @@ export class ParticleField {
     g.rotation.z += (-this.mouse.x * 0.06 - g.rotation.z) * 0.04
     this.shapeScale += (cfg.scale - this.shapeScale) * 0.04
     g.scale.setScalar(this.fitScale * this.shapeScale)
+    // Keep the shape beside the text: full offset on wide screens, near-centre on phones.
+    const narrow = window.innerWidth < 768
+    const k = narrow ? 0.15 : THREE.MathUtils.clamp((window.innerWidth / window.innerHeight - 0.9) * 1.3, 0.3, 1)
+    g.position.x += (cfg.pos[0] * k - g.position.x) * 0.03
+    g.position.y += (cfg.pos[1] * (narrow ? 0.4 : 1) - g.position.y) * 0.03
+    const targetOpacity = cfg.opacity * (narrow ? 0.55 : 1) * (0.8 + 0.2 * this.activity)
+    u.uOpacity.value += (targetOpacity - u.uOpacity.value) * 0.04
 
     this.camera.position.x += (this.mouse.x * 0.35 - this.camera.position.x) * 0.04
     this.camera.position.y += (this.mouse.y * 0.25 - this.camera.position.y) * 0.04

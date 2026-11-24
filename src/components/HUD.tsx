@@ -64,7 +64,7 @@ export default function HUD() {
   }
 
   return (
-    <div className={`hud ${entered ? 'is-on' : ''} ${menu ? 'menu-open' : ''}`} ref={root}>
+    <div className={`hud ${entered ? 'is-on' : ''} ${menu ? 'menu-open' : ''} ${scrolled ? 'is-scrolled' : ''}`} ref={root}>
       <header className="hud__top">
         <button className="hud__item hud__logo" onClick={() => go(0)} onMouseEnter={fx.hover} data-cursor="Top">
           <span className="logo-mark" aria-hidden="true" />

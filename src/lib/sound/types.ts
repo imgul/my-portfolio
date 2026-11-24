@@ -10,6 +10,10 @@ export interface Theme {
   fx: FxSettings
   /** Tempo, used to lock ambience (clock ticks, data chatter) to the groove. */
   bpm: number
+  /** Scale for the ambient textures (wind, birds, clock…). 0 = none. Default 0.6. */
+  ambience?: number
+  /** Play a signature motif on section changes. Default true. */
+  stingers?: boolean
   /** Re-arrange for a section: crossfade layers, queue a key change, etc. */
   scene(rig: Rig, scene: Scene, t: number): void
   start(rig: Rig, t: number): void
