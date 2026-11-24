@@ -9,8 +9,8 @@
  */
 import { applyFx, Conductor, createRig, getTheme, mtof, noiseBuffer, osc, perc, SCENES, THEMES, type Rig, type Theme } from './sound'
 
-// v2: everyone starts on the calm Deep Focus track (older picks are not carried over)
-const STORAGE_KEY = 'gul:sound-theme-v2'
+// v3: everyone starts on the per-section Soundtrack (older picks are not carried over)
+const STORAGE_KEY = 'gul:sound-theme-v3'
 
 function initialThemeId() {
   try {
@@ -74,6 +74,11 @@ class AudioEngine {
 
   get themeName() {
     return getTheme(this.themeId).name.replace(/^[A-Z] · /, '')
+  }
+
+  /** Title of what's playing in the current section (track name, or the section mood). */
+  get trackTitle() {
+    return getTheme(this.themeId).tracks?.[this.section] ?? this.sceneInfo.mood
   }
 
   get sceneInfo() {

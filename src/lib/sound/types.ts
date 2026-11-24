@@ -33,5 +33,7 @@ export interface ThemeInfo {
   id: string
   name: string
   tagline: string
+  /** Optional per-section track titles (shown in the "now playing" chip). */
+  tracks?: string[]
   create: () => Theme
 }
