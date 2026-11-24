@@ -151,7 +151,7 @@ export const decode = (s = '') =>
 
 const clean = (s, max) => {
   if (!s) return undefined
-  const t = decode(String(s)).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const t = decode(String(s)).replace(/<[^>]+>/g, ' ').replace(/[\u2b50\u2b51\u2729-\u2730]\ufe0f?/g, '★').replace(/\s+/g, ' ').trim()
   if (!t) return undefined
   return t.length > max ? t.slice(0, max - 1).replace(/\s+\S*$/, '') + '…' : t
 }
@@ -306,28 +306,94 @@ async function enrichGithub(u) {
   return null
 }
 
-const CSL_TYPES = { 'article-journal': 'Journal article', 'paper-conference': 'Conference paper', 'posted-content': 'Preprint', article: 'Article', book: 'Book', chapter: 'Book chapter', report: 'Report', dataset: 'Dataset', 'blog-post': 'Blog post', thesis: 'Thesis' }
+const CSL_TYPES = {
+  'article-journal': 'Journal article', 'journal-article': 'Journal article',
+  'paper-conference': 'Conference paper', 'proceedings-article': 'Conference paper',
+  'posted-content': 'Preprint', article: 'Article', book: 'Book', chapter: 'Book chapter', 'book-chapter': 'Book chapter',
+  report: 'Report', dataset: 'Dataset', 'blog-post': 'Blog post', thesis: 'Thesis', dissertation: 'Thesis', monograph: 'Book',
+}
 
-/** DOIs: ask doi.org for CSL-JSON (works for Crossref and DataCite, no scraping). */
+/** "Lewis et al." / "Robertson & Zaragoza" from a list of family names. */
+const authorLine = (names) => (names.length > 2 ? `${names[0]} et al.` : names.join(' & ')) || undefined
+const first = (v) => (Array.isArray(v) ? v[0] : v)
+
+/** Well-known venues, found in arXiv comments ("Accepted at NeurIPS 2020"). */
+const VENUE_RE = /\b(NeurIPS|NIPS|ICLR|ICML|ACL|EMNLP|NAACL|EACL|TACL|COLING|AAAI|IJCAI|CVPR|ICCV|ECCV|SIGIR|KDD|WSDM|CIKM|WWW|CHI|UIST|COLM|TMLR|JMLR)\b(?:[\s'’]*(\d{4}|'?\d{2}))?/
+
+/** DOIs: doi.org content negotiation (Crossref, DataCite, mEDRA…), then the Crossref REST API. */
 async function enrichDoi(u) {
   const doi = decodeURIComponent(u.pathname.slice(1))
   if (!/^10\.\d{4,9}\//.test(doi)) return null
-  const r = await safeGet(`https://doi.org/${doi}`, { accept: 'application/vnd.citationstyles.csl+json', max: 400_000, timeout: 7000 })
-  if (r.status !== 200) throw new Error(`doi.org ${r.status}`)
-  const j = JSON.parse(r.body.toString('utf8'))
-  const authors = (j.author || []).map((a) => a.family || a.literal).filter(Boolean)
-  const who = authors.length > 2 ? `${authors[0]} et al.` : authors.join(' & ')
-  const year = j.issued?.['date-parts']?.[0]?.[0] || j.published?.['date-parts']?.[0]?.[0]
-  const venue = clean(Array.isArray(j['container-title']) ? j['container-title'][0] : j['container-title'], 80) || clean(j.publisher, 60)
-  const chips = [CSL_TYPES[j.type], year && String(year), `DOI ${doi}`].filter(Boolean)
-  const abstract = clean(j.abstract, 320)
+  const arxiv = doi.match(/^10\.48550\/arxiv\.(.+)$/i)
+  if (arxiv) {
+    const r = await enrichArxiv(arxiv[1]).catch(() => null)
+    if (r) return { ...r, chips: [...r.chips.filter((c) => !c.startsWith('arXiv ')).slice(0, 3), `DOI ${doi}`] }
+  }
+  let j
+  try {
+    const r = await safeGet(`https://doi.org/${doi}`, { accept: 'application/vnd.citationstyles.csl+json', max: 600_000, timeout: 7000 })
+    if (r.status !== 200) throw new Error(`doi.org ${r.status}`)
+    j = JSON.parse(r.body.toString('utf8'))
+  } catch {
+    const r = await safeGet(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, { accept: 'application/json', max: 900_000, timeout: 8000, headers: { 'User-Agent': `${UA} mailto:iigulzaib@gmail.com` } })
+    if (r.status !== 200) throw new Error(`crossref ${r.status}`)
+    j = JSON.parse(r.body.toString('utf8')).message
+  }
+  const authors = (j.author || []).map((a) => a.family || a.literal || a.name).filter(Boolean)
+  const parts = j.issued?.['date-parts']?.[0] || j.published?.['date-parts']?.[0] || j['published-print']?.['date-parts']?.[0] || []
+  const year = parts[0]
+  const event = typeof j.event === 'object' ? j.event?.acronym : undefined
+  const container = clean(first(j['container-title']), 80)
+  const venue = clean(event, 30) || clean(first(j['container-title-short']) || first(j['short-container-title']), 40) || container || clean(j.publisher, 60)
+  const abstract = clean(String(j.abstract || '').replace(/<jats:title>[^<]*<\/jats:title>/gi, ' '), 320)?.replace(/^Abstract\s+/i, '')
+  // the publisher's own favicon (ACM, MIT Press…) reads better than the generic DOI mark
+  const landing = j.resource?.primary?.URL || (j.link || []).map((l) => l.URL).find(Boolean)
+  let pub
+  try {
+    pub = landing ? new URL(landing).origin : undefined
+  } catch {
+    pub = undefined
+  }
+  const who = authorLine(authors)
   return {
     kind: 'paper',
-    title: clean(Array.isArray(j.title) ? j.title[0] : j.title, 200),
-    description: abstract || [who, venue, year].filter(Boolean).join(' · ') || undefined,
-    byline: who || undefined,
-    site: venue || 'DOI',
-    chips,
+    title: clean(first(j.title), 200),
+    description: abstract || [authors.slice(0, 6).join(', '), container, year].filter(Boolean).join(' · ') || undefined,
+    site: (container && container.length <= 64 ? container : clean(j.publisher, 60)) || container || 'DOI',
+    chips: [who, venue !== container && venue ? venue : CSL_TYPES[j.type], year && String(year), `DOI ${doi}`].filter(Boolean).slice(0, 4),
+    icons: [pub && `${pub}/favicon.ico`, 'https://www.doi.org/images/favicons/favicon-32x32.png', 'https://doi.org/favicon.ico'].filter(Boolean),
+    iconHost: pub ? new URL(pub).hostname : 'doi.org',
+  }
+}
+
+const ARXIV_ID = /^(\d{4}\.\d{4,5}|[a-z-]+(?:\.[a-z]{2})?\/\d{7})(v\d+)?$/i
+const xmlText = (s, tag) => s.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`, 'i'))?.[1]
+
+/** arXiv papers via the official API (arxiv.org itself turns many bots away). */
+async function enrichArxiv(id) {
+  id = String(id).replace(/\.pdf$/i, '')
+  if (!ARXIV_ID.test(id)) return null
+  const bare = id.replace(/v\d+$/, '')
+  const r = await safeGet(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(id)}&max_results=1`, { accept: 'application/atom+xml', max: 300_000, timeout: 9000 })
+  if (r.status !== 200) throw new Error(`arXiv API ${r.status}`)
+  const xml = r.body.toString('utf8')
+  const entry = xmlText(xml, 'entry')
+  const title = entry && clean(xmlText(entry, 'title'), 200)
+  if (!title || /^error$/i.test(title)) return null
+  const authors = [...entry.matchAll(/<author\b[^>]*>[\s\S]*?<name>([\s\S]*?)<\/name>/gi)].map((m) => clean(m[1], 80)).filter(Boolean)
+  const year = (xmlText(entry, 'published') || '').slice(0, 4)
+  const note = clean(xmlText(entry, 'arxiv:journal_ref'), 120) || clean(xmlText(entry, 'arxiv:comment'), 400) || ''
+  const v = note.match(VENUE_RE)
+  const venue = v ? `${v[1] === 'NIPS' ? 'NeurIPS' : v[1]}${v[2] ? ` ${v[2].length === 2 || v[2].startsWith("'") ? `'${v[2].replace("'", '')}` : v[2]}` : ''}` : undefined
+  const category = entry.match(/<arxiv:primary_category\b[^>]*term="([^"]+)"/i)?.[1]
+  return {
+    kind: 'paper',
+    title,
+    description: clean(xmlText(entry, 'summary'), 320),
+    site: 'arXiv',
+    chips: [authorLine(authors.map((a) => a.split(' ').pop())), venue || category, venue?.includes(year) ? undefined : year, `arXiv ${bare}`].filter(Boolean),
+    icons: ['https://arxiv.org/static/browse/0.3.4/images/icons/favicon-32x32.png', 'https://arxiv.org/favicon.ico'],
+    iconHost: 'arxiv.org',
   }
 }
 
@@ -352,6 +418,10 @@ export async function fetchPreview(url) {
   try {
     if (host === 'github.com') extra = await enrichGithub(u)
     else if (host === 'doi.org' || host === 'dx.doi.org') extra = await enrichDoi(u)
+    else if (host === 'arxiv.org' || host === 'export.arxiv.org') {
+      const m = u.pathname.match(/^\/(?:abs|pdf|html)\/(.+?)\/?$/)
+      if (m) extra = await enrichArxiv(m[1])
+    }
   } catch {
     extra = null
   }
@@ -369,7 +439,9 @@ export async function fetchPreview(url) {
       error = e.code || e.message
     }
   }
-  const icon = await fetchIcon(page?.icons?.length ? rankIcons(page.icons, finalUrl) : [new URL('/favicon.ico', finalUrl).href], hostOf(new URL(finalUrl)))
+  const icon = extra?.icons?.length
+    ? await fetchIcon(extra.icons, extra.iconHost)
+    : await fetchIcon(page?.icons?.length ? rankIcons(page.icons, finalUrl) : [new URL('/favicon.ico', finalUrl).href], hostOf(new URL(finalUrl)))
   const title = extra?.title || page?.title
   if (!title && !extra) return { ok: false, error: error || 'no metadata', icon, finalUrl }
   const chips = [...(extra?.chips || page?.chips || [])]

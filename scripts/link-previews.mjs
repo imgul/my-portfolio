@@ -9,12 +9,17 @@
  * first hover, so cards appear instantly.
  *
  * Results are cached in node_modules/.cache between builds (Vercel keeps it),
- * and a stale good result beats a fresh failure. The build never fails
- * because a site is down: missing links fall back to /api/link-preview at
- * runtime, and then to a card built from the URL alone.
+ * and a stale good result beats a fresh failure. On top of that, a committed
+ * snapshot (data/link-previews.snapshot.json: metadata + the real favicons)
+ * is refreshed by GitHub Actions (.github/workflows/link-previews.yml), so
+ * cards stay complete even when a site blocks the build machine or the build
+ * runs offline. The build never fails because a site is down: missing links
+ * fall back to /api/link-preview at runtime, and then to a card built from
+ * the URL alone.
  *
  *   node scripts/link-previews.mjs            # after a build
- *   LINK_PREVIEWS=off npm run build           # skip fetching (offline builds)
+ *   node scripts/link-previews.mjs --snapshot # refetch everything into the snapshot
+ *   LINK_PREVIEWS=off npm run build           # skip fetching (uses cache + snapshot)
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -25,6 +30,7 @@ import { LICENSES, ORCID } from '../src/blog/scholar.mjs'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const CACHE_FILE = path.join(ROOT, 'node_modules/.cache/gul-link-previews/cache.json')
+const SNAPSHOT_FILE = path.join(ROOT, 'data/link-previews.snapshot.json')
 const FRESH_MS = 3 * 24 * 3600e3
 const STALE_MS = 45 * 24 * 3600e3
 const CATEGORY_COLOR = { Founder: '#d4834f', Engineering: '#5a84d6', 'AI Research': '#9a6fd1', Writing: '#3a9c7c' }
@@ -39,6 +45,15 @@ const OVERRIDES = {
     m: ['Founder & CEO', 'Islamabad'],
     av: '/img/gul/gulzaib.jpg',
     c: '#0a66c2',
+  },
+  'wa.me/923026999008': {
+    k: 'profile',
+    t: 'Chat with Muhammad Gulzaib',
+    s: 'WhatsApp',
+    d: 'Message Gul directly on WhatsApp for projects, collaborations or a quick hello.',
+    m: ['WhatsApp', 'Usually replies within a day'],
+    av: '/img/gul/gulzaib.jpg',
+    c: '#25d366',
   },
   [`orcid.org/${ORCID}`]: {
     k: 'profile',
@@ -196,6 +211,17 @@ function readCache() {
   }
 }
 
+/** The committed snapshot: { v, links: { [url]: { at, entry, icon } } } (same shape as the cache). */
+export function readSnapshot() {
+  try {
+    return JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf8')).links || {}
+  } catch {
+    return {}
+  }
+}
+
+const packIcon = (icon) => (icon ? { type: icon.type, ext: icon.ext, hash: icon.hash, b64: icon.body.toString('base64') } : undefined)
+
 async function pool(items, n, fn) {
   const out = []
   let i = 0
@@ -219,6 +245,7 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
   const { entries, posts } = internalEntries({ dist })
   const urls = collectExternal({ dist })
   const cache = readCache()
+  const snapshot = readSnapshot()
   const nextCache = {}
   const iconDir = dist && path.join(dist, 'link-icons')
   if (iconDir) fs.mkdirSync(iconDir, { recursive: true })
@@ -234,7 +261,9 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
   await pool(urls, 8, async (url) => {
     const key = previewKey(url)
     if (!key || entries[key]) return
-    const cached = cache[url]
+    const snap = snapshot[url]?.entry?.ok ? snapshot[url] : null
+    // the local cache, unless the committed snapshot is newer
+    const cached = cache[url]?.entry?.ok && snap && snap.at > cache[url].at ? snap : cache[url] || snap
     const age = cached ? Date.now() - cached.at : Infinity
     let entry
     let icon
@@ -244,17 +273,19 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
       reused++
     } else if (fetchExternal) {
       const r = await fetchPreview(url)
-      if (r.ok || !(cached?.entry?.ok && age < STALE_MS)) {
+      const fallback = cached?.entry?.ok && age < STALE_MS ? cached : snap
+      if (r.ok || !fallback) {
         entry = toEntry(r)
-        icon = r.icon ? { type: r.icon.type, ext: r.icon.ext, hash: r.icon.hash, b64: r.icon.body.toString('base64') } : cached?.icon
+        icon = packIcon(r.icon) || cached?.icon || snap?.icon
       } else {
-        entry = cached.entry
-        icon = cached.icon
+        entry = fallback.entry
+        icon = fallback.icon || packIcon(r.icon)
         reused++
       }
     } else if (cached) {
       entry = cached.entry
       icon = cached.icon
+      if (entry?.ok) reused++
     } else entry = { ok: 0 }
     nextCache[url] = { at: entry === cached?.entry ? cached.at : Date.now(), entry, icon }
     const ov = OVERRIDES[key]
@@ -275,8 +306,47 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
 
 /* ----------------------------------------------------------------- CLI */
 
+/**
+ * Refetch every external link into the committed snapshot. A link that fails
+ * now keeps its last good snapshot (sites go down; the card shouldn't).
+ * Entries only get a new date when their content changes, so diffs stay small.
+ */
+export async function writeSnapshot({ dist = null, log = () => {} } = {}) {
+  const urls = collectExternal({ dist })
+  const old = readSnapshot()
+  const links = {}
+  const failed = []
+  await pool(urls, 6, async (url) => {
+    const r = await fetchPreview(url)
+    const prev = old[url]
+    if (!r.ok) {
+      failed.push(`${url} (${r.error || 'no metadata'})`)
+      if (prev?.entry?.ok) links[url] = r.icon && !prev.icon ? { ...prev, icon: packIcon(r.icon) } : prev
+      return
+    }
+    const next = { entry: toEntry(r), icon: packIcon(r.icon) || prev?.icon }
+    const same = prev && JSON.stringify(prev.entry) === JSON.stringify(next.entry) && prev.icon?.hash === next.icon?.hash
+    links[url] = { at: same ? prev.at : Date.now(), ...next }
+    log(`  ✓ ${url}${next.icon ? '' : '  (no icon)'}`)
+  })
+  // one link per line: readable diffs in pull requests
+  const body = Object.keys(links)
+    .sort()
+    .map((u) => `    ${JSON.stringify(u)}: ${JSON.stringify(links[u])}`)
+    .join(',\n')
+  fs.mkdirSync(path.dirname(SNAPSHOT_FILE), { recursive: true })
+  fs.writeFileSync(SNAPSHOT_FILE, `{\n  "v": 1,\n  "links": {\n${body}\n  }\n}\n`)
+  for (const f of failed.sort()) log(`  ✗ ${f}`)
+  log(`link previews snapshot: ${Object.keys(links).length}/${urls.length} links, ${failed.length} failed now → ${path.relative(ROOT, SNAPSHOT_FILE)}`)
+  return { links, failed }
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const dist = path.join(ROOT, 'dist')
-  const manifest = await buildManifest({ dist, fetchExternal: process.env.LINK_PREVIEWS !== 'off', log: console.log })
-  fs.writeFileSync(path.join(dist, 'link-previews.json'), JSON.stringify(manifest))
+  if (process.argv.includes('--snapshot')) {
+    await writeSnapshot({ dist: fs.existsSync(path.join(dist, 'blog')) ? dist : null, log: console.log })
+  } else {
+    const manifest = await buildManifest({ dist, fetchExternal: process.env.LINK_PREVIEWS !== 'off', log: console.log })
+    fs.writeFileSync(path.join(dist, 'link-previews.json'), JSON.stringify(manifest))
+  }
 }

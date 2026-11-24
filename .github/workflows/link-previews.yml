@@ -1,0 +1,59 @@
+# Refreshes data/link-previews.snapshot.json: titles, descriptions, images,
+# paper metadata (arXiv / Crossref) and the real favicons of every external
+# link on the site. The build uses the snapshot whenever a live fetch fails,
+# so preview cards stay complete. Runs weekly, on demand, and whenever the
+# fetcher changes; commits only when something actually changed.
+name: Link previews
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 4 * * 1' # Mondays 04:23 UTC
+  push:
+    paths:
+      - 'scripts/link-meta.mjs'
+      - 'scripts/link-previews.mjs'
+      - '.github/workflows/link-previews.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: link-previews-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # render the site so links that only exist in the built pages (DOIs, …) are found
+      - name: Build pages
+        run: npx vite build && npx vite build --ssr src/blog/ssr.tsx && node scripts/prerender.mjs
+
+      - name: Fetch link previews
+        run: node scripts/link-previews.mjs --snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit the snapshot
+        run: |
+          git add data/link-previews.snapshot.json
+          if git diff --cached --quiet; then
+            echo "Snapshot unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh link preview snapshot"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
