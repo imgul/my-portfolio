@@ -829,7 +829,9 @@ export async function fetchPreview(url) {
     if (!Number.isNaN(+d)) chips.push(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))
   }
   // (an "author" that is just the site itself says nothing)
-  const people = (page?.authors || []).filter((a) => a.toLowerCase() !== String(page?.site || '').toLowerCase() && !String(page?.title || '').toLowerCase().endsWith(a.toLowerCase()))
+  const brand = finalHost.split('.').slice(-2, -1)[0] || ''
+  const squash = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const people = (page?.authors || []).filter((a) => squash(a) !== squash(page?.site) && squash(a) !== squash(brand) && !String(page?.title || '').toLowerCase().endsWith(a.toLowerCase()))
   if (!extra && people.length) chips.unshift(people.length > 2 ? `${people[0]} et al.` : people.join(' & '))
   const kind = extra?.kind || page?.kind || (page?.authors?.length && page?.doi ? 'paper' : ld?.kind && ld.kind !== 'event' ? ld.kind : page?.type?.startsWith('video') ? 'video' : page?.type === 'article' ? 'article' : page?.type === 'profile' ? 'profile' : 'web')
   return {
