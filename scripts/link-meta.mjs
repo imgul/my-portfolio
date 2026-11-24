@@ -307,14 +307,17 @@ function readJsonLd(html) {
 /** First real heading and paragraph of the page body (for pages without meta tags). */
 function bodyText(html) {
   const body = html.slice(Math.max(0, html.search(/<body\b/i)))
-  const main = body.match(/<(main|article)\b[\s\S]*?<\/\1>/i)?.[0] || body
-  const strip = (x) => x.replace(/<(script|style|noscript|svg|template|nav|header|footer|form)\b[\s\S]*?<\/\1>/gi, ' ')
-  const text = strip(main)
-  const h1 = text.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
+  // only the page's own content: banners, promos and chrome live outside <main>/<article>
+  const main = body.match(/<(main|article)\b[\s\S]*?<\/\1>/i)?.[0]
+  const strip = (x) =>
+    x
+      .replace(/<(script|style|noscript|svg|template|nav|header|footer|form|aside|dialog)\b[\s\S]*?<\/\1>/gi, ' ')
+      .replace(/<(div|section)\b[^>]*(?:class|id|role)=["'][^"']*(banner|notice|cookie|consent|donat|promo|alert|announce|newsletter|modal)[^"']*["'][\s\S]*?<\/\1>/gi, ' ')
+  const h1 = strip(body).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
   let para
-  for (const m of text.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)) {
+  for (const m of main ? strip(main).matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi) : []) {
     const t = clean(m[1], 400)
-    if (t && t.length >= 60 && !/cookie|javascript|browser is not supported|sign in|log in/i.test(t)) {
+    if (t && t.length >= 60 && !/cookie|javascript|browser is not supported|sign in|log in|donat|your support|subscribe/i.test(t)) {
       para = t
       break
     }
@@ -825,7 +828,9 @@ export async function fetchPreview(url) {
     const d = new Date(page.published)
     if (!Number.isNaN(+d)) chips.push(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))
   }
-  if (!extra && page?.authors?.length) chips.unshift(page.authors.length > 2 ? `${page.authors[0]} et al.` : page.authors.join(' & '))
+  // (an "author" that is just the site itself says nothing)
+  const people = (page?.authors || []).filter((a) => a.toLowerCase() !== String(page?.site || '').toLowerCase() && !String(page?.title || '').toLowerCase().endsWith(a.toLowerCase()))
+  if (!extra && people.length) chips.unshift(people.length > 2 ? `${people[0]} et al.` : people.join(' & '))
   const kind = extra?.kind || page?.kind || (page?.authors?.length && page?.doi ? 'paper' : ld?.kind && ld.kind !== 'event' ? ld.kind : page?.type?.startsWith('video') ? 'video' : page?.type === 'article' ? 'article' : page?.type === 'profile' ? 'profile' : 'web')
   return {
     ok: true,
