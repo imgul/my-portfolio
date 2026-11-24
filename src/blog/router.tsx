@@ -1,12 +1,19 @@
 /**
  * A tiny client router for the blog (/blog, /blog/:slug, ?tag= / ?q= / ?category=).
  * Links to the portfolio (/) are normal page loads: it is a separate app.
+ * SSR-safe: during pre-rendering the location comes from setServerLocation().
  */
 import { useEffect, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent } from 'react'
 
+const isBrowser = typeof window !== 'undefined'
+let serverHref = '/blog'
+export const setServerLocation = (href: string) => {
+  serverHref = href
+}
+
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
-window.addEventListener('popstate', emit)
+if (isBrowser) window.addEventListener('popstate', emit)
 
 const subscribe = (fn: () => void) => {
   listeners.add(fn)
@@ -14,7 +21,9 @@ const subscribe = (fn: () => void) => {
     listeners.delete(fn)
   }
 }
-const snapshot = () => window.location.pathname + window.location.search + window.location.hash
+const snapshot = () => (isBrowser ? window.location.pathname + window.location.search + window.location.hash : serverHref)
+// during hydration the client must see the same URL the page was pre-rendered for
+const serverSnapshot = () => (isBrowser ? window.location.pathname : serverHref)
 
 export function navigate(to: string, opts: { replace?: boolean; keepScroll?: boolean } = {}) {
   if (to === snapshot()) return
@@ -25,8 +34,8 @@ export function navigate(to: string, opts: { replace?: boolean; keepScroll?: boo
 }
 
 export function useLocation() {
-  const href = useSyncExternalStore(subscribe, snapshot)
-  const url = new URL(href, window.location.origin)
+  const href = useSyncExternalStore(subscribe, snapshot, serverSnapshot)
+  const url = new URL(href, 'https://x.invalid')
   return { path: url.pathname.replace(/\/+$/, '') || '/', search: url.searchParams, hash: url.hash }
 }
 
@@ -34,19 +43,19 @@ export function useLocation() {
 export function useHashScroll(dep: unknown) {
   useEffect(() => {
     const id = decodeURIComponent(window.location.hash.slice(1))
-    if (!id) return
+    if (!id || id.startsWith(':~:')) return
     const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }), 60)
     return () => clearTimeout(t)
   }, [dep])
 }
 
-const isInternal = (href: string) => href.startsWith('/blog')
+const isInternal = (href: string) => href === '/blog' || href.startsWith('/blog/') || href.startsWith('/blog?') || href.startsWith('/blog#')
 
 export function Link({ href = '', onClick, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   const handle = (e: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(e)
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-    if (!isInternal(href) || rest.target === '_blank') return
+    if (!isInternal(href) || rest.target === '_blank' || href.endsWith('.md')) return
     e.preventDefault()
     navigate(href, { keepScroll: href.startsWith('/blog?') })
   }

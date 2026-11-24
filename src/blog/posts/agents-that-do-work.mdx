@@ -1,6 +1,6 @@
 ---
 title: "Agents that do real work: a pragmatic multi-agent design"
-description: "Most agent demos produce text. Agents that run business operations need tools, state, guardrails and a human in the loop. The design I use at SynergyFlow Labs, and where I'd keep it simple."
+description: "Agents that run business operations need tools, state, guardrails and a human in the loop. The design I use at SynergyFlow Labs, and where I keep it simple."
 date: 2026-11-16
 category: AI Research
 tags: [agents, llm, architecture, automation]
@@ -24,6 +24,13 @@ references:
     title: "Building effective agents"
     year: 2024
     url: https://www.anthropic.com/engineering/building-effective-agents
+faq:
+  - q: "When should I use an AI agent instead of a workflow?"
+    a: "Use a fixed workflow whenever you can draw the steps in advance, and call the LLM inside specific steps. Reach for an agent loop only when the number and order of steps depend on what the model finds along the way."
+  - q: "How do you keep AI agents safe in production?"
+    a: "Give them narrow, typed tools, explicit stored state and budgets on steps, time and cost, and require a human approval step for anything irreversible."
+  - q: "When does a multi-agent design make sense?"
+    a: "Split work into multiple agents when parts need different tools or different context, not because the architecture diagram looks better."
 ---
 
 <TLDR>

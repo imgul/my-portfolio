@@ -1,12 +1,19 @@
 ---
 title: "Multi-tenant Laravel SaaS: the architecture I actually use"
-description: "Single database or one per tenant? A practical, production-tested setup for multi-tenant SaaS in Laravel, with global scopes, tenant resolution, queues and the mistakes to avoid."
+description: "Single database or one per tenant? A production-tested multi-tenant setup for Laravel SaaS: global scopes, tenant resolution, queues and the mistakes to avoid."
 date: 2026-08-10
 updated: 2026-11-02
 category: Engineering
 tags: [laravel, saas, architecture, php, multi-tenancy]
 art: stack
 level: Advanced
+faq:
+  - q: "Should a Laravel SaaS use one database or a database per tenant?"
+    a: "For most early SaaS products, one database with a tenant_id column enforced by a global scope is simpler to run, cheaper to host and easy to migrate later."
+  - q: "When should you move to a database per tenant?"
+    a: "When a contract requires physical separation or data residency, when one tenant is large enough to slow everyone else down, or when per-tenant backups and restores are a product feature."
+  - q: "Where do multi-tenant data leaks usually happen?"
+    a: "In queued jobs and raw queries, where the global scope or tenant context may be missing. Fail closed, so no tenant means no data, and test those paths explicitly."
 ---
 
 <TLDR>

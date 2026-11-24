@@ -1,11 +1,16 @@
 ---
 title: "Shipping AI features in Laravel without blocking your app"
-description: "LLM calls are slow, flaky and expensive. How I wrap them in Laravel with queues, streaming responses, retries, caching and cost tracking so users never stare at a spinner."
+description: "LLM calls are slow, flaky and expensive. How I wrap them in Laravel with queues, streaming, retries, caching and cost tracking so users never stare at a spinner."
 date: 2026-06-22
 category: Engineering
 tags: [laravel, ai, queues, openai, performance]
 art: network
 level: Intermediate
+faq:
+  - q: "Should AI features in Laravel be streamed or queued?"
+    a: "Stream the response when a user is waiting on screen, and queue the work when nobody is watching, such as batch generation or background summaries."
+  - q: "How do you make LLM calls reliable in Laravel?"
+    a: "Treat the model like a slow, unreliable third-party API: set timeouts, retry with backoff, cache repeated prompts, run AI jobs on separate queue workers and log the cost of every call."
 ---
 
 <TLDR>

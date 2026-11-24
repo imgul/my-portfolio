@@ -1,6 +1,6 @@
 ---
 title: "Grounded exam generation with RAG: retrieval, fusion and evaluation"
-description: "How I design retrieval-augmented generation for ZeroExam AI so generated questions stay inside the syllabus: hybrid retrieval, reciprocal rank fusion, grounding checks and an evaluation plan you can actually run."
+description: "How ZeroExam AI keeps generated exam questions inside the syllabus: hybrid retrieval, reciprocal rank fusion, grounding checks and an evaluation plan you can run."
 date: 2026-07-18
 category: AI Research
 tags: [rag, llm, evaluation, retrieval, edtech]
@@ -34,6 +34,13 @@ references:
     title: "RAGAS: Automated Evaluation of Retrieval Augmented Generation"
     year: 2023
     url: https://arxiv.org/abs/2309.15217
+faq:
+  - q: "How do you stop RAG from generating off-syllabus questions?"
+    a: "Filter retrieval by metadata such as grade, subject and chapter first, retrieve with hybrid lexical and dense search, and make every generated question cite its source passages so a grounding check can verify it."
+  - q: "Why use reciprocal rank fusion for hybrid retrieval?"
+    a: "Lexical and dense retrievers produce scores on different scales. Fusing their ranks instead of their scores combines them without fragile score normalisation."
+  - q: "How should a RAG system be evaluated?"
+    a: "Evaluate retrieval and generation separately, so you know whether a bad question came from missing context or from the model."
 ---
 
 <Abstract>

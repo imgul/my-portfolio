@@ -27,6 +27,8 @@ export interface PostMeta {
   art: Art
   level?: 'Beginner' | 'Intermediate' | 'Advanced'
   references: Reference[]
+  faq: { q: string; a: string }[]
+  headings: { depth: 2 | 3; text: string; id: string }[]
   words: number
   minutes: number
 }
@@ -34,18 +36,19 @@ export interface PostMeta {
 export const posts: PostMeta[] = ALL
 export { SITE_URL }
 
-export const CATEGORIES: { id: Category; blurb: string }[] = [
-  { id: 'Founder', blurb: 'Building companies: validation, distribution, pricing, hiring.' },
-  { id: 'Engineering', blurb: 'Laravel, React, SaaS architecture and shipping production systems.' },
-  { id: 'AI Research', blurb: 'RAG, agents, evaluation and what actually works with LLMs.' },
-  { id: 'Writing', blurb: 'The craft of explaining technical work clearly.' },
+export const CATEGORIES: { id: Category; audience: string; blurb: string; glyph: string }[] = [
+  { id: 'Founder', audience: 'Founders', blurb: 'Building companies: validation, distribution, pricing and hiring.', glyph: '◆' },
+  { id: 'Engineering', audience: 'Engineers', blurb: 'Laravel, React, SaaS architecture and shipping production systems.', glyph: '{ }' },
+  { id: 'AI Research', audience: 'AI researchers', blurb: 'RAG, agents, evaluation and what actually works with LLMs.', glyph: '✲' },
+  { id: 'Writing', audience: 'Technical writers', blurb: 'The craft of explaining technical work clearly.', glyph: '¶' },
 ]
 
+/** Muted, eye-friendly category hues (text uses a contrast-safe mix of these, see blog.css). */
 export const CATEGORY_COLOR: Record<Category, string> = {
-  Founder: '#ff9d5c',
-  Engineering: '#5b8cff',
-  'AI Research': '#c46bff',
-  Writing: '#3dd6a0',
+  Founder: '#d4834f',
+  Engineering: '#5a84d6',
+  'AI Research': '#9a6fd1',
+  Writing: '#3a9c7c',
 }
 
 export const getPost = (slug: string) => posts.find((p) => p.slug === slug)
@@ -85,6 +88,12 @@ export function neighbours(p: PostMeta) {
   const i = posts.findIndex((q) => q.slug === p.slug)
   return { newer: i > 0 ? posts[i - 1] : undefined, older: i >= 0 && i < posts.length - 1 ? posts[i + 1] : undefined }
 }
+
+/** "founders", "engineers", "AI researchers": lower-case the audience but keep acronyms. */
+export const audienceLower = (a: string) => a.replace(/^([A-Z])([a-z])/, (_, x: string, y: string) => x.toLowerCase() + y)
+
+/** Total reading time across all posts, in minutes. */
+export const totalMinutes = () => posts.reduce((n, p) => n + p.minutes, 0)
 
 export const formatDate = (d: string, style: 'long' | 'short' = 'long') =>
   new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: style, year: 'numeric', timeZone: 'UTC' }).replace('Sept', 'Sep')

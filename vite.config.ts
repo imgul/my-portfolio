@@ -7,7 +7,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import rehypeKatex from 'rehype-katex'
 import rehypeSlug from 'rehype-slug'
 import rehypePrettyCode from 'rehype-pretty-code'
-import { loadPosts, writeBlogFiles, SITE_URL, POSTS_DIR } from './scripts/blog.mjs'
+import { loadPosts, SITE_URL, POSTS_DIR } from './scripts/blog.mjs'
 
 const VIRTUAL = 'virtual:blog'
 const RESOLVED = '\0' + VIRTUAL
@@ -16,16 +16,14 @@ const RESOLVED = '\0' + VIRTUAL
  * Blog plugin:
  *  - `virtual:blog` exports the post index (frontmatter + reading time), no post bodies
  *  - hot-reloads the index when a post is added/edited in dev
- *  - after a build writes rss.xml, feed.json, sitemap.xml, robots.txt and a
- *    pre-rendered HTML shell per post with the right title / description / OG tags
+ *  (static HTML, feeds, sitemap, llms.txt, Markdown copies and OG images are
+ *   generated after the build by scripts/prerender.mjs)
  */
 function blog(): Plugin {
-  let outDir = 'dist'
   let isBuild = false
   return {
     name: 'gul-blog',
     configResolved(c) {
-      outDir = c.build.outDir.startsWith('/') ? c.build.outDir : `${c.root}/${c.build.outDir}`
       isBuild = c.command === 'build'
     },
     resolveId(id) {
@@ -48,13 +46,10 @@ function blog(): Plugin {
       server.watcher.on('unlink', reload)
       server.watcher.on('change', (f) => f.endsWith('.mdx') && reload(f))
     },
-    writeBundle() {
-      writeBlogFiles(outDir)
-    },
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     {
       enforce: 'pre',
@@ -79,15 +74,29 @@ export default defineConfig({
   ],
   server: { host: '0.0.0.0', port: 5173, allowedHosts: true },
   preview: { host: '0.0.0.0', port: 4173, allowedHosts: true },
-  build: {
-    chunkSizeWarningLimit: 800,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/three')) return 'three'
-          if (id.includes('node_modules/gsap')) return 'gsap'
+  build: isSsrBuild
+    ? {
+        outDir: '.ssr',
+        emptyOutDir: true,
+        copyPublicDir: false,
+        rollupOptions: {
+          // the server bundle imports every post eagerly on purpose
+          onwarn(w: { code?: string }, warn: (w: never) => void) {
+            if (w.code !== 'INEFFECTIVE_DYNAMIC_IMPORT') warn(w as never)
+          },
+        },
+      }
+    : {
+        chunkSizeWarningLimit: 800,
+        // scripts/prerender.mjs reads the manifest to preload the blog's CSS/JS
+        manifest: true,
+        rollupOptions: {
+          output: {
+            manualChunks(id: string) {
+              if (id.includes('node_modules/three')) return 'three'
+              if (id.includes('node_modules/gsap')) return 'gsap'
+            },
+          },
         },
       },
-    },
-  },
-})
+}))

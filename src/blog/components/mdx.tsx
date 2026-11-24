@@ -26,22 +26,26 @@ import { CATEGORY_COLOR, getPost, postUrl, type PostMeta } from '../data'
 import { CoverArt } from './CoverArt'
 
 export const PostContext = createContext<PostMeta | null>(null)
+/** true when rendering for feeds / Markdown copies: no interactive chrome, every tab visible. */
+export const StaticContext = createContext(false)
 
 /* --------------------------------------------------------------- headings */
 
 function Heading({ as: Tag, id, children, ...rest }: { as: 'h2' | 'h3' | 'h4' } & ComponentProps<'h2'>) {
-  if (!id || rest.className === 'sr-only') return <Tag id={id} {...rest}>{children}</Tag>
-  const link = () => {
+  const isStatic = useContext(StaticContext)
+  if (!id || rest.className === 'sr-only' || isStatic) return <Tag id={id} {...rest}>{children}</Tag>
+  const link = (e: React.MouseEvent) => {
+    e.preventDefault()
     const url = `${location.origin}${location.pathname}#${id}`
     history.replaceState(null, '', `#${id}`)
     copy(url, 'Link to section copied')
   }
   return (
-    <Tag id={id} {...rest} className="b-h">
+    <Tag id={id} {...rest} className="b-h" tabIndex={-1}>
       {children}
-      <button className="b-h__anchor" onClick={link} aria-label="Copy link to this section" title="Copy link to this section">
+      <a className="b-h__anchor" href={`#${id}`} onClick={link} aria-label="Copy link to this section" title="Copy link to this section">
         #
-      </button>
+      </a>
     </Tag>
   )
 }
@@ -63,7 +67,10 @@ function A({ href = '', children, ...rest }: ComponentProps<'a'>) {
 function Pre(props: ComponentProps<'pre'> & { 'data-language'?: string }) {
   const ref = useRef<HTMLPreElement>(null)
   const [done, setDone] = useState(false)
+  const [wrap, setWrap] = useState(false)
+  const isStatic = useContext(StaticContext)
   const lang = props['data-language']
+  if (isStatic) return <pre {...props} />
   const onCopy = () => {
     const text = [...(ref.current?.querySelectorAll('[data-line]') ?? [])].map((l) => l.textContent).join('\n') || ref.current?.textContent || ''
     copy(text, 'Code copied')
@@ -71,14 +78,17 @@ function Pre(props: ComponentProps<'pre'> & { 'data-language'?: string }) {
     setTimeout(() => setDone(false), 1600)
   }
   return (
-    <div className="b-code">
+    <div className={`b-code ${wrap ? 'is-wrapped' : ''}`}>
       <div className="b-code__bar">
         <span className="b-code__lang">{lang && lang !== 'plaintext' ? lang : 'text'}</span>
-        <button className="b-code__copy" onClick={onCopy} aria-label="Copy code">
+        <button type="button" className="b-code__btn" onClick={() => setWrap(!wrap)} aria-pressed={wrap} title="Wrap long lines">
+          <Icon name="wrap" size={15} /> <span className="b-code__btnlabel">Wrap</span>
+        </button>
+        <button type="button" className="b-code__btn" onClick={onCopy} aria-label={done ? 'Code copied' : 'Copy code'}>
           <Icon name={done ? 'check' : 'copy'} size={15} /> {done ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre ref={ref} {...props} tabIndex={0} />
+      <pre ref={ref} {...props} tabIndex={0} aria-label={`${lang && lang !== 'plaintext' ? lang : 'Text'} code sample`} />
     </div>
   )
 }
@@ -285,9 +295,27 @@ export function Tabs({ children }: { children: ReactNode }) {
   const tabs = Children.toArray(children).filter(isValidElement) as ReactElement<{ label: string; children: ReactNode }>[]
   const [i, setI] = useState(0)
   const id = useId()
+  const isStatic = useContext(StaticContext)
+  if (isStatic)
+    return (
+      <>
+        {tabs.map((t) => (
+          <div key={t.props.label}>
+            <p>
+              <strong>{t.props.label}</strong>
+            </p>
+            {t.props.children}
+          </div>
+        ))}
+      </>
+    )
+  const focusTab = (k: number) => {
+    setI(k)
+    requestAnimationFrame(() => document.getElementById(`${id}-t${k}`)?.focus())
+  }
   return (
     <div className="b-tabs">
-      <div className="b-tabs__list" role="tablist">
+      <div className="b-tabs__list" role="tablist" aria-label="Choose a variant">
         {tabs.map((t, k) => (
           <button
             key={t.props.label}
@@ -298,8 +326,10 @@ export function Tabs({ children }: { children: ReactNode }) {
             tabIndex={i === k ? 0 : -1}
             onClick={() => setI(k)}
             onKeyDown={(e) => {
-              if (e.key === 'ArrowRight') setI((k + 1) % tabs.length)
-              if (e.key === 'ArrowLeft') setI((k - 1 + tabs.length) % tabs.length)
+              if (e.key === 'ArrowRight') focusTab((k + 1) % tabs.length)
+              if (e.key === 'ArrowLeft') focusTab((k - 1 + tabs.length) % tabs.length)
+              if (e.key === 'Home') focusTab(0)
+              if (e.key === 'End') focusTab(tabs.length - 1)
             }}
           >
             {t.props.label}
@@ -307,7 +337,7 @@ export function Tabs({ children }: { children: ReactNode }) {
         ))}
       </div>
       {tabs.map((t, k) => (
-        <div key={t.props.label} role="tabpanel" id={`${id}-p${k}`} aria-labelledby={`${id}-t${k}`} hidden={i !== k} className="b-tabs__panel">
+        <div key={t.props.label} role="tabpanel" id={`${id}-p${k}`} aria-labelledby={`${id}-t${k}`} hidden={i !== k} className="b-tabs__panel" tabIndex={0}>
           {t.props.children}
         </div>
       ))}
@@ -480,6 +510,24 @@ export function PostLink({ slug }: { slug: string }) {
         <span className="b-postlink__desc">{p.description}</span>
       </span>
     </Link>
+  )
+}
+
+/** Frequently asked questions (from frontmatter `faq`), also emitted as FAQPage structured data. */
+export function Faq({ items }: { items: { q: string; a: string }[] }) {
+  if (!items.length) return null
+  return (
+    <section className="b-faq" aria-labelledby="faq">
+      <h2 id="faq">Questions readers ask</h2>
+      {items.map((f) => (
+        <details key={f.q} className="b-details">
+          <summary>{f.q}</summary>
+          <div>
+            <p>{f.a}</p>
+          </div>
+        </details>
+      ))}
+    </section>
   )
 }
 

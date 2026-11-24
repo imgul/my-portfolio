@@ -2,8 +2,9 @@
  * Generative dotted cover art, echoing the portfolio's 3D point clouds.
  * Deterministic per post (seeded by slug), pure SVG, no image files.
  */
-import { memo } from 'react'
+import { memo, useId } from 'react'
 import type { Art } from '../data'
+import { useHydrated } from '../hydrated'
 
 type Pt = [number, number, number] // x, y (0..1), size
 
@@ -158,18 +159,19 @@ const GEN: Record<Art, (r: () => number) => Pt[]> = {
   },
 }
 
-function CoverArtImpl({ art, seed, color, className }: { art: Art; seed: string; color: string; className?: string }) {
+/** `bg` / `second` default to CSS variables; pass real colours for static rendering (OG images). */
+export function CoverArtSvg({ art, seed, color, className, bg = 'var(--cover-bg)', second = 'var(--cover-2, #5b8cff)' }: { art: Art; seed: string; color: string; className?: string; bg?: string; second?: string }) {
   const pts = (GEN[art] ?? GEN.galaxy)(rng(seed))
-  const id = `g-${seed.replace(/[^a-z0-9]/gi, '')}`
+  const id = `g${useId().replace(/[^a-z0-9]/gi, '')}`
   return (
     <svg className={`cover-art ${className ?? ''}`} viewBox="0 0 1200 630" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" stopColor={color} />
-          <stop offset="1" stopColor="var(--cover-2, #5b8cff)" />
+          <stop offset="1" stopColor={second} />
         </linearGradient>
       </defs>
-      <rect width="1200" height="630" fill="var(--cover-bg)" />
+      <rect width="1200" height="630" fill={bg} />
       <g fill={`url(#${id})`}>
         {pts.map(([x, y, s], i) => (
           <circle key={i} cx={(x * 1200).toFixed(1)} cy={(y * 630).toFixed(1)} r={(s * 1.9).toFixed(2)} opacity={Math.min(1, 0.35 + s * 0.3).toFixed(2)} />
@@ -177,6 +179,16 @@ function CoverArtImpl({ art, seed, color, className }: { art: Art; seed: string;
       </g>
     </svg>
   )
+}
+
+/**
+ * Pre-rendered HTML gets a light gradient placeholder (hundreds of dots per
+ * cover would bloat the page); the dots draw in right after hydration.
+ */
+function CoverArtImpl(props: { art: Art; seed: string; color: string; className?: string }) {
+  const hydrated = useHydrated()
+  if (!hydrated) return <span className={`cover-art is-placeholder ${props.className ?? ''}`} style={{ ['--c' as string]: props.color }} aria-hidden="true" />
+  return <CoverArtSvg {...props} />
 }
 
 export const CoverArt = memo(CoverArtImpl)
