@@ -37,6 +37,7 @@ const OVERRIDES = {
     s: 'LinkedIn',
     d: 'Founder & CEO of SynergyFlow Labs · Senior Full Stack Engineer building AI-native SaaS with Laravel, React and agentic AI. Islamabad, Pakistan.',
     m: ['Founder & CEO', 'Islamabad'],
+    av: '/img/gul/gulzaib.jpg',
     c: '#0a66c2',
   },
   [`orcid.org/${ORCID}`]: {
@@ -45,6 +46,7 @@ const OVERRIDES = {
     s: 'ORCID',
     d: 'ORCID iD for Muhammad Gulzaib: a persistent identifier that links his publications, DOIs and affiliations.',
     m: [`iD ${ORCID}`],
+    av: '/img/gul/gulzaib.jpg',
     c: '#a6ce39',
   },
 }
@@ -128,11 +130,12 @@ export function internalEntries({ dist } = {}) {
     s: 'Portfolio',
     d: home?.description || 'Founder & CEO of SynergyFlow Labs. Senior Full Stack Engineer building AI-native SaaS.',
     m: ['Founder', 'Full Stack', 'AI systems'],
+    img: '/img/gul/og-home.jpg',
     i: icon,
     c: '#c6ff3d',
   }
   e['/blog'] = { ok: 1, k: 'page', t: BLOG_TITLE, s: 'Blog', d: BLOG_DESCRIPTION, img: '/og/blog.png', m: [`${posts.length} posts`, 'Founder · Engineering · AI · Writing'], i: icon }
-  e['/blog/research'] = { ok: 1, k: 'page', t: 'Research & citation', s: BLOG_TITLE, d: RESEARCH_DESCRIPTION, m: [`ORCID ${ORCID}`, `${open.length} open-access posts`], i: icon, c: '#a6ce39' }
+  e['/blog/research'] = { ok: 1, k: 'page', t: 'Research & citation', s: BLOG_TITLE, d: RESEARCH_DESCRIPTION, m: [`ORCID ${ORCID}`, `${open.length} open-access posts`], i: icon, av: '/img/gul/gulzaib.jpg', c: '#a6ce39' }
   for (const p of posts) {
     const meta = { cat: p.category, c: CATEGORY_COLOR[p.category] }
     e[`/blog/${p.slug}`] = {

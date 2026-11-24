@@ -410,7 +410,9 @@ export function Header() {
       <header className={`b-header ${isHidden ? 'is-hidden' : ''}`} data-preview="hover">
         <div className="b-header__in">
           <a href="/" className="b-logo" aria-label="Muhammad Gulzaib: portfolio home">
-            <span className="b-logo__mark" aria-hidden="true" />
+            <span className="b-logo__mark" aria-hidden="true">
+              <img src="/img/gul/avatar.webp" alt="" width="26" height="26" decoding="async" />
+            </span>
             GUL
           </a>
           <Link href="/blog" className="b-header__title" aria-current={path === '/blog' ? 'page' : undefined}>
@@ -532,7 +534,7 @@ export function AuthorCard() {
   return (
     <section className="b-author" aria-labelledby="author-name">
       <span className="b-author__avatar" aria-hidden="true">
-        MG
+        <img src="/img/gul/avatar.webp" alt="" width="56" height="56" decoding="async" />
       </span>
       <div>
         <p className="b-kicker">Written by</p>

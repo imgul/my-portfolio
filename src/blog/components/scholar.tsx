@@ -257,7 +257,7 @@ export function ResearchPage() {
 
       <section className="b-research__id" aria-labelledby="r-id">
         <span className="b-author__avatar" aria-hidden="true">
-          MG
+          <img src="/img/gul/avatar.webp" alt="" width="56" height="56" decoding="async" />
         </span>
         <div>
           <h2 id="r-id">{AUTHOR.name}</h2>

@@ -260,6 +260,8 @@ function wrap(text, size, max, maxLines) {
 }
 
 const BG = '#17181c'
+// author photo (warm cut-out, from scripts/portrait.mjs)
+const AVATAR = `data:image/png;base64,${fs.readFileSync(path.join(root, 'public/img/gul/avatar-og.png')).toString('base64')}`
 function ogSvg({ kicker, color, title, sub, art }) {
   let size = 68
   let lines = wrap(title, size, 760, 3)
@@ -283,8 +285,10 @@ function ogSvg({ kicker, color, title, sub, art }) {
   ${lines.map((l, i) => `<text x="80" y="${top + i * lh}" font-family="Source Serif 4" font-weight="700" font-size="${size}" fill="#f2eee6">${xml(l)}</text>`).join('\n  ')}
   ${subLines.map((l, i) => `<text x="80" y="${top + lines.length * lh + 16 + i * 36}" font-family="Inter" font-weight="500" font-size="26" fill="#b9b4aa">${xml(l)}</text>`).join('\n  ')}
   <line x1="80" y1="520" x2="1120" y2="520" stroke="#ffffff" stroke-opacity="0.12"/>
-  <circle cx="104" cy="566" r="24" fill="${color}" fill-opacity="0.18" stroke="${color}" stroke-opacity="0.6"/>
-  <text x="104" y="574" text-anchor="middle" font-family="Inter" font-weight="600" font-size="19" fill="#f2eee6">MG</text>
+  <clipPath id="av"><circle cx="104" cy="566" r="25"/></clipPath>
+  <circle cx="104" cy="566" r="25" fill="${color}" fill-opacity="0.22"/>
+  <image href="${AVATAR}" x="79" y="541" width="50" height="50" clip-path="url(#av)"/>
+  <circle cx="104" cy="566" r="26" fill="none" stroke="${color}" stroke-opacity="0.75" stroke-width="2"/>
   <text x="142" y="560" font-family="Inter" font-weight="600" font-size="22" fill="#f2eee6">${xml(AUTHOR.name)}</text>
   <text x="142" y="588" font-family="Inter" font-weight="500" font-size="19" fill="#9d988f">${xml(BLOG_TITLE)} · ${xml(SITE_URL.replace(/^https?:\/\//, ''))}/blog</text>
 </svg>`

@@ -127,6 +127,27 @@ Hover a link (mouse, pen or keyboard focus) to see a card: favicon, title, descr
 - **Client:** `src/lib/linkPreview/` (one delegated listener; mounted in `src/App.tsx` and `src/blog/BlogApp.tsx`). `data-no-preview` turns the card off for a link or a container. `data-preview="hover"` keeps the hover card but lets a tap open the link straight away (used for the blog header, breadcrumbs, prev/next and link cards).
 - **Feedback:** soft synthesized sounds (follow the portfolio's sound toggle; on the blog, Settings → Sounds, off by default) and haptics on phones (blog: Settings → Vibration). Reduced motion turns the motion into fades. Blog readers can turn previews off in Settings.
 
+## Portrait, logo and icons
+
+One photo (`assets/gulzaib.jpg`) feeds every image of me on the site. `scripts/portrait.mjs` cuts out the background and writes each version into `public/img/gul/`, plus the favicons and app icons in `public/`:
+
+| File | Where | Look |
+| --- | --- | --- |
+| `hero-bw.webp` / `hero-color.webp` | Portfolio hero, the pill next to GULZAIB | black and white cut-out on lime; colour on hover |
+| `mark.webp` | Portfolio logo (top left) | face on ink inside the spinning lime ring; colour on hover |
+| `avatar.webp` | Blog header mark, bylines, author card, research page | warm-toned transparent cut-out (the reader's theme shows through) |
+| `avatar-og.png` | Blog post share images (`og/<slug>.png`) | same, embedded by `scripts/prerender.mjs` |
+| `og-home.jpg` | Portfolio share image (`og:image`) | 1200×630, lime disc and name |
+| `gulzaib.jpg` | `Person.image` structured data, link-preview cards | the original photo |
+| `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png`, `/site.webmanifest` | Browser tabs, home screens | face in a lime-to-blue ring on ink |
+
+The outputs are committed, so the normal build doesn't need the image tools. To change the photo, replace `assets/gulzaib.jpg` and run:
+
+```bash
+npm i --prefix /tmp/imgtools sharp @imgly/background-removal-node
+PORTRAIT_TOOLS=/tmp/imgtools node scripts/portrait.mjs
+```
+
 ## Develop
 
 ```bash
