@@ -66,6 +66,43 @@ const OVERRIDES = {
   },
 }
 
+/** Cards for when a site can't be fetched at all (down, or blocking bots). Real metadata wins when it loads. */
+const FALLBACKS = {
+  'anysub.app': {
+    k: 'web',
+    t: 'AnySub: any subscription, one system',
+    s: 'AnySub',
+    d: 'A calm, serious operating system for subscriptions. Track every SaaS tool, free trial and renewal, with budgets, audit trails and team comments.',
+    m: ['SaaS', 'Building in public'],
+    c: '#ff6b3d',
+  },
+  'oxygenlms.com': {
+    k: 'web',
+    t: 'Oxygen LMS: an operating system for education',
+    s: 'Oxygen LMS',
+    d: 'Schools, colleges and academies on one platform: academics, attendance, fees, HR, parents and AI assistants. Simple and mobile-first.',
+    m: ['EdTech', 'Multi-tenant SaaS'],
+    c: '#5b8cff',
+  },
+  'gulzaib.dev': {
+    k: 'profile',
+    t: 'Muhammad Gulzaib',
+    s: 'gulzaib.dev',
+    d: 'Founder & CEO of SynergyFlow Labs. Senior Full Stack Engineer building AI-native SaaS with Laravel, React and agentic AI.',
+    m: ['Founder', 'Full Stack', 'AI systems'],
+    av: '/img/gul/gulzaib.jpg',
+    c: '#c6ff3d',
+  },
+  'vu.edu.pk': {
+    k: 'web',
+    t: 'Virtual University of Pakistan',
+    s: 'vu.edu.pk',
+    d: 'Public university founded in 2002 to bring quality education to the doorstep of every citizen, online and across the country.',
+    m: ['Public university', 'Est. 2002'],
+    c: '#1d3f8f',
+  },
+}
+
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const kb = (file) => {
   try {
@@ -263,7 +300,8 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
     if (!key || entries[key]) return
     const snap = snapshot[url]?.entry?.ok ? snapshot[url] : null
     // the local cache, unless the committed snapshot is newer
-    const cached = cache[url]?.entry?.ok && snap && snap.at > cache[url].at ? snap : cache[url] || snap
+    const local = cache[url]
+    const cached = local?.entry?.ok ? (snap && snap.at > local.at ? snap : local) : snap || local
     const age = cached ? Date.now() - cached.at : Infinity
     let entry
     let icon
@@ -288,12 +326,13 @@ export async function buildManifest({ dist = null, fetchExternal = true, log = (
       if (entry?.ok) reused++
     } else entry = { ok: 0 }
     nextCache[url] = { at: entry === cached?.entry ? cached.at : Date.now(), entry, icon }
-    const ov = OVERRIDES[key]
+    icon ||= snapshot[url]?.icon // failed links still keep their favicon
+    const ov = OVERRIDES[key] || (!entry?.ok && FALLBACKS[key])
     const iconRef = icon ? saveIcon({ ...icon, body: Buffer.from(icon.b64, 'base64') }) : undefined
     entries[key] = ov ? { ...entry, ...ov, ok: 1, ...(iconRef ? { i: iconRef } : {}) } : { ...entry, ...(iconRef ? { i: iconRef } : {}) }
     if (entries[key].ok) ok++
   })
-  for (const [key, ov] of Object.entries(OVERRIDES)) if (!entries[key]) entries[key] = { ok: 1, ...ov }
+  for (const [key, ov] of Object.entries({ ...FALLBACKS, ...OVERRIDES })) if (!entries[key]) entries[key] = { ok: 1, ...ov }
   try {
     fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true })
     fs.writeFileSync(CACHE_FILE, JSON.stringify({ ...cache, ...nextCache }))
@@ -320,8 +359,9 @@ export async function writeSnapshot({ dist = null, log = () => {} } = {}) {
     const r = await fetchPreview(url)
     const prev = old[url]
     if (!r.ok) {
-      failed.push(`${url} (${r.error || 'no metadata'})`)
+      failed.push([url, String(r.error || 'no metadata')])
       if (prev?.entry?.ok) links[url] = r.icon && !prev.icon ? { ...prev, icon: packIcon(r.icon) } : prev
+      else if (r.icon || prev?.icon) links[url] = { at: prev?.icon && (!r.icon || prev.icon.hash === r.icon.hash) ? prev.at : Date.now(), entry: { ok: 0 }, icon: packIcon(r.icon) || prev.icon }
       return
     }
     const next = { entry: toEntry(r), icon: packIcon(r.icon) || prev?.icon }
@@ -335,9 +375,11 @@ export async function writeSnapshot({ dist = null, log = () => {} } = {}) {
     .map((u) => `    ${JSON.stringify(u)}: ${JSON.stringify(links[u])}`)
     .join(',\n')
   fs.mkdirSync(path.dirname(SNAPSHOT_FILE), { recursive: true })
-  fs.writeFileSync(SNAPSHOT_FILE, `{\n  "v": 1,\n  "links": {\n${body}\n  }\n}\n`)
-  for (const f of failed.sort()) log(`  ✗ ${f}`)
-  log(`link previews snapshot: ${Object.keys(links).length}/${urls.length} links, ${failed.length} failed now → ${path.relative(ROOT, SNAPSHOT_FILE)}`)
+  failed.sort((a, b) => a[0].localeCompare(b[0]))
+  const fails = failed.map(([u, e]) => `    ${JSON.stringify(u)}: ${JSON.stringify(e)}`).join(',\n')
+  fs.writeFileSync(SNAPSHOT_FILE, `{\n  "v": 1,\n  "links": {\n${body}\n  },\n  "failing": {\n${fails}\n  }\n}\n`)
+  for (const [u, e] of failed) log(`  ✗ ${u} (${e})`)
+  log(`link previews snapshot: ${Object.values(links).filter((l) => l.entry.ok).length}/${urls.length} links, ${failed.length} failed now → ${path.relative(ROOT, SNAPSHOT_FILE)}`)
   return { links, failed }
 }
 

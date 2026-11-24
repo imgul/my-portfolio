@@ -151,7 +151,7 @@ export const decode = (s = '') =>
 
 const clean = (s, max) => {
   if (!s) return undefined
-  const t = decode(String(s)).replace(/<[^>]+>/g, ' ').replace(/[\u2b50\u2b51\u2729-\u2730]\ufe0f?/g, '★').replace(/\s+/g, ' ').trim()
+  const t = decode(String(s)).replace(/<[^>]+>/g, ' ').replace(/\u00ad|(?<=\p{L})\u00ac(?=\p{L})/gu, '').replace(/[\u2b50\u2b51\u2729-\u2730]\ufe0f?/g, '★').replace(/\s+/g, ' ').trim()
   if (!t) return undefined
   return t.length > max ? t.slice(0, max - 1).replace(/\s+\S*$/, '') + '…' : t
 }
@@ -200,10 +200,12 @@ export function parseHtml(html, baseUrl) {
   const titleTag = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
   const lang = html.match(/<html\b[^>]*\blang=["']?([a-zA-Z-]+)/i)?.[1]
   const pick = (...keys) => keys.map((k) => meta[k]).find((v) => v && v.trim())
-  const image = abs(pick('og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src') || '', base)
+  let image = abs(pick('og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src') || '', base)
+  // an empty og:image resolves to the page itself: not an image
+  if (image && (image === abs('', base) || image === abs('', baseUrl) || /\/$/.test(new URL(image).pathname))) image = undefined
   const authors = (multi.citation_author.length ? multi.citation_author : multi['article:author']).map((a) => clean(a, 80)).filter(Boolean)
   return {
-    title: clean(pick('og:title', 'twitter:title', 'citation_title', 'dc.title') || titleTag, 180),
+    title: clean(pick('og:title', 'twitter:title', 'citation_title', 'dc.title') || titleTag, 180)?.replace(/^(home|homepage|home page|welcome)\s*[-|–—:·]\s*/i, ''),
     description: clean(pick('og:description', 'description', 'twitter:description', 'citation_abstract', 'dc.description'), 320),
     site: clean(pick('og:site_name', 'application-name', 'apple-mobile-web-app-title', 'citation_journal_title', 'citation_publisher'), 60),
     image: image && image.startsWith('https:') ? image : undefined,
