@@ -67,7 +67,9 @@ export default function HUD() {
     <div className={`hud ${entered ? 'is-on' : ''} ${menu ? 'menu-open' : ''} ${scrolled ? 'is-scrolled' : ''}`} ref={root}>
       <header className="hud__top">
         <button className="hud__item hud__logo" onClick={() => go(0)} onMouseEnter={fx.hover} data-cursor="Top">
-          <span className="logo-mark" aria-hidden="true" />
+          <span className="logo-mark" aria-hidden="true">
+            <img src="/img/gul/mark.webp" alt="" width="30" height="30" decoding="async" />
+          </span>
           GUL<sup>©</sup>
         </button>
 

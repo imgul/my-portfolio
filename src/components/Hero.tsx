@@ -40,6 +40,7 @@ export default function Hero() {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ delay: 0.15 })
       tl.from('.hero__name .ch', { yPercent: 120, rotate: 8, duration: 1.4, stagger: 0.035, ease: 'expo.out' })
+        .from('.hero__portrait', { scale: 0, rotate: -14, duration: 1.3, ease: 'expo.out' }, 0.35)
         .from('.hero__meta > *', { y: 20, opacity: 0, stagger: 0.08, duration: 1, ease: 'expo.out' }, '-=1.1')
         .from('.hero__bottom > *', { y: 30, opacity: 0, stagger: 0.1, duration: 1.1, ease: 'expo.out' }, '-=0.9')
     }, root)
@@ -90,6 +91,10 @@ export default function Hero() {
           <Letters word="MUHAMMAD" offset={0} />
         </span>
         <span className="hero__line hero__line--2" aria-hidden="true">
+          <span className="hero__portrait" data-cursor="Hi!" onPointerEnter={() => fx.hover()}>
+            <img className="hero__portrait-bw" src="/img/gul/hero-bw.webp" alt="" width="300" height="135" decoding="async" fetchPriority="high" />
+            <img className="hero__portrait-color" src="/img/gul/hero-color.webp" alt="" width="300" height="135" decoding="async" />
+          </span>
           <Letters word="GULZAIB" offset={3} />
           <span className="hero__star" aria-hidden="true">
             ✲

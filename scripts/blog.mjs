@@ -431,6 +431,7 @@ const PERSON = {
   familyName: AUTHOR.familyName,
   alternateName: 'Gul',
   url: SITE_URL,
+  image: `${SITE_URL}/img/gul/gulzaib.jpg`,
   email: `mailto:${AUTHOR.email}`,
   jobTitle: AUTHOR.jobTitle,
   worksFor: { '@type': 'Organization', name: AUTHOR.affiliation },

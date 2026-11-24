@@ -51,6 +51,7 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
   const H = `h${headingLevel}` as 'h2' | 'h3'
   return (
     <article
+      data-no-preview=""
       className={`b-card ${big ? 'is-big' : ''} ${view === 'list' && !big ? 'is-row' : ''}`}
       style={{ ['--cat' as string]: CATEGORY_COLOR[p.category] }}
       onPointerEnter={() => prefetchBody(p.slug)}

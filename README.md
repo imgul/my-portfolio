@@ -118,6 +118,46 @@ Set `VITE_SITE_URL` to change the canonical domain (default `https://gulzaib.ver
 
 **Components available in every post (no imports):** `TLDR`, `Abstract`, `Takeaways`, `Callout` (note/tip/warning/danger/insight/success), `Update`, `PullQuote`, `Stats`/`Stat`, `Timeline`/`Event`, `Decision` (ADR), `ProsCons`, `Steps`/`Step`, `Tabs`/`Tab`, `FileTree`, `Kbd`, `Cite` with automatic references, `BarChart`, `Flow`, `Sidenote`, `Term`, `Details`, `Figure`, `YouTube`, `LinkCard`, `PostLink`. Markdown extras: GFM tables, task lists and footnotes, KaTeX math (`$…$`, `$$…$$`), and Shiki code blocks with `title="file.ts"`, `showLineNumbers`, `{2-4}` line highlights, and wrap and copy buttons. The post [`how-i-write-technical-posts.mdx`](src/blog/posts/how-i-write-technical-posts.mdx) shows every component in use.
 
+## Link previews (every link, portfolio and blog)
+
+Hover a link (mouse, pen or keyboard focus) to see a card: favicon, title, description, image and details. On touch, the first tap shows the card (a bottom sheet on phones, swipe down to close) and a second tap or **Open** follows the link.
+
+- **Data:** `scripts/link-previews.mjs` runs after the build and writes `dist/link-previews.json` plus the favicons (`dist/link-icons/`). It covers this site's pages, posts, PDFs and feeds, and every external link in `src/` and the built HTML. Results are cached in `node_modules/.cache/gul-link-previews` (set `LINK_PREVIEWS=off` to skip fetching). `GITHUB_TOKEN` is optional; it raises GitHub's API limit.
+- **Snapshot:** `data/link-previews.snapshot.json` holds the real titles, descriptions, images, paper metadata (arXiv API, Crossref) and favicons of every external link. The **Link previews** GitHub Actions workflow (`.github/workflows/link-previews.yml`) refetches it every Monday, when the fetcher changes, or on demand (Actions → Link previews → Run workflow), and commits it only if something changed. The build uses it whenever a live fetch fails or runs offline. Its `failing` list shows the links that can't be fetched right now and why. Sites that can't be reached at all get the hand-written fallbacks in `FALLBACKS` (`scripts/link-previews.mjs`).
+- **Any link, live:** links the build missed (new posts, links added at runtime) are fetched at `/api/link-preview?url=…`, a Vercel function that shares its code with the build (`scripts/link-meta.mjs`; `vite dev` and `vite preview` serve the same endpoint). What it understands:
+  - **APIs first:** GitHub repos, profiles, issues and PRs; DOIs (Crossref); arXiv; Wikipedia; npm; PyPI; and oEmbed for YouTube, Vimeo, X, Spotify, SoundCloud, TikTok, Reddit, CodePen, Loom, Figma and any page that advertises oEmbed.
+  - **Pages:** Open Graph, Twitter cards, `citation_*` tags, JSON-LD (articles, products with price and rating, videos with duration, events), the page's own charset, `<meta http-equiv="refresh">` redirects, and the first heading and paragraph when a page has no meta tags at all.
+  - **Files:** images (with dimensions), video, audio, PDFs, archives, feeds and text files get a file card with type and size, using `Content-Disposition` for the name and reading only the first 64 KB.
+  - **Blocked or flaky sites:** one retry with a browser-like user agent (403, 429, 5xx, resets).
+  - **Safety and cost:** same-origin only, SSRF-safe (every hop's IP is checked), byte and time limits, 30 requests then one every 2 s per IP, tracking parameters stripped so caches are shared.
+- **Caching, outermost first:** the build manifest (`/link-previews.json`); the browser (`localStorage`: fresh for 1 day, served stale while it refreshes for 14 days, failures for 20 minutes, 160 links max, shared between tabs); Vercel's edge (`s-maxage` 7 days + `stale-while-revalidate` 30 days, failures 15 minutes); the function's own LRU with in-flight dedupe; and ETags (`304 Not Modified`).
+- **Loading:** a hover or a finger on a link starts the fetch before the card opens (hover intent), and its images are warmed. Links that stay on screen are prefetched while the browser is idle (`IntersectionObserver` + `requestIdleCallback`, at most 16 a page, never on Save-Data or 2G). Requests go through a queue (3 at a time, hovers jump ahead of prefetches, one retry with backoff honouring `Retry-After`, 12 s timeout). Cards show a shimmer and a progress bar until data arrives; images load lazily, decode off the main thread and fade in.
+- **Fallbacks:** if nothing can be fetched the card is built from the URL itself (brand name, colour, favicon, readable title such as "vitejs/vite · Issue #1") with a quiet note saying why (offline, or no details). A stale copy beats nothing.
+- **In-page links:** `#section` links show the section's title, first paragraph and reading time; citation links (`[1]`) show the cited work's own card, labelled "Reference 1". Tables of contents, skip links and heading anchors are left alone.
+- **Client:** `src/lib/linkPreview/` (one delegated listener; mounted in `src/App.tsx` and `src/blog/BlogApp.tsx`). `data-no-preview` turns the card off for a link or a container. `data-preview="hover"` keeps the hover card but lets a tap open the link straight away (used for the blog header, breadcrumbs, prev/next and link cards).
+- **Feedback:** soft synthesized sounds (follow the portfolio's sound toggle; on the blog, Settings → Sounds, off by default) and haptics on phones (blog: Settings → Vibration). Reduced motion turns the motion into fades. Blog readers can turn previews off in Settings.
+
+## Portrait, logo and icons
+
+One photo (`assets/gulzaib.jpg`) feeds every image of me on the site. `scripts/portrait.mjs` cuts out the background and writes each version into `public/img/gul/`, plus the favicons and app icons in `public/`:
+
+| File | Where | Look |
+| --- | --- | --- |
+| `hero-bw.webp` / `hero-color.webp` | Portfolio hero, the pill next to GULZAIB | black and white cut-out on lime; colour on hover |
+| `mark.webp` | Portfolio logo (top left) | face on ink inside the spinning lime ring; colour on hover |
+| `avatar.webp` | Blog header mark, bylines, author card, research page | warm-toned transparent cut-out (the reader's theme shows through) |
+| `avatar-og.png` | Blog post share images (`og/<slug>.png`) | same, embedded by `scripts/prerender.mjs` |
+| `og-home.jpg` | Portfolio share image (`og:image`) | 1200×630, lime disc and name |
+| `gulzaib.jpg` | `Person.image` structured data, link-preview cards | the original photo |
+| `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png`, `/site.webmanifest` | Browser tabs, home screens | face in a lime-to-blue ring on ink |
+
+The outputs are committed, so the normal build doesn't need the image tools. To change the photo, replace `assets/gulzaib.jpg` and run:
+
+```bash
+npm i --prefix /tmp/imgtools sharp @imgly/background-removal-node
+PORTRAIT_TOOLS=/tmp/imgtools node scripts/portrait.mjs
+```
+
 ## Develop
 
 ```bash

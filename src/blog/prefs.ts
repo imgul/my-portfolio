@@ -1,6 +1,6 @@
 /**
  * Reader preferences: theme, contrast, text size, font, line spacing, width
- * and motion. Saved per visitor and applied to <html> as data-* attributes
+ * motion, link previews, sounds and vibration. Saved per visitor and applied to <html> as data-* attributes
  * (an inline script in index.html applies them before first paint).
  */
 import { useSyncExternalStore } from 'react'
@@ -14,10 +14,16 @@ export interface Prefs {
   leading: 'tight' | 'normal' | 'loose'
   width: 'narrow' | 'normal' | 'wide'
   motion: 'auto' | 'reduce'
+  /** hover / tap cards for links */
+  previews: 'on' | 'off'
+  /** quiet UI sounds (link previews) */
+  sounds: 'off' | 'on'
+  /** vibration on phones */
+  haptics: 'on' | 'off'
 }
 
 export const KEY = 'gul:blog-prefs'
-export const DEFAULTS: Prefs = { theme: 'auto', contrast: 'normal', size: 1, font: 'serif', leading: 'normal', width: 'normal', motion: 'auto' }
+export const DEFAULTS: Prefs = { theme: 'auto', contrast: 'normal', size: 1, font: 'serif', leading: 'normal', width: 'normal', motion: 'auto', previews: 'on', sounds: 'off', haptics: 'on' }
 
 /** Page background per theme (used for the browser UI colour). */
 export const THEME_BG: Record<Exclude<Theme, 'auto'>, string> = {
@@ -88,5 +94,8 @@ export function usePrefs() {
     () => DEFAULTS,
   )
 }
+
+/** Current prefs, outside React. */
+export const getPrefs = () => prefs
 
 export const reduceMotion = () => prefs.motion === 'reduce' || (isBrowser && window.matchMedia('(prefers-reduced-motion: reduce)').matches)

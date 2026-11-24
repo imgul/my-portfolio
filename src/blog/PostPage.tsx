@@ -143,7 +143,7 @@ function SeriesBox({ p }: { p: PostMeta }) {
   if (list.length < 2) return null
   const i = list.findIndex((q) => q.slug === p.slug)
   return (
-    <nav className="b-series" aria-labelledby="series-name">
+    <nav className="b-series" aria-labelledby="series-name" data-preview="hover">
       <p className="b-kicker">
         Series · part {p.seriesPart ?? i + 1} of {list.length}
       </p>
@@ -220,7 +220,7 @@ function PrevNext({ p }: { p: PostMeta }) {
   const { newer, older } = neighbours(p)
   if (!newer && !older) return null
   return (
-    <nav className="b-prevnext" aria-label="Older and newer posts">
+    <nav className="b-prevnext" aria-label="Older and newer posts" data-preview="hover">
       {older ? (
         <Link href={postUrl(older)} className="is-prev" rel="prev">
           <span className="b-kicker">← Older</span>
@@ -376,7 +376,7 @@ export default function PostPage({ slug }: { slug: string }) {
       <main id="main" className="b-post" style={{ ['--cat' as string]: color }} tabIndex={-1}>
         <article ref={article} className="b-article" aria-labelledby="post-title">
           <header className="b-post__head">
-            <nav aria-label="Breadcrumb">
+            <nav aria-label="Breadcrumb" data-preview="hover">
               <ol className="b-crumbs">
                 <li>
                   <Link href="/blog">Notebook</Link>
@@ -393,7 +393,7 @@ export default function PostPage({ slug }: { slug: string }) {
             <p className="b-post__dek">{p.description}</p>
             <div className="b-byline">
               <span className="b-author__avatar is-sm" aria-hidden="true">
-                MG
+                <img src="/img/gul/avatar.webp" alt="" width="42" height="42" decoding="async" />
               </span>
               <div>
                 <p className="b-byline__name">
