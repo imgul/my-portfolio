@@ -37,6 +37,15 @@ const CATEGORY_COLOR = { Founder: '#d4834f', Engineering: '#5a84d6', 'AI Researc
 
 /** Hand-written cards for pages that block bots (LinkedIn answers 999 to everyone). */
 const OVERRIDES = {
+  'x.com/gulzaib_ai': {
+    k: 'profile',
+    t: 'Muhammad Gulzaib (@gulzaib_ai)',
+    s: 'X',
+    d: 'Founder & CEO of SynergyFlow Labs · Senior Full Stack Engineer building AI-native SaaS with Laravel, React and agentic AI.',
+    m: ['@gulzaib_ai', 'Islamabad'],
+    av: '/img/gul/gulzaib.jpg',
+    c: '#0f1419',
+  },
   'linkedin.com/in/gulzaib-ai': {
     k: 'profile',
     t: 'Muhammad Gulzaib',

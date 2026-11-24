@@ -13,6 +13,7 @@ import { setProgress, toggleSaved, useReader } from './store'
 import { reduceMotion } from './prefs'
 import { useHydrated } from './hydrated'
 import { notFoundHead, postHead, setHead } from './head'
+import { AUTHOR } from './scholar.mjs'
 import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
 
 /** 0..1 of the article read, measured so the last screen counts as "done". */
@@ -176,7 +177,7 @@ function Share({ p }: { p: PostMeta }) {
         <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
           <Icon name="linkedin" size={16} /> LinkedIn<span className="sr-only"> (opens in a new tab)</span>
         </a>
-        <a href={`https://x.com/intent/post?text=${text}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
+        <a href={`https://x.com/intent/post?text=${text}&url=${encodeURIComponent(url)}${AUTHOR.x ? `&via=${AUTHOR.x}` : ''}`} target="_blank" rel="noopener noreferrer">
           <Icon name="x" size={14} /> X<span className="sr-only"> (opens in a new tab)</span>
         </a>
         <a href={`https://wa.me/?text=${encodeURIComponent(`${p.title} ${url}`)}`} target="_blank" rel="noopener noreferrer">

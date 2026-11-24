@@ -39,6 +39,8 @@ export const AUTHOR: {
   location: string
   orcid: string
   orcidUrl: string
+  /** X handle without the @ */
+  x: string
   knowsAbout: string[]
 }
 export const PROFILES: Profile[]

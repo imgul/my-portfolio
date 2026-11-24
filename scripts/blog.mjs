@@ -6,7 +6,7 @@
  * A post is one MDX file in src/blog/posts/<slug>.mdx with YAML frontmatter:
  *
  *   title:        required, aim for 30–65 characters (search results truncate ~60)
- *   description:  required, 70–160 characters; used for cards, meta description, feeds
+ *   description:  required, 70–160 characters (Google cuts off longer); used for cards, meta description, feeds
  *   seoTitle:     optional, a shorter <title> for search results (the page headline is unchanged)
  *
  *   Every post gets its <head> (title, description, canonical, Open Graph, Twitter, JSON-LD),
@@ -162,7 +162,7 @@ export function lintPosts(dir = POSTS_DIR) {
     else if (p.title.length > 70) warn(`title is ${p.title.length} chars; search results show ~60`)
     else if (p.title.length < 20) warn(`title is only ${p.title.length} chars; be more specific`)
     if (!p.description) err('missing description')
-    else if (p.description.length < 70 || p.description.length > 170) warn(`description is ${p.description.length} chars; aim for 70–160`)
+    else if (p.description.length < 70 || p.description.length > 160) warn(`description is ${p.description.length} chars; aim for 70–160 (Google cuts off longer)`)
     if (descs.has(p.description)) warn(`same description as ${descs.get(p.description)}`)
     descs.set(p.description, p.slug)
     if (p.date === '1970-01-01' || Number.isNaN(Date.parse(p.date))) err('missing or invalid date (YYYY-MM-DD)')
@@ -573,6 +573,10 @@ export const RESEARCH_DESCRIPTION =
 export const NOT_FOUND_DESCRIPTION = 'This page doesn’t exist. Search Gul’s Notebook or start with a recent post on founding, engineering and AI.'
 
 /** "<post> · Gul’s Notebook", or just the post title when that would be cut off in search results. */
+/** The blog index's <title> and share title (search results show ~60 characters). */
+export const BLOG_INDEX_TITLE = `${BLOG_TITLE}: founder, engineering and AI notes`
+const TWITTER = PERSON_INFO.x ? [`<meta name="twitter:site" content="@${PERSON_INFO.x}" />`, `<meta name="twitter:creator" content="@${PERSON_INFO.x}" />`] : []
+
 export const postTitle = (p) => p.seoTitle ?? (`${p.title} · ${BLOG_TITLE}`.length <= 65 ? `${p.title} · ${BLOG_TITLE}` : p.title)
 
 /** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
@@ -583,7 +587,7 @@ export function headTags({ post, posts, notFound, research }) {
       ? postTitle(post)
       : research
         ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
-        : `${BLOG_TITLE}: founder, engineering and AI notes by Muhammad Gulzaib`
+        : BLOG_INDEX_TITLE
   const description = notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
   const url = post ? postUrl(post) : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
   const lic = post ? LICENSES[post.license] : null
@@ -614,7 +618,7 @@ export function headTags({ post, posts, notFound, research }) {
     `<meta property="og:site_name" content="${esc(BLOG_TITLE)}" />`,
     `<meta property="og:locale" content="en_US" />`,
     `<meta property="og:type" content="${post ? 'article' : 'website'}" />`,
-    `<meta property="og:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_TITLE)}" />`,
+    `<meta property="og:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${img}" />`,
@@ -632,7 +636,8 @@ export function headTags({ post, posts, notFound, research }) {
         ]
       : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_TITLE)}" />`,
+    ...TWITTER,
+    `<meta name="twitter:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta name="twitter:description" content="${esc(description)}" />`,
     `<meta name="twitter:image" content="${img}" />`,
     `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
@@ -772,6 +777,7 @@ export function homeHeadTags(content, posts) {
     `<meta property="og:image:height" content="630" />`,
     `<meta property="og:image:alt" content="${esc(alt)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
+    ...TWITTER,
     `<meta name="twitter:title" content="${esc(meta.ogTitle)}" />`,
     `<meta name="twitter:description" content="${esc(meta.ogDescription)}" />`,
     `<meta name="twitter:image" content="${img}" />`,
@@ -784,12 +790,17 @@ export function homeHeadTags(content, posts) {
  * Plain-HTML summary of the portfolio for visitors and crawlers without JavaScript
  * (link unfurlers, AI crawlers, text browsers). Same facts as the interactive page.
  */
+/**
+ * The landing page's server-side summary, rendered inside #root. Crawlers that don't run
+ * JavaScript (and link checkers) see a real <h1>, the ventures, recent posts and contact links;
+ * React replaces it on mount. It is visually hidden while the app loads and shown when
+ * JavaScript is off (the <noscript> style in homeHeadTags).
+ */
 export function homeNoscript({ profile, ventures, manifesto }, posts) {
   const li = (s) => `<li>${s}</li>`
-  return `<noscript>
-      <main style="max-width:44rem;margin:0 auto;padding:3rem 1.25rem;font:16px/1.6 system-ui,sans-serif;color:#ecebe6;background:#07070a">
-        <h1>${esc(profile.name)}</h1>
-        <p><strong>${esc(profile.role)}</strong> · ${esc(profile.headline)} · ${esc(profile.location)}</p>
+  return `<main class="pre" id="pre">
+        <h1>${esc(profile.name)}: ${esc(profile.role)}</h1>
+        <p><strong>${esc(profile.tagline)}</strong> ${esc(profile.headline)} · ${esc(profile.location)}</p>
         <p>${esc(manifesto)}</p>
         <h2>Ventures</h2>
         <ul>${ventures.map((v) => li(`<strong>${v.url ? `<a href="${v.url}">${esc(v.name)}</a>` : esc(v.name)}</strong> (${esc(v.role)}): ${esc(v.tagline)} ${esc(v.body)}`)).join('')}</ul>
@@ -797,11 +808,22 @@ export function homeNoscript({ profile, ventures, manifesto }, posts) {
         <ul>${posts.slice(0, 6).map((p) => li(`<a href="${postUrl(p)}">${esc(p.title)}</a>: ${esc(p.description)}`)).join('')}</ul>
         <h2>Contact</h2>
         <p><a href="mailto:${profile.email}">${esc(profile.email)}</a> · ${profile.socials.filter((x) => /^https?:/.test(x.url)).map((x) => `<a href="${x.url}" rel="me">${esc(x.label)}</a>`).join(' · ')} · ${esc(profile.availability)}</p>
-      </main>
-    </noscript>`
+      </main>`
 }
+
+/** Hides the summary above while the app boots; shows it as a readable page when JavaScript is off. */
+const PRE_STYLE = [
+  `<style>.pre{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}</style>`,
+  `<noscript><style>body{margin:0;background:#07070a}.pre{position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;max-width:44rem;margin:0 auto;padding:3rem 1.25rem;font:16px/1.6 system-ui,sans-serif;color:#ecebe6;background:#07070a}.pre a{color:#c6ff3d}</style></noscript>`,
+].join('\n    ')
 
 /** The built index.html with the landing page's generated head and no-JS summary. */
 export function homeHtml(indexHtml, { head, noscript }) {
-  return indexHtml.replace(/<!-- seo -->[\s\S]*?<!-- \/seo -->/, `<!-- seo -->\n    ${head}\n    <!-- /seo -->`).replace(/<noscript>[\s\S]*?<\/noscript>/, noscript)
+  const [top, body] = indexHtml.split(/(?=<body)/)
+  if (!body || !body.includes('<div id="root"></div>')) throw new Error('homeHtml: <div id="root"></div> not found in index.html')
+  return (
+    top.replace(/<!-- seo -->[\s\S]*?<!-- \/seo -->/, `<!-- seo -->\n    ${head}\n    ${PRE_STYLE}\n    <!-- /seo -->`) +
+    // the summary replaces index.html's one-line <noscript> fallback
+    body.replace(/\s*<noscript>[\s\S]*?<\/noscript>/, '').replace('<div id="root"></div>', `<div id="root">\n      ${noscript}\n    </div>`)
+  )
 }
