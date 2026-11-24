@@ -127,6 +127,9 @@ export function Settings({ open, onClose, returnFocus }: { open: boolean; onClos
   const prefs = usePrefs()
   const music = useMusic()
   const panel = useRef<HTMLDivElement>(null)
+  // vibration only matters on touch screens (set after hydration)
+  const [coarse, setCoarse] = useState(false)
+  useEffect(() => setCoarse(window.matchMedia('(pointer: coarse)').matches), [])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -244,6 +247,37 @@ export function Settings({ open, onClose, returnFocus }: { open: boolean; onClos
           ]}
         />
       </div>
+      <div className="b-settings__row">
+        <Seg<Prefs['previews']>
+          label="Link previews"
+          value={prefs.previews}
+          onChange={(previews) => setPrefs({ previews })}
+          options={[
+            { v: 'on', l: 'On' },
+            { v: 'off', l: 'Off' },
+          ]}
+        />
+        <Seg<Prefs['sounds']>
+          label="Sounds"
+          value={prefs.sounds}
+          onChange={(sounds) => setPrefs({ sounds })}
+          options={[
+            { v: 'off', l: 'Off' },
+            { v: 'on', l: 'On' },
+          ]}
+        />
+      </div>
+      {coarse && (
+        <Seg<Prefs['haptics']>
+          label="Vibration"
+          value={prefs.haptics}
+          onChange={(haptics) => setPrefs({ haptics })}
+          options={[
+            { v: 'on', l: 'On' },
+            { v: 'off', l: 'Off' },
+          ]}
+        />
+      )}
       <Seg<Music> label="Focus music" value={music} onChange={(m) => setMusic(m)} options={MUSIC.map((m) => ({ v: m.id, l: m.label }))} />
       <div className="b-settings__foot">
         <p className="b-settings__hint">Saved on this device only.</p>
@@ -373,7 +407,7 @@ export function Header() {
       <a className="b-skip" href="#main">
         Skip to content
       </a>
-      <header className={`b-header ${isHidden ? 'is-hidden' : ''}`}>
+      <header className={`b-header ${isHidden ? 'is-hidden' : ''}`} data-preview="hover">
         <div className="b-header__in">
           <a href="/" className="b-logo" aria-label="Muhammad Gulzaib: portfolio home">
             <span className="b-logo__mark" aria-hidden="true" />

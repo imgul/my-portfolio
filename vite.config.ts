@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, type Connect, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import mdx from '@mdx-js/rollup'
 import remarkGfm from 'remark-gfm'
@@ -49,6 +49,54 @@ function blog(): Plugin {
   }
 }
 
+/**
+ * Link previews in dev / preview: serves /link-previews.json (built in memory,
+ * icons inlined) and /api/link-preview (the same handler as the Vercel function).
+ * In production both come from the build (scripts/link-previews.mjs) and api/.
+ */
+function linkPreviews(): Plugin {
+  const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {}
+  let manifest: Promise<Record<string, unknown>> | null = null
+  // (no @types/node here, so the Node request / response are typed loosely)
+  const middleware: Connect.NextHandleFunction = (req, response, next) => {
+    const url = (req as unknown as { url?: string }).url || ''
+    const res = response as unknown as { setHeader(k: string, v: string): void; end(b: string): void }
+    if (url.startsWith('/api/link-preview')) {
+      import('./scripts/link-meta.mjs').then(({ previewHandler }) => previewHandler(req, res)).catch(next)
+      return
+    }
+    if (url.split('?')[0] === '/link-previews.json') {
+      manifest ??= import('./scripts/link-previews.mjs').then(({ buildManifest }) =>
+        buildManifest({ fetchExternal: env.LINK_PREVIEWS !== 'off', log: (m) => console.log(`  ${m}`) }),
+      )
+      manifest
+        .then((m) => {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.setHeader('Cache-Control', 'no-cache')
+          res.end(JSON.stringify(m))
+        })
+        .catch((e) => {
+          manifest = null
+          next(e)
+        })
+      return
+    }
+    next()
+  }
+  return {
+    name: 'gul-link-previews',
+    configureServer(server) {
+      server.middlewares.use(middleware)
+      // a post changed: rebuild on the next request
+      server.watcher.on('change', (f) => f.endsWith('.mdx') && (manifest = null))
+    },
+    configurePreviewServer(server) {
+      // the built dist/link-previews.json is served as a static file
+      server.middlewares.use((req, res, next) => ((req as unknown as { url?: string }).url?.startsWith('/api/') ? middleware(req, res, next) : next()))
+    },
+  }
+}
+
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     {
@@ -71,6 +119,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     },
     react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
     blog(),
+    linkPreviews(),
   ],
   server: { host: '0.0.0.0', port: 5173, allowedHosts: true },
   preview: { host: '0.0.0.0', port: 4173, allowedHosts: true },

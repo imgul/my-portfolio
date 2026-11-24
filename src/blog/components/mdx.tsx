@@ -492,14 +492,17 @@ export function LinkCard({ href, title, description, label }: { href: string; ti
   } catch {
     /* relative */
   }
+  // already a card: the hover preview adds the favicon and image, a tap just opens it
   return (
-    <A href={href}>
-      <span className="b-linkcard">
-        <span className="b-kicker">{label ?? host}</span>
-        <span className="b-linkcard__title">{title}</span>
-        {description && <span className="b-linkcard__desc">{description}</span>}
-      </span>
-    </A>
+    <span data-preview="hover">
+      <A href={href}>
+        <span className="b-linkcard">
+          <span className="b-kicker">{label ?? host}</span>
+          <span className="b-linkcard__title">{title}</span>
+          {description && <span className="b-linkcard__desc">{description}</span>}
+        </span>
+      </A>
+    </span>
   )
 }
 
@@ -508,7 +511,7 @@ export function PostLink({ slug }: { slug: string }) {
   const p = getPost(slug)
   if (!p) return null
   return (
-    <Link href={postUrl(p)} className="b-postlink">
+    <Link href={postUrl(p)} className="b-postlink" data-preview="hover">
       <CoverArt art={p.art} seed={p.slug} color={CATEGORY_COLOR[p.category]} />
       <span>
         <span className="b-kicker">

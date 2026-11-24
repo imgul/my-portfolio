@@ -21,6 +21,15 @@ import Education from './components/Education'
 import Beyond from './components/Beyond'
 import Contact from './components/Contact'
 import Toast from './components/Toast'
+import LinkPreviews, { type LinkPreviewFeedback } from './lib/linkPreview/LinkPreviews'
+import { haptics } from './lib/haptics'
+
+// link preview cards follow the site's sound toggle and haptics
+const previewFeedback: LinkPreviewFeedback = {
+  sound: () => !audio.isMuted,
+  haptic: (p) => haptics.fire(p),
+}
+const reduced = () => prefersReducedMotion
 
 
 export default function App() {
@@ -122,6 +131,7 @@ export default function App() {
         <Contact />
       </main>
       <Toast />
+      <LinkPreviews theme="portfolio" feedback={previewFeedback} reducedMotion={reduced} />
     </>
   )
 }

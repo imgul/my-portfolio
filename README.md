@@ -118,6 +118,15 @@ Set `VITE_SITE_URL` to change the canonical domain (default `https://gulzaib.ver
 
 **Components available in every post (no imports):** `TLDR`, `Abstract`, `Takeaways`, `Callout` (note/tip/warning/danger/insight/success), `Update`, `PullQuote`, `Stats`/`Stat`, `Timeline`/`Event`, `Decision` (ADR), `ProsCons`, `Steps`/`Step`, `Tabs`/`Tab`, `FileTree`, `Kbd`, `Cite` with automatic references, `BarChart`, `Flow`, `Sidenote`, `Term`, `Details`, `Figure`, `YouTube`, `LinkCard`, `PostLink`. Markdown extras: GFM tables, task lists and footnotes, KaTeX math (`$…$`, `$$…$$`), and Shiki code blocks with `title="file.ts"`, `showLineNumbers`, `{2-4}` line highlights, and wrap and copy buttons. The post [`how-i-write-technical-posts.mdx`](src/blog/posts/how-i-write-technical-posts.mdx) shows every component in use.
 
+## Link previews (every link, portfolio and blog)
+
+Hover a link (mouse, pen or keyboard focus) to see a card: favicon, title, description, image and details. On touch, the first tap shows the card (a bottom sheet on phones, swipe down to close) and a second tap or **Open** follows the link.
+
+- **Data:** `scripts/link-previews.mjs` runs after the build and writes `dist/link-previews.json` plus the favicons (`dist/link-icons/`). It covers this site's pages, posts, PDFs and feeds, and every external link in `src/` and the built HTML. Results are cached in `node_modules/.cache/gul-link-previews` (set `LINK_PREVIEWS=off` to skip fetching). `GITHUB_TOKEN` is optional; it raises GitHub's API limit.
+- **Live fallback:** links the build missed are fetched at `/api/link-preview?url=…` (a Vercel function: same-origin only, SSRF-safe, cached at the edge). The fetching code lives in `scripts/link-meta.mjs`; `vite dev` and `vite preview` serve the same endpoints.
+- **Client:** `src/lib/linkPreview/` (one delegated listener; mounted in `src/App.tsx` and `src/blog/BlogApp.tsx`). `data-no-preview` turns the card off for a link or a container. `data-preview="hover"` keeps the hover card but lets a tap open the link straight away (used for the blog header, breadcrumbs, prev/next and link cards).
+- **Feedback:** soft synthesized sounds (follow the portfolio's sound toggle; on the blog, Settings → Sounds, off by default) and haptics on phones (blog: Settings → Vibration). Reduced motion turns the motion into fades. Blog readers can turn previews off in Settings.
+
 ## Develop
 
 ```bash

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build && vite build --ssr src/blog/ssr.tsx && node scripts/prerender.mjs",
+    "build": "tsc --noEmit && vite build && vite build --ssr src/blog/ssr.tsx && node scripts/prerender.mjs && node scripts/link-previews.mjs",
     "lint:blog": "node scripts/lint-blog.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "blog:dois": "node scripts/blog-dois.mjs",

@@ -239,7 +239,7 @@ export function ResearchPage() {
   return (
     <main id="main" className="b-research" tabIndex={-1}>
       <header className="b-research__head">
-        <nav aria-label="Breadcrumb">
+        <nav aria-label="Breadcrumb" data-preview="hover">
           <ol className="b-crumbs">
             <li>
               <Link href="/blog">Notebook</Link>
