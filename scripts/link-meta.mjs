@@ -344,7 +344,9 @@ async function enrichDoi(u) {
   const authors = (j.author || []).map((a) => a.family || a.literal || a.name).filter(Boolean)
   const parts = j.issued?.['date-parts']?.[0] || j.published?.['date-parts']?.[0] || j['published-print']?.['date-parts']?.[0] || []
   const year = parts[0]
-  const event = typeof j.event === 'object' ? j.event?.acronym : undefined
+  // Crossref REST: event.acronym; CSL-JSON: event / event-title is a string like "SIGIR '09: The 32nd …"
+  const eventName = typeof j.event === 'object' ? j.event?.acronym || j.event?.name : j['event-title'] || j.event
+  const event = eventName && String(eventName).split(/:\s/)[0].length <= 30 ? String(eventName).split(/:\s/)[0] : undefined
   const container = clean(first(j['container-title']), 80)
   const venue = clean(event, 30) || clean(first(j['container-title-short']) || first(j['short-container-title']), 40) || container || clean(j.publisher, 60)
   const abstract = clean(String(j.abstract || '').replace(/<jats:title>[^<]*<\/jats:title>/gi, ' '), 320)?.replace(/^Abstract\s+/i, '')
@@ -360,9 +362,9 @@ async function enrichDoi(u) {
   return {
     kind: 'paper',
     title: clean(first(j.title), 200),
-    description: abstract || [authors.slice(0, 6).join(', '), container, year].filter(Boolean).join(' · ') || undefined,
+    description: abstract || [authors.slice(0, 8).join(', ') + (authors.length > 8 ? ' et al.' : ''), container].filter(Boolean).join(' · ') || undefined,
     site: (container && container.length <= 64 ? container : clean(j.publisher, 60)) || container || 'DOI',
-    chips: [who, venue !== container && venue ? venue : CSL_TYPES[j.type], year && String(year), `DOI ${doi}`].filter(Boolean).slice(0, 4),
+    chips: [who, venue !== container && venue ? venue : CSL_TYPES[j.type], year && !String(venue).includes(String(year)) ? String(year) : undefined, `DOI ${doi}`].filter(Boolean).slice(0, 4),
     icons: [pub && `${pub}/favicon.ico`, 'https://www.doi.org/images/favicons/favicon-32x32.png', 'https://doi.org/favicon.ico'].filter(Boolean),
     iconHost: pub ? new URL(pub).hostname : 'doi.org',
   }
