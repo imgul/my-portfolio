@@ -3,6 +3,7 @@ import { useStore, store, toast } from '../lib/store'
 import { audio } from '../lib/audio'
 import { haptics } from '../lib/haptics'
 import { SCENES } from '../lib/sound/scenes'
+import { getTheme } from '../lib/sound'
 
 /**
  * "Now playing" chip (bottom-right). Shows the musical mood of the current
@@ -15,8 +16,14 @@ export default function NowPlaying({ visible }: { visible: boolean }) {
     (fn) => audio.subscribe(fn),
     () => audio.themeName,
   )
+  const themeId = useSyncExternalStore(
+    (fn) => audio.subscribe(fn),
+    () => audio.themeId,
+  )
   const [swap, setSwap] = useState(0)
   const scene = SCENES[section] ?? SCENES[0]
+  // the Soundtrack names a piece per section; other tracks show the section's mood
+  const title = getTheme(themeId).tracks?.[section] ?? scene.mood
 
   useEffect(() => setSwap((n) => n + 1), [themeName])
 
@@ -35,8 +42,8 @@ export default function NowPlaying({ visible }: { visible: boolean }) {
       onClick={next}
       onMouseEnter={() => audio.hover()}
       data-cursor="Next track"
-      title="Switch music (each section has its own mix)"
-      aria-label={`Now playing: ${scene.mood}, ${themeName}. Switch track`}
+      title="Switch music (each section has its own piece)"
+      aria-label={`Now playing: ${title}, ${themeName}. Switch track`}
     >
       <span className="np__disc" aria-hidden="true">
         <span />
@@ -44,7 +51,7 @@ export default function NowPlaying({ visible }: { visible: boolean }) {
       <span className="np__text">
         <span className="np__roll">
           <span key={section} className="np__mood">
-            {scene.mood}
+            {title}
           </span>
         </span>
         <span className="np__roll np__roll--sub">
