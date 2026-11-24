@@ -77,8 +77,8 @@ export const postHead = (p: PostMeta): Head => ({
 export function indexHead({ q, tag, cat, saved, count }: { q?: string; tag?: string; cat?: string; saved?: boolean; count: number }): Head {
   const what = saved ? 'Saved posts' : q ? `Search: “${q}”` : tag ? `#${tag}` : cat ? `${cat} posts` : ''
   return {
-    title: what ? `${what} · ${SEO.BLOG_TITLE}` : `${SEO.BLOG_TITLE}: founder, engineering and AI notes by Muhammad Gulzaib`,
-    ogTitle: what ? undefined : SEO.BLOG_TITLE,
+    title: what ? `${what} · ${SEO.BLOG_TITLE}` : SEO.BLOG_INDEX_TITLE,
+    ogTitle: what ? undefined : SEO.BLOG_INDEX_TITLE,
     description: what && !saved ? `${count} ${count === 1 ? 'post' : 'posts'}${tag ? ` tagged #${tag}` : cat ? ` in ${cat}` : q ? ` matching “${q}”` : ''} on ${SEO.BLOG_TITLE}. ${SEO.BLOG_DESCRIPTION}` : SEO.BLOG_DESCRIPTION,
     path: '/blog',
     image: 'blog',

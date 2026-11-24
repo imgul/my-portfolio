@@ -5,7 +5,7 @@ import { useReader } from '../store'
 import { useHydrated } from '../hydrated'
 import { Icon, toast } from './ui'
 import { OrcidLink, ResearchProfiles } from './scholar'
-import { activeProfiles } from '../scholar.mjs'
+import { activeProfiles, AUTHOR } from '../scholar.mjs'
 
 /* ------------------------------------------------------------ focus music */
 
@@ -557,6 +557,9 @@ export function AuthorCard() {
           </a>
           <a href="https://github.com/imgul" target="_blank" rel="noopener noreferrer me">
             GitHub
+          </a>
+          <a href={`https://x.com/${AUTHOR.x}`} target="_blank" rel="noopener noreferrer me">
+            X
           </a>
           <a href="mailto:iigulzaib@gmail.com">Email</a>
         </p>

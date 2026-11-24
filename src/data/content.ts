@@ -18,6 +18,7 @@ export const profile = {
   socials: [
     { label: 'LinkedIn', handle: 'gulzaib-ai', url: 'https://www.linkedin.com/in/gulzaib-ai' },
     { label: 'GitHub', handle: 'imgul', url: 'https://github.com/imgul' },
+    { label: 'X', handle: '@gulzaib_ai', url: 'https://x.com/gulzaib_ai' },
     { label: 'Email', handle: 'iigulzaib@gmail.com', url: 'mailto:iigulzaib@gmail.com' },
   ],
 }

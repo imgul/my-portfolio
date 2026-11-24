@@ -8,7 +8,8 @@
  *           og:url / og:image / twitter:card; an og:image that isn't in dist/;
  *           invalid JSON-LD; canonical or og:url on another host; a sitemap URL
  *           without a page; duplicate titles or descriptions.
- * Warnings: title over 70 characters, description outside 50–170, no JSON-LD,
+ * Warnings: title over 70 characters, description outside 50–160, share title under 25,
+ * no twitter:site, not exactly one <h1> (outside <noscript>), no JSON-LD,
  *           no <h1> in the HTML, image without width/height.
  */
 import fs from 'node:fs'
@@ -73,7 +74,9 @@ export function checkSeo(dist, { siteUrl }) {
     if (!h.title) err('missing <title>')
     else if (h.title.length > 70) warn(`title is ${h.title.length} characters (search results show ~60)`)
     if (!desc) err('missing meta description')
-    else if (desc.length < 50 || desc.length > 170) warn(`description is ${desc.length} characters (aim for 70–160)`)
+    else if (desc.length < 50 || desc.length > 160) warn(`description is ${desc.length} characters (aim for 70–160; Google cuts off longer)`)
+    if (!noindex && h.metas['og:title'] && h.metas['og:title'].length < 25) warn(`og:title is ${h.metas['og:title'].length} characters (too short to describe the page)`)
+    if (!h.metas['twitter:site']) warn('missing twitter:site')
     if (!noindex) {
       if (!h.links.canonical) err('missing canonical link')
       else if (new URL(h.links.canonical, siteUrl).host !== host) err(`canonical points to another host: ${h.links.canonical}`)
@@ -101,7 +104,9 @@ export function checkSeo(dist, { siteUrl }) {
         err(`invalid JSON-LD: ${e.message}`)
       }
     }
-    if (!noindex && !/<h1\b/i.test(html)) warn('no <h1> in the HTML')
+    // crawlers ignore <noscript> content, so it doesn't count
+    const h1s = (html.replace(/<noscript>[\s\S]*?<\/noscript>/gi, '').match(/<h1\b/gi) || []).length
+    if (!noindex && h1s !== 1) warn(h1s ? `${h1s} <h1> elements (use exactly one)` : 'no <h1> in the HTML')
   }
   // every sitemap URL must be a real page
   const sm = path.join(dist, 'sitemap.xml')

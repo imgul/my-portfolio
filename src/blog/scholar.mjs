@@ -26,6 +26,8 @@ export const AUTHOR = {
   location: 'Islamabad, Pakistan',
   orcid: ORCID,
   orcidUrl: `https://orcid.org/${ORCID}`,
+  /** X (Twitter) handle: twitter:site / twitter:creator and the share button */
+  x: 'gulzaib_ai',
   knowsAbout: ['SaaS', 'Laravel', 'React', 'Retrieval-augmented generation', 'AI agents', 'Product validation', 'Technical writing'],
 }
 
@@ -48,6 +50,7 @@ export const PROFILES = [
   { id: 'wikidata', label: 'Wikidata', url: '', research: true },
   { id: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/in/gulzaib-ai', research: false },
   { id: 'github', label: 'GitHub', url: 'https://github.com/imgul', research: false },
+  { id: 'x', label: 'X', url: `https://x.com/${AUTHOR.x}`, research: false },
 ]
 
 /** Profiles with a URL. */

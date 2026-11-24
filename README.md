@@ -143,7 +143,7 @@ Every page gets its own `<head>` and its own 1200×630 share image. Nothing has 
 
 | Page | `<head>` | Share image |
 | --- | --- | --- |
-| `/` portfolio | generated from `src/data/content.ts` and injected into `dist/index.html`: title, description, canonical, Open Graph `profile`, Twitter, `rel="me"`, JSON-LD (`WebSite` + search, `ProfilePage`, `Person`, one `Organization` per venture) and a `<noscript>` summary for crawlers that don't run JavaScript | `og/home.png`: photo on the lime disc, role, tagline, stack, ventures, latest note |
+| `/` portfolio | generated from `src/data/content.ts` and injected into `dist/index.html`: title, description, canonical, Open Graph `profile`, Twitter, `rel="me"`, JSON-LD (`WebSite` + search, `ProfilePage`, `Person`, one `Organization` per venture), plus a summary inside `#root` with the page's one `<h1>` for crawlers that don't run JavaScript (visually hidden while the app boots, shown as a plain page when JavaScript is off; React replaces it on mount) | `og/home.png`: photo on the lime disc, role, tagline, stack, ventures, latest note |
 | `/blog` | `Blog` + `ItemList` JSON-LD, RSS/JSON Feed links | `og/blog.png`: post count, categories, latest post |
 | `/blog/<slug>` | title, description, canonical, `article:*`, Twitter reading time and category, `citation_*` (Google Scholar), `BlogPosting` + `BreadcrumbList` (+ `FAQPage`) JSON-LD | `og/<slug>.png`: category colour and cover art, series, reading time, date, level or licence |
 | `/blog/research` | `ProfilePage` + `Person` with ORCID | `og/research.png`: open-access posts and citation formats |
@@ -151,8 +151,9 @@ Every page gets its own `<head>` and its own 1200×630 share image. Nothing has 
 
 - **Code:** images are drawn by `scripts/og.mjs` (SVG → PNG with resvg, fonts from `@expo-google-fonts`); head tags and JSON-LD come from `scripts/blog.mjs` (`headTags`, `homeHeadTags`); `scripts/prerender.mjs` renders them after the build. Image URLs carry a content hash (`?v=…`) so LinkedIn, X, Slack and WhatsApp refetch an image when it changes.
 - **Between pages:** the blog is a single-page app after the first load, so `src/blog/head.ts` updates the title, description, canonical, robots and share tags on every navigation. Filtered blog views (`?tag=`, `?category=`) get their own title; search results and saved posts are `noindex`.
+- **X:** `twitter:site` and `twitter:creator` come from `AUTHOR.x` in `src/blog/scholar.mjs` (`gulzaib_ai`), which also feeds `sameAs`, the author card and the share button's `via`.
 - **Titles:** a post's `<title>` is "Post title · Gul’s Notebook" when that fits in about 65 characters, otherwise just the post title. Set `seoTitle:` in the frontmatter to choose a shorter one.
-- **Audit:** the build ends with `scripts/seo-check.mjs`, which reads every page in `dist/` and **fails the build** on a missing title, description, canonical, Open Graph or Twitter tag, a share image that doesn't exist, invalid JSON-LD, a link to another host, a sitemap URL without a page, or a duplicate title or description. Lengths, alt text and headings are warnings. Run it on its own with `npm run seo:check`.
+- **Audit:** the build ends with `scripts/seo-check.mjs`, which reads every page in `dist/` and **fails the build** on a missing title, description, canonical, Open Graph or Twitter tag, a share image that doesn't exist, invalid JSON-LD, a link to another host, a sitemap URL without a page, or a duplicate title or description. Warnings: titles over 70 characters, descriptions over 160 (Google cuts them off), share titles under 25, no `twitter:site`, missing alt text, and anything but exactly one `<h1>` (`<noscript>` doesn't count). Run it on its own with `npm run seo:check`.
 - **Domain:** URLs use `VITE_SITE_URL` (default `https://gulzaib.vercel.app`). Set it in Vercel if the site moves to a custom domain.
 
 ## Portrait, logo and icons

@@ -9,5 +9,5 @@ declare module 'virtual:blog' {
   export const posts: PostMeta[]
   export const SITE_URL: string
   /** shared with scripts/blog.mjs so the client-side <head> matches the pre-rendered one */
-  export const SEO: { BLOG_TITLE: string; BLOG_DESCRIPTION: string; RESEARCH_DESCRIPTION: string; NOT_FOUND_DESCRIPTION: string }
+  export const SEO: { BLOG_TITLE: string; BLOG_INDEX_TITLE: string; BLOG_DESCRIPTION: string; RESEARCH_DESCRIPTION: string; NOT_FOUND_DESCRIPTION: string }
 }

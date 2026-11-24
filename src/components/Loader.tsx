@@ -76,14 +76,14 @@ export default function Loader() {
           <span>Muhammad Gulzaib</span>
           <span>Portfolio, 2026 edition</span>
         </div>
-        <h1 className="loader__name" aria-label="Gul">
+        <div className="loader__name" role="img" aria-label="Gul">
           {'GUL'.split('').map((c, i) => (
             <span className="mask" key={i}>
               <span className="ch">{c}</span>
             </span>
           ))}
           <span className="loader__pct mono">{String(pct).padStart(3, '0')}%</span>
-        </h1>
+        </div>
         <div className="loader__bar">
           <span style={{ transform: `scaleX(${pct / 100})` }} />
         </div>
