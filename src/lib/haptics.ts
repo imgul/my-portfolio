@@ -44,6 +44,19 @@ export const haptics = {
   get enabled() {
     return enabled
   },
+  /** Raw vibration (ms or pattern). On iOS each call is a single system tick. */
+  buzz(pattern: number | number[]) {
+    if (!enabled) return
+    try {
+      if (canVibrate()) navigator.vibrate(pattern)
+      else if (isIOS() && pattern !== 0) {
+        ensureIOS()
+        iosLabel?.click()
+      }
+    } catch {
+      /* noop */
+    }
+  },
   fire(p: Pattern = 'tap') {
     if (!enabled) return
     try {

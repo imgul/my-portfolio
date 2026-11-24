@@ -1,17 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
-import { useStore, toast } from '../lib/store'
+import { useStore } from '../lib/store'
 import { fx } from '../lib/feedback'
 import { scrollTo } from '../lib/scroll'
-import { sceneRef } from '../three/sceneRef'
-import { useMagnetic } from '../lib/hooks'
 import { profile } from '../data/content'
+import HoldToCopy from './HoldToCopy'
 
 export default function Contact() {
   const entered = useStore((s) => s.entered)
   const root = useRef<HTMLElement>(null)
-  const orb = useRef<HTMLButtonElement>(null)
-  useMagnetic(orb, 0.5)
 
   useEffect(() => {
     if (!entered) return
@@ -27,27 +24,6 @@ export default function Contact() {
     }, root)
     return () => ctx.revert()
   }, [entered])
-
-  const copy = async () => {
-    let ok = false
-    try {
-      await navigator.clipboard.writeText(profile.email)
-      ok = true
-    } catch {
-      // Fallback for browsers without async clipboard permissions
-      const ta = document.createElement('textarea')
-      ta.value = profile.email
-      ta.style.cssText = 'position:fixed;opacity:0'
-      document.body.appendChild(ta)
-      ta.select()
-      ok = document.execCommand('copy')
-      ta.remove()
-    }
-    toast(ok ? 'Email copied. Talk soon!' : profile.email)
-    fx.success()
-    sceneRef.current?.pulse(1)
-    gsap.fromTo(orb.current, { scale: 0.88 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.35)' })
-  }
 
   const words = ["Let's build", "what's next."]
 
@@ -69,21 +45,7 @@ export default function Contact() {
       </h2>
 
       <div className="contact__grid">
-        <button className="contact__orb" ref={orb} onClick={copy} onMouseEnter={fx.hover} data-cursor="Copy">
-          <span className="contact__orb-text">
-            Copy
-            <br />
-            email
-          </span>
-          <svg viewBox="0 0 200 200" className="contact__orb-ring" aria-hidden="true">
-            <defs>
-              <path id="circ" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0" />
-            </defs>
-            <text>
-              <textPath href="#circ" textLength="508" lengthAdjust="spacing">{`${profile.email} ✦ open to work ✦ `}</textPath>
-            </text>
-          </svg>
-        </button>
+        <HoldToCopy email={profile.email} ringText={`${profile.email} ✦ open to work ✦ `} />
 
         <div className="contact__info">
           <p className="contact__avail">

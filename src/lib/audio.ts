@@ -6,7 +6,7 @@
  * Pick a theme with ?sound=original|pulse|dawn (remembered in localStorage).
  * Scroll energy feeds the music; an analyser feeds the 3D scene.
  */
-import { applyFx, createRig, getTheme, type Rig, type Theme } from './sound'
+import { applyFx, createRig, getTheme, mtof, noiseBuffer, osc, perc, type Rig, type Theme } from './sound'
 
 const STORAGE_KEY = 'gul:sound-theme'
 
@@ -33,6 +33,13 @@ class AudioEngine {
   private muted = true
   private musicOn = false
   private lastHover = 0
+  private charge: {
+    oscs: OscillatorNode[]
+    lfo: OscillatorNode
+    filter: BiquadFilterNode
+    gain: GainNode
+    trem: GainNode
+  } | null = null
 
   init() {
     if (this.ctx) return
@@ -145,6 +152,136 @@ class AudioEngine {
   /** Play the i-th note of the theme's playable scale. */
   note(i: number, vel = 1) {
     if (this.ready()) this.theme.sfx.note(this.rig, this.now, i, vel)
+  }
+
+  /* ------------------------- Press & hold charge ------------------------- */
+
+  /** Start the rising "charging" synth used by press-and-hold buttons. */
+  chargeStart() {
+    if (!this.ready()) return
+    this.chargeKill(0.05)
+    const { ctx } = this.rig
+    const t = ctx.currentTime
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.Q.value = 9
+    filter.frequency.value = 380
+    const trem = ctx.createGain()
+    trem.gain.value = 0.75
+    const lfo = osc(ctx, 'sine', 5)
+    const lfoAmt = ctx.createGain()
+    lfoAmt.gain.value = 0.25
+    lfo.connect(lfoAmt).connect(trem.gain)
+    const gain = ctx.createGain()
+    gain.gain.value = 0
+    gain.gain.setTargetAtTime(0.07, t, 0.04)
+    const oscs = [osc(ctx, 'sawtooth', 110, -9), osc(ctx, 'square', 110, 9), osc(ctx, 'sine', 55)]
+    oscs.forEach((o) => o.connect(filter))
+    filter.connect(trem).connect(gain)
+    gain.connect(this.rig.sfxBus)
+    gain.connect(this.rig.reverbSend)
+    oscs.forEach((o) => o.start(t))
+    lfo.start(t)
+    this.charge = { oscs, lfo, filter, gain, trem }
+  }
+
+  /** Map hold progress (0..1) onto pitch, brightness, tremolo speed and level. */
+  chargeSet(p: number) {
+    const c = this.charge
+    if (!c || !this.ctx) return
+    const t = this.ctx.currentTime
+    const f = 110 * Math.pow(2, p * 2.6)
+    c.oscs[0].frequency.setTargetAtTime(f, t, 0.03)
+    c.oscs[1].frequency.setTargetAtTime(f * 1.5, t, 0.03)
+    c.oscs[2].frequency.setTargetAtTime(f / 2, t, 0.03)
+    c.filter.frequency.setTargetAtTime(380 + Math.pow(p, 1.5) * 5200, t, 0.03)
+    c.lfo.frequency.setTargetAtTime(5 + p * 22, t, 0.05)
+    c.gain.gain.setTargetAtTime(0.06 + p * 0.06, t, 0.05)
+  }
+
+  /** One step of the charge: an ascending note from the theme's scale + a ratchet click. */
+  chargeTick(i: number) {
+    if (!this.ready()) return
+    const t = this.now
+    this.theme.sfx.note(this.rig, t, i, 0.55)
+    const { ctx } = this.rig
+    const src = ctx.createBufferSource()
+    src.buffer = noiseBuffer(ctx)
+    const f = ctx.createBiquadFilter()
+    f.type = 'bandpass'
+    f.frequency.value = 2400 + i * 260
+    f.Q.value = 4
+    const g = ctx.createGain()
+    perc(g.gain, t, 0.05, 0.001, 0.025)
+    src.connect(f).connect(g).connect(this.rig.sfxBus)
+    src.start(t, Math.random(), 0.05)
+  }
+
+  /** Let go too early: the charge powers down. */
+  chargeCancel() {
+    const c = this.charge
+    if (!c || !this.ctx) return
+    const t = this.ctx.currentTime
+    c.oscs.forEach((o, k) => {
+      o.frequency.cancelScheduledValues(t)
+      o.frequency.setValueAtTime(o.frequency.value, t)
+      o.frequency.exponentialRampToValueAtTime(k === 2 ? 20 : 40, t + 0.4)
+    })
+    c.filter.frequency.setTargetAtTime(200, t, 0.1)
+    this.chargeKill(0.12)
+  }
+
+  /** Fully charged: boom + crack + sparkle chord in the current theme. */
+  chargeRelease() {
+    this.chargeKill(0.03)
+    if (!this.ready()) return
+    const { ctx } = this.rig
+    const t = ctx.currentTime
+    // sub boom
+    const sub = osc(ctx, 'sine', 140)
+    sub.frequency.setValueAtTime(140, t)
+    sub.frequency.exponentialRampToValueAtTime(34, t + 0.7)
+    const sg = ctx.createGain()
+    perc(sg.gain, t, 0.5, 0.005, 0.9)
+    sub.connect(sg).connect(this.rig.sfxBus)
+    sub.start(t)
+    sub.stop(t + 1)
+    // crack: falling noise burst
+    const src = ctx.createBufferSource()
+    src.buffer = noiseBuffer(ctx)
+    const nf = ctx.createBiquadFilter()
+    nf.type = 'bandpass'
+    nf.Q.value = 1.4
+    nf.frequency.setValueAtTime(6000, t)
+    nf.frequency.exponentialRampToValueAtTime(400, t + 0.5)
+    const ng = ctx.createGain()
+    perc(ng.gain, t, 0.16, 0.002, 0.5)
+    src.connect(nf).connect(ng).connect(this.rig.sfxBus)
+    ng.connect(this.rig.reverbSend)
+    src.start(t, 0, 0.6)
+    // theme success + high sparkles through the delay
+    this.theme.sfx.success(this.rig, t + 0.04)
+    ;[86, 90, 93, 98, 102].forEach((m, i) => {
+      const s = t + 0.12 + i * 0.045 + Math.random() * 0.02
+      const o = osc(ctx, 'sine', mtof(m))
+      const g = ctx.createGain()
+      perc(g.gain, s, 0.035, 0.002, 0.5)
+      o.connect(g).connect(this.rig.sfxBus)
+      g.connect(this.rig.delaySend)
+      g.connect(this.rig.reverbSend)
+      o.start(s)
+      o.stop(s + 0.6)
+    })
+  }
+
+  private chargeKill(tau: number) {
+    const c = this.charge
+    if (!c || !this.ctx) return
+    const t = this.ctx.currentTime
+    c.gain.gain.cancelScheduledValues(t)
+    c.gain.gain.setTargetAtTime(0, t, tau)
+    ;[...c.oscs, c.lfo].forEach((o) => o.stop(t + tau * 8 + 0.05))
+    this.charge = null
   }
 
   boot() {

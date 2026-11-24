@@ -408,6 +408,12 @@ export class ParticleField {
     gsap.to(this.material.uniforms.uOpacity, { value: i === 6 ? 0.42 : 1, duration: 1.2, overwrite: true })
   }
 
+  /** Sustained turbulence while something is charging (0..1). */
+  charge(p: number) {
+    this.chargeLevel = p
+  }
+  private chargeLevel = 0
+
   /** Big shockwave used on intro / special interactions. */
   pulse(amount = 1) {
     gsap.fromTo(this.material.uniforms.uTurb, { value: amount * 2.2 }, { value: 0, duration: 2.2, ease: 'expo.out' })
@@ -424,7 +430,7 @@ export class ParticleField {
     u.uMouseStrength.value *= 0.985
 
     const vel = Math.min(Math.abs(scrollState.velocity) / 30, 1)
-    u.uTurb.value += (vel * 0.9 - u.uTurb.value) * 0.05
+    u.uTurb.value += (Math.max(vel * 0.9, this.chargeLevel * 1.3) - u.uTurb.value) * (this.chargeLevel > 0 ? 0.12 : 0.05)
     const level = audio.level()
     u.uAudio.value += (level * 0.9 - u.uAudio.value) * 0.15
 
