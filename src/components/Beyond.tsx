@@ -17,7 +17,7 @@ export default function Beyond() {
   }
 
   return (
-    <section className="beyond" data-shape="2" data-index="8" id="beyond">
+    <section className="beyond" data-shape="8" data-index="8" id="beyond">
       <header className="section-head">
         <p className="eyebrow mono">
           <span>(08)</span> Beyond the code

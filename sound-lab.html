@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sound Lab · Gul</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      :root { color-scheme: dark; --lime: #c6ff3d; --blue: #5b8cff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: #07070a; color: #eee; font: 15px/1.5 Inter, system-ui, sans-serif; padding: 48px 24px; }
+      main { max-width: 980px; margin: 0 auto; }
+      h1 { font-size: clamp(36px, 6vw, 64px); margin: 0 0 4px; letter-spacing: -0.03em; }
+      h1 span { color: var(--lime); }
+      .sub { color: #999; margin: 0 0 32px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+      .card { border: 1px solid #222; border-radius: 18px; padding: 20px; background: #0d0d12; transition: border-color .3s; }
+      .card.is-on { border-color: var(--lime); box-shadow: 0 0 0 1px var(--lime) inset; }
+      .card h2 { margin: 0; font-size: 22px; }
+      .card p { margin: 4px 0 16px; color: #999; font-size: 13px; }
+      button { font: inherit; font-size: 13px; color: #eee; background: #18181f; border: 1px solid #2a2a33; border-radius: 999px; padding: 7px 14px; cursor: pointer; margin: 0 6px 6px 0; }
+      button:hover { border-color: var(--lime); color: var(--lime); }
+      button.primary { background: var(--lime); color: #07070a; border-color: var(--lime); font-weight: 600; }
+      .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; padding: 16px 20px; border: 1px solid #222; border-radius: 18px; }
+      label { font-size: 13px; color: #aaa; }
+      input[type=range] { width: 220px; accent-color: var(--lime); }
+      a { color: var(--blue); }
+      code { color: var(--lime); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sound <span>Lab</span></h1>
+      <p class="sub">Audition the site's sound themes live. Open the site with <code>?sound=pulse</code>, <code>?sound=dawn</code> or <code>?sound=original</code> to use one everywhere.</p>
+      <div class="grid" id="themes"></div>
+      <div class="row">
+        <label for="energy">Scroll energy</label>
+        <input id="energy" type="range" min="0" max="1" step="0.01" value="0" />
+        <span id="energyVal" class="mono">0.00</span>
+        <button id="auto">Simulate scrolling</button>
+        <button id="stop">Stop</button>
+      </div>
+    </main>
+    <script type="module" src="/src/lab/main.ts"></script>
+  </body>
+</html>

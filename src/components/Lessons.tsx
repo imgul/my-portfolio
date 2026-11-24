@@ -31,7 +31,7 @@ export default function Lessons() {
   }, [entered])
 
   return (
-    <section className="lessons" ref={root} data-shape="3" data-index="4">
+    <section className="lessons" ref={root} data-shape="4" data-index="4">
       <header className="section-head">
         <p className="eyebrow mono">
           <span>(04)</span> Founder notes

@@ -88,7 +88,7 @@ export default function Agents() {
   }
 
   return (
-    <section className="agents" ref={root} data-shape="5" data-index="6" id="agents">
+    <section className="agents" ref={root} data-shape="6" data-index="6" id="agents">
       <header className="section-head">
         <p className="eyebrow mono">
           <span>(06)</span> AI systems

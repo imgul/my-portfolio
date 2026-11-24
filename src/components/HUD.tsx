@@ -7,6 +7,7 @@ import { fx } from '../lib/feedback'
 import { scrollState, scrollTo } from '../lib/scroll'
 import { profile, SECTIONS } from '../data/content'
 import { useClock, useMagnetic } from '../lib/hooks'
+import NowPlaying from './NowPlaying'
 
 export default function HUD() {
   const entered = useStore((s) => s.entered)
@@ -63,7 +64,7 @@ export default function HUD() {
   }
 
   return (
-    <div className={`hud ${entered ? 'is-on' : ''} ${menu ? 'menu-open' : ''}`} ref={root}>
+    <div className={`hud ${entered ? 'is-on' : ''} ${menu ? 'menu-open' : ''} ${scrolled ? 'is-scrolled' : ''}`} ref={root}>
       <header className="hud__top">
         <button className="hud__item hud__logo" onClick={() => go(0)} onMouseEnter={fx.hover} data-cursor="Top">
           <span className="logo-mark" aria-hidden="true" />
@@ -141,6 +142,7 @@ export default function HUD() {
       <div className={`hud__item hud__hint mono ${scrolled ? 'is-hidden' : ''}`}>
         Scroll to explore <span className="hint-line" />
       </div>
+      <NowPlaying visible={entered && scrolled && !menu} />
 
       <div className="menu" aria-hidden={!menu}>
         <ul>

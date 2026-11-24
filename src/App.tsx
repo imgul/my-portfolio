@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ParticleField } from './three/ParticleField'
 import { sceneRef } from './three/sceneRef'
 import { initScroll, prefersReducedMotion } from './lib/scroll'
-import { store, useStore } from './lib/store'
+import { store, toast, useStore } from './lib/store'
 import { audio } from './lib/audio'
 import { fx } from './lib/feedback'
 import Loader from './components/Loader'
@@ -60,6 +60,7 @@ export default function App() {
             sceneRef.current?.setShape(shape)
             if (store.get().section !== index) {
               store.set({ section: index })
+              audio.setSection(index)
               if (index > 0) fx.section()
             }
           },
@@ -91,6 +92,9 @@ export default function App() {
         const next = !store.get().sound
         store.set({ sound: next })
         audio.setMuted(!next)
+      } else if (e.key.toLowerCase() === 'n' && store.get().sound) {
+        audio.nextTheme()
+        toast(`Now playing · ${audio.themeName}`)
       }
     }
     window.addEventListener('keydown', onKey)
