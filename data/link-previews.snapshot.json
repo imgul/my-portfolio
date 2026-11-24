@@ -42,6 +42,6 @@
     "https://gulzaib.dev": "ENOTFOUND",
     "https://oxygenlms.com": "HTTP 525",
     "https://vu.edu.pk": "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
-    "https://www.linkedin.com/in/gulzaib-ai": "HTTP 429"
+    "https://www.linkedin.com/in/gulzaib-ai": "HTTP 999"
   }
 }
