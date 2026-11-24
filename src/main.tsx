@@ -1,11 +1,6 @@
-import { createRoot } from 'react-dom/client'
-import '@fontsource/syne/600.css'
-import '@fontsource/syne/700.css'
-import '@fontsource/syne/800.css'
-import '@fontsource-variable/inter'
-import '@fontsource/jetbrains-mono/400.css'
-import '@fontsource/jetbrains-mono/500.css'
-import './styles.css'
-import App from './App'
-
-createRoot(document.getElementById('root')!).render(<App />)
+/**
+ * Entry point. The portfolio (3D, GSAP, sound) and the blog (calm, reading-first)
+ * are separate bundles: /blog/* loads only the blog, everything else the portfolio.
+ */
+if (window.location.pathname.startsWith('/blog')) import('./blog/main')
+else import('./portfolio')

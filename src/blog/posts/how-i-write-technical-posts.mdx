@@ -1,0 +1,258 @@
+---
+title: "How I write technical posts (a field guide, and every component on this blog)"
+description: "A practical process for writing clear technical articles, from finding the one idea to editing for skimmers, plus a live reference of every building block this blog supports."
+date: 2026-11-22
+category: Writing
+tags: [writing, documentation, style-guide, mdx]
+art: tree
+level: Beginner
+references:
+  - id: diataxis
+    authors: Procida, D.
+    title: "Diátaxis: a systematic approach to technical documentation"
+    url: https://diataxis.fr
+  - id: zinsser
+    authors: Zinsser, W.
+    title: "On Writing Well"
+    venue: Harper Perennial
+    year: 2006
+---
+
+<TLDR>
+
+Write for one reader with one problem. Lead with the answer, then the reasoning, then the details. Edit for the skimmer first: headings, summaries and visuals should tell the story on their own.
+
+</TLDR>
+
+I was the technical editor of my university’s magazine, and I’ve written a lot of documentation since. The posts that work best all follow the same process. This post explains it, and it doubles as the reference for every component this blog supports, so you can see each one in context.
+
+## 1. Find the one idea
+
+Before writing, finish this sentence: *“After reading this, the reader will be able to …”*. If you need two sentences, you have two posts.
+
+It also helps to know which kind of document you’re writing. The Diátaxis framework <Cite id="diataxis" /> splits technical writing into four kinds:
+
+| Type | Reader’s question | Example on this blog |
+| --- | --- | --- |
+| Tutorial | “Teach me.” | A first Laravel API |
+| How-to guide | “Help me do this task.” | [Multi-tenant Laravel](/blog/multi-tenant-laravel-saas) |
+| Explanation | “Help me understand.” | [RAG for exam generation](/blog/rag-for-exam-generation) |
+| Reference | “Give me the facts.” | This component list |
+
+## 2. Lead with the answer
+
+Readers decide in seconds whether to keep reading. Put the conclusion first, in a summary box:
+
+<TLDR>
+
+This is a `TLDR` box. Use it at the top of a post for the answer in two or three sentences.
+
+</TLDR>
+
+Research posts get an `Abstract` instead, which reads more formally:
+
+<Abstract>
+
+This is an `Abstract`. Problem, approach, result, in one paragraph.
+
+</Abstract>
+
+## 3. Structure for skimmers
+
+Most people skim first and read second. Good headings, short paragraphs and lists let them find what they need. Every heading on this blog gets an anchor link (hover it and click the `#`), and the table of contents follows you as you read.
+
+### Callouts
+
+Use callouts sparingly, for things the reader must not miss.
+
+<Callout type="note">A `note` adds useful context.</Callout>
+
+<Callout type="tip">A `tip` is a shortcut or best practice.</Callout>
+
+<Callout type="warning">A `warning` flags something that can go wrong.</Callout>
+
+<Callout type="danger">A `danger` callout is for data loss, security or money.</Callout>
+
+<Callout type="insight">An `insight` is the non-obvious idea in the post.</Callout>
+
+<Callout type="success" title="Custom titles work too">A `success` callout reports a result.</Callout>
+
+### Steps
+
+<Steps>
+<Step title="Use Steps for procedures">
+
+When order matters, number it. Each step gets a title and a body.
+
+</Step>
+<Step title="One action per step">
+
+If a step has “and then” in it, split it.
+
+</Step>
+</Steps>
+
+### Details
+
+<Details summary="Use Details to hide optional depth">
+
+Edge cases, long logs and full config files go here, so the main path stays short.
+
+</Details>
+
+## 4. Show, don’t only tell
+
+### Code
+
+Code blocks have syntax highlighting, a language label, a copy button, optional file titles, line numbers and highlighted lines:
+
+```ts title="src/example.ts" showLineNumbers {2}
+export function greet(name: string) {
+  return `Hello, ${name}!` // this line is highlighted
+}
+```
+
+Inline code looks like `npm run build`, and keyboard shortcuts look like <Kbd>Ctrl</Kbd> + <Kbd>K</Kbd>. On the blog index, press <Kbd>/</Kbd> to search.
+
+<Tabs>
+<Tab label="npm">
+
+```bash
+npm install @mdx-js/rollup
+```
+
+</Tab>
+<Tab label="pnpm">
+
+```bash
+pnpm add @mdx-js/rollup
+```
+
+</Tab>
+</Tabs>
+
+<FileTree>
+
+- src/blog/
+  - **posts/** one `.mdx` file per post
+  - components/
+  - blog.css
+
+</FileTree>
+
+### Diagrams and charts
+
+<Flow steps={["Idea", "Outline", "Draft", "Edit", "Publish"]} caption="A Flow shows a sequence or pipeline. It wraps on small screens." />
+
+<BarChart
+  title="BarChart: simple comparisons without a charting library"
+  unit="%"
+  data={[
+    { label: "Skim headings", value: 80 },
+    { label: "Read summary", value: 60 },
+    { label: "Read everything", value: 20 },
+  ]}
+  caption="Illustrative numbers. Captions should say what the reader is looking at and where the data came from."
+/>
+
+<Stats>
+  <Stat value="8" label="Posts" note="and counting" />
+  <Stat value="4" label="Categories" />
+  <Stat value="68ch" label="Line length" note="for comfortable reading" />
+</Stats>
+
+<Timeline>
+  <Event date="Step 1" title="A Timeline">Good for stories, launches and post-mortems.</Event>
+  <Event date="Step 2" title="Each event">Has a date, a title and an optional body.</Event>
+</Timeline>
+
+### Math
+
+Inline math like $E = mc^2$ uses single dollar signs. Display math uses double:
+
+$$
+\operatorname{softmax}(z)_i = \frac{e^{z_i}}{\sum_j e^{z_j}}
+$$
+
+### Figures and video
+
+<Figure caption="A Figure with a caption. Use src and alt for images; always describe the image in alt text." credit="Cover art is generated from the post’s slug.">
+  <svg viewBox="0 0 600 200" role="img" aria-label="Three connected circles labelled Write, Edit, Ship">
+    <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.7">
+      <circle cx="100" cy="100" r="50" />
+      <circle cx="300" cy="100" r="50" />
+      <circle cx="500" cy="100" r="50" />
+      <path d="M150 100h100M350 100h100" />
+    </g>
+    <g fontFamily="Inter, sans-serif" fontSize="18" textAnchor="middle" fill="currentColor">
+      <text x="100" y="106">Write</text>
+      <text x="300" y="106">Edit</text>
+      <text x="500" y="106">Ship</text>
+    </g>
+  </svg>
+</Figure>
+
+A `YouTube` component loads a privacy-friendly embed only when clicked, so it never slows the page down.
+
+## 5. Help the reader decide
+
+Founders and engineers read to make decisions. Make the trade-offs explicit.
+
+<ProsCons title="ProsCons" pros={["Makes trade-offs scannable", "Forces you to be honest about downsides"]} cons={["Oversimplifies nuanced choices"]} />
+
+<Decision title="A Decision record (ADR)" status="Proposed" date="Nov 2026">
+
+**Context.** Why a decision was needed.
+
+**Decision.** What we chose.
+
+**Consequences.** What gets easier and what gets harder.
+
+</Decision>
+
+## 6. Write like a person
+
+Plain words beat clever ones. Zinsser’s advice still holds: strip every sentence to its cleanest components <Cite id="zinsser" />. Use “I” and “you”. Explain jargon the first time, like <Term def="A score that measures how well retrieved results match what you needed.">retrieval quality</Term>, with a `Term` that shows a definition on hover or tap.
+
+Side comments that would interrupt the flow go in a sidenote.<Sidenote>On wide screens this sits in the margin. On phones, tap the mark to open it inline.</Sidenote> Classic footnotes work too.[^1]
+
+<PullQuote cite="A PullQuote">
+
+Use a pull quote for the one line you want people to remember and share.
+
+</PullQuote>
+
+> A regular blockquote is for quoting someone else’s words.
+
+Link to related posts with a card:
+
+<PostLink slug="code-is-not-a-business" />
+
+Or to anything on the web:
+
+<LinkCard href="https://diataxis.fr" title="Diátaxis documentation framework" description="A systematic approach to technical documentation authoring." />
+
+## 7. Edit, then edit for the skimmer
+
+- [x] Read only the headings. Do they tell the story?
+- [x] Read only the summary and takeaways. Is the answer there?
+- [x] Cut the first paragraph. Was it throat-clearing?
+- [ ] Read it aloud. Fix every sentence you stumble on.
+
+<Takeaways>
+
+- One reader, one problem, one idea per post.
+- Lead with the answer.
+- Structure for skimmers, then write for readers.
+- Make trade-offs explicit and cite your sources.
+
+</Takeaways>
+
+<Update date="22 Nov 2026">
+
+Use an `Update` block when you change a published post, so returning readers know what’s new.
+
+</Update>
+
+[^1]: Footnotes are collected at the end of the post, with a link back to where you were.
+

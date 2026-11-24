@@ -46,10 +46,18 @@ export default function Lessons() {
             <span className="lesson__line" />
             <span className="lesson__n mono">{l.n}</span>
             <h3>{l.title}</h3>
-            <p>{l.body}</p>
+            <div>
+              <p>{l.body}</p>
+              <a className="lesson__more mono" href={`/blog/${l.slug}`} data-cursor="Read">
+                Read the full story →
+              </a>
+            </div>
           </article>
         ))}
       </div>
+      <a className="lessons__blog btn btn--small btn--ghost" href="/blog" onMouseEnter={fx.hover} data-cursor="Read">
+        More notes on the blog ↗
+      </a>
     </section>
   )
 }

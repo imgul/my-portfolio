@@ -12,6 +12,18 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://gulzaib.dev" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" type="application/rss+xml" title="Gul’s Notebook" href="/rss.xml" />
+    <script>
+      // blog: apply the reader's theme before first paint (no white flash)
+      try {
+        if (location.pathname.indexOf('/blog') === 0) {
+          var p = JSON.parse(localStorage.getItem('gul:blog-prefs') || '{}'), t = p.theme || 'auto'
+          if (t === 'auto') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          document.documentElement.dataset.theme = t
+          document.documentElement.style.background = { light: '#fbfaf7', sepia: '#f4ecd8', dark: '#0c0c10' }[t]
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

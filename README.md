@@ -36,6 +36,37 @@ The keyboard sounds (the playable stack synth, the hold-to-copy charge) follow t
 
 **Other tracks.** Press **N** or tap the chip to switch between Soundtrack, Deep Focus (one calm pad and piano piece), Original, A · Neon Pulse, B · Margalla Dawn and C · Night Shift (lo-fi). Those share one score that re-arranges itself per section (`scenes.ts` and `conductor.ts`): layers, key, tone, reverb and ambience change with each section. Audition any track with `/?sound=soundtrack|focus|original|pulse|dawn|lofi`.
 
+## Blog: Gul’s Notebook (`/blog`)
+
+A reading-first blog for founders, engineers, technical writers and AI researchers, kept separate from the portfolio. It has its own small bundle and calm styles, with no 3D, custom cursor or smooth-scroll hijacking.
+
+**Write a post:** add `src/blog/posts/my-slug.mdx`. The file name is the URL (`/blog/my-slug`).
+
+```mdx
+---
+title: "Post title"
+description: "One or two sentences. Used on cards, in feeds and in search results."
+date: 2026-11-24
+updated: 2026-12-01          # optional
+category: Founder            # Founder | Engineering | AI Research | Writing
+tags: [saas, validation]
+series: Founder lessons      # optional; posts in a series link to each other
+seriesPart: 4
+featured: true               # optional; shown as "Start here" on the index
+draft: true                  # optional; visible in dev only
+art: city                    # galaxy | dna | road | city | book | stack | network | tree | mountains | globe
+level: Beginner              # optional: Beginner | Intermediate | Advanced
+references:                  # optional; cite with <Cite id="lewis2020" />
+  - { id: lewis2020, authors: "Lewis, P. et al.", title: "Retrieval-Augmented Generation…", year: 2020, url: "https://arxiv.org/abs/2005.11401" }
+---
+```
+
+**Reading experience:** serif body at about 66 characters per line and 1.7 line height. Light, sepia, dark and auto themes, four text sizes, serif or sans, and comfortable or wide width, all saved per visitor. Optional quiet focus music comes from the portfolio soundtrack. Also: a reading progress bar with minutes left, a sticky table of contents with scrollspy, heading anchor links, series navigation, related posts, previous/next, share and copy link, "Cite this post" (BibTeX/APA), "Suggest an edit" on GitHub, an author card and a newsletter signup. The index has search (press `/`), category and tag filters, a featured post, series, posts grouped by year and topics.
+
+**Components available in every post (no imports):** `TLDR`, `Abstract`, `Takeaways`, `Callout` (note/tip/warning/danger/insight/success), `Update`, `PullQuote`, `Stats`/`Stat`, `Timeline`/`Event`, `Decision` (ADR), `ProsCons`, `Steps`/`Step`, `Tabs`/`Tab`, `FileTree`, `Kbd`, `Cite` with automatic references, `BarChart`, `Flow`, `Sidenote`, `Term`, `Details`, `Figure`, `YouTube`, `LinkCard`, `PostLink`. Markdown extras: GFM tables, task lists and footnotes, KaTeX math (`$…$`, `$$…$$`), and Shiki code blocks with `title="file.ts"`, `showLineNumbers`, `{2-4}` line highlights and a copy button. The post [`how-i-write-technical-posts.mdx`](src/blog/posts/how-i-write-technical-posts.mdx) shows every component in use.
+
+**At build time** the blog writes `rss.xml`, `feed.json`, `sitemap.xml`, `robots.txt` and a pre-rendered HTML shell per post with its own title, description, Open Graph tags and JSON-LD, so links preview properly when shared. Set `VITE_SITE_URL` to change the canonical domain (default `https://gulzaib.vercel.app`). Set `VITE_NEWSLETTER_ENDPOINT` to a URL that accepts `POST {email}` to collect signups; without it, the form falls back to a pre-filled email.
+
 ## Develop
 
 ```bash
@@ -61,8 +92,16 @@ src/
   lib/haptics.ts          vibration / iOS haptics
   lib/scroll.ts           Lenis + ScrollTrigger wiring
   components/             one file per section + HUD, cursor, loader
+  main.tsx                entry: loads the blog for /blog*, the portfolio otherwise
+  blog/
+    posts/*.mdx           blog posts (frontmatter + MDX)
+    BlogIndex.tsx         /blog: search, filters, featured, series, archive
+    PostPage.tsx          /blog/:slug: TOC, progress, series, share, cite, related
+    components/mdx.tsx    every component available inside posts
+    blog.css              reading-first themes and typography
+scripts/blog.mjs          frontmatter loader, reading time, RSS/JSON feed, sitemap, per-post HTML
 ```
 
 ## Deploy
 
-It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`).
+It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`). `vercel.json` sends any unknown `/blog/*` route to the app, so it can show its 404 page.

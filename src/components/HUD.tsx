@@ -114,6 +114,9 @@ export default function HUD() {
               <span className="chip__text">{hapticsOn ? 'Haptics' : 'No haptics'}</span>
             </button>
           )}
+          <a className="hud__item chip hud__blog" href="/blog" onMouseEnter={fx.hover} data-cursor="Read" title="Read the blog">
+            <span aria-hidden="true">✎</span> Blog
+          </a>
           <button className="hud__item btn btn--small btn--primary hud__talk" ref={talk} onClick={() => go(SECTIONS.length - 1)} onMouseEnter={fx.hover} data-cursor="Hi!">
             Let’s talk
           </button>
@@ -154,6 +157,12 @@ export default function HUD() {
               </button>
             </li>
           ))}
+          <li style={{ transitionDelay: `${menu ? SECTIONS.length * 0.04 : 0}s` }}>
+            <a href="/blog" onMouseEnter={fx.hover}>
+              <span className="mono">↗</span>
+              Blog
+            </a>
+          </li>
         </ul>
       </div>
     </div>

@@ -1,0 +1,140 @@
+---
+title: "Agents that do real work: a pragmatic multi-agent design"
+description: "Most agent demos produce text. Agents that run business operations need tools, state, guardrails and a human in the loop. The design I use at SynergyFlow Labs, and where I'd keep it simple."
+date: 2026-11-16
+category: AI Research
+tags: [agents, llm, architecture, automation]
+art: galaxy
+level: Intermediate
+references:
+  - id: yao2022
+    authors: Yao, S. et al.
+    title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+    venue: ICLR
+    year: 2023
+    url: https://arxiv.org/abs/2210.03629
+  - id: schick2023
+    authors: Schick, T. et al.
+    title: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+    venue: NeurIPS
+    year: 2023
+    url: https://arxiv.org/abs/2302.04761
+  - id: anthropic2024
+    authors: Anthropic
+    title: "Building effective agents"
+    year: 2024
+    url: https://www.anthropic.com/engineering/building-effective-agents
+---
+
+<TLDR>
+
+Start with a workflow, not an agent. Add autonomy only where the path genuinely can’t be known in advance. When you do use agents, give them narrow tools, explicit state, budgets and a human approval step for anything irreversible.
+
+</TLDR>
+
+At SynergyFlow Labs we build software that does work rather than just showing it: following up on leads, drafting WhatsApp replies in Urdu, reconciling invoices. “Agentic AI” is the label, but the hard part isn’t the model. It’s everything around it.
+
+## Workflows first
+
+Most business processes are mostly predictable. If you can draw the steps on a whiteboard, write them as code and use the LLM *inside* specific steps: classify this message, extract these fields, draft this reply. That’s a workflow, and it’s easier to test, cheaper to run and simpler to debug than an autonomous agent <Cite id="anthropic2024" />.
+
+<ProsCons
+  title="Fixed workflow vs. autonomous agent"
+  pros={["Workflow: predictable cost and latency", "Workflow: easy to test step by step", "Agent: handles open-ended tasks", "Agent: adapts when a step fails"]}
+  cons={["Workflow: breaks on cases you didn't plan for", "Agent: harder to test and audit", "Agent: cost and latency vary a lot", "Agent: can loop or take wrong actions"]}
+/>
+
+I reach for an agent loop only when the number and order of steps genuinely depend on what the model finds along the way, like researching a lead across several sources.
+
+## The agent loop
+
+The core loop is the ReAct pattern <Cite id="yao2022" />: the model reasons about what to do, calls a tool, observes the result and repeats until it’s done.
+
+<Flow
+  steps={[
+    { label: "Goal + state", note: "what we know so far" },
+    { label: "Think", note: "pick the next action" },
+    { label: "Act", note: "call one tool" },
+    { label: "Observe", note: "append the result" },
+    { label: "Done?", note: "or loop, within budget" },
+  ]}
+/>
+
+```ts title="agent.ts" {9-11}
+async function runAgent(goal: string, tools: Tool[], budget = { steps: 12, usd: 0.5 }) {
+  const state: Step[] = []
+  for (let i = 0; i < budget.steps; i++) {
+    const action = await llm.decide({ goal, state, tools: tools.map((t) => t.spec) })
+    if (action.type === 'finish') return action.result
+
+    const tool = tools.find((t) => t.name === action.tool)!
+    // irreversible actions wait for a human
+    if (tool.irreversible && !(await approve(action))) {
+      state.push({ action, result: 'rejected by human' })
+      continue
+    }
+    state.push({ action, result: await tool.run(action.input) })
+    if (spent() > budget.usd) break
+  }
+  return escalate(goal, state) // hand over to a person with full context
+}
+```
+
+## Design rules
+
+<Steps>
+<Step title="Narrow tools with typed inputs">
+
+`send_whatsapp(to, template_id, vars)` is safer than `send_message(anything)`. Models are good at learning to use well-described tools <Cite id="schick2023" />, and narrow tools limit how much damage a mistake can do.
+
+</Step>
+<Step title="Explicit state, outside the prompt">
+
+Store each step’s action and result in the database. You get audit trails, resumability after crashes, and the ability to replay a run when debugging.
+
+</Step>
+<Step title="Budgets on everything">
+
+Max steps, max cost, max wall-clock time. An agent without a budget will eventually find a loop.
+
+</Step>
+<Step title="Humans approve the irreversible">
+
+Sending money, emailing a customer or deleting data needs a person to click approve, at least until you have weeks of logs showing the agent gets it right.
+
+</Step>
+<Step title="Escalate gracefully">
+
+When the agent gives up, hand the task to a person *with the full trace*, so they don’t start from zero.
+
+</Step>
+</Steps>
+
+<Callout type="danger" title="Prompt injection is real">
+
+If an agent reads emails or web pages, those pages can contain instructions. Treat all retrieved content as untrusted data, never as instructions, and never give a browsing agent access to destructive tools.
+
+</Callout>
+
+## Multi-agent, carefully
+
+On my portfolio I show six agents: research, planning, coding, sales, support and operations. In practice, “multiple agents” mostly means **multiple prompts and tool sets with clear handoffs**, coordinated by plain code. A planner that delegates to specialists can work well, but every extra agent adds latency, cost and a new place for things to go wrong.
+
+My rule of thumb: split into separate agents when the tools or context are genuinely different (the sales agent should never see deployment tools), not just because it looks good in a diagram.
+
+## How I evaluate agents
+
+- **Task success rate** on a fixed set of realistic tasks, rerun on every prompt or model change.
+- **Steps and cost per successful task**, because a correct agent that costs too much is still a failure.
+- **Human override rate**: how often people reject or edit the agent’s proposed actions.
+- **Trace review**: reading 20 full runs a week catches problems no metric shows.
+
+<Takeaways>
+
+- Use workflows for predictable processes. Use agents only where the path is unknown.
+- Narrow, typed tools; explicit, stored state; budgets on everything.
+- Humans approve anything irreversible.
+- Split into multiple agents for different tools or context, not for the diagram.
+
+</Takeaways>
+

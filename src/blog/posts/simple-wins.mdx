@@ -1,0 +1,98 @@
+---
+title: "Simple wins: designing for the least technical user in the room"
+description: "People pick software they enjoy over software with the longest feature list. A practical guide to designing SaaS for users who would rather not use software at all."
+date: 2026-10-26
+category: Founder
+tags: [product, ux, saas, lessons]
+series: Founder lessons
+seriesPart: 3
+art: book
+level: Intermediate
+---
+
+<TLDR>
+
+In a school or a shop, the person who decides whether your software survives is often the least technical person who has to use it every day. Design for them first, and everyone else benefits.
+
+</TLDR>
+
+When I visited schools for Oxygen LMS, one moment stuck with me. I showed an admin clerk a demo with a dashboard full of charts. She nodded politely and asked one question: *“Where do I click to print the fee voucher?”*
+
+She didn’t need a dashboard. She needed one button, every month, without thinking.
+
+## The person who can veto you
+
+In B2B software, there’s usually a buyer, a champion and a user. Founders spend their energy on the buyer. But the user is the one who decides, day after day, whether the product actually gets used or quietly gets replaced by the old spreadsheet.
+
+<Callout type="insight">
+
+If the least technical user can’t do their main task in under a minute, your product will lose to paper, however good it is.
+
+</Callout>
+
+## Principles I design by
+
+<Steps>
+<Step title="One screen, one job">
+
+Each screen should answer one question or do one task. Fee collection is a screen. Attendance is a screen. Analytics can live somewhere else.
+
+</Step>
+<Step title="Defaults over settings">
+
+Every setting you add is a decision you’re pushing onto the user. Pick sensible defaults for the local context: currency, date format, academic calendar, language.
+
+</Step>
+<Step title="Speak their language">
+
+Use the words people already use. “Fee voucher”, not “invoice document”. “Class”, not “cohort”. Support Urdu where it matters.
+
+</Step>
+<Step title="Make mistakes cheap">
+
+Undo, confirmations for destructive actions only, and clear messages. A user who is scared of breaking something will stop exploring.
+
+</Step>
+<Step title="Design for the worst device">
+
+An old Android phone on a slow connection. If it works there, it works everywhere.
+
+</Step>
+</Steps>
+
+## Simple is not the same as basic
+
+Simple doesn’t mean fewer capabilities. It means the complexity sits in the right place: in the system, not in the user’s head.
+
+<ProsCons
+  title="Hiding complexity behind progressive disclosure"
+  pros={["New users see only what they need", "Power users can still go deeper", "Fewer support tickets"]}
+  cons={["Harder to design well", "Advanced features are less discoverable", "Needs good defaults to work"]}
+/>
+
+A good test: can you explain the main workflow to a new staff member in one sentence? *“Choose the class, tick who’s absent, press save.”* If your sentence needs the word “then” more than twice, there’s room to simplify.
+
+## How to test it cheaply
+
+You don’t need a UX lab. You need five people and twenty minutes each.
+
+1. Give them one real task: “Collect this month’s fee for this student.”
+2. Don’t help. Watch where they hesitate and write it down.
+3. Fix the biggest hesitation. Repeat with the next five people.
+
+<Callout type="tip">
+
+Record the screen (with permission) and watch it back at double speed. The pauses tell you exactly where the design is unclear.
+
+</Callout>
+
+<Takeaways>
+
+- The least technical daily user has an effective veto over your product.
+- One screen, one job. Defaults over settings.
+- Simple means complexity in the system, not in the user’s head.
+- Five users and a stopwatch beat a hundred opinions.
+
+</Takeaways>
+
+That’s the end of the founder lessons series for now. If you’re building for schools, shops or anyone who would rather not use software, I’d love to hear what you’ve learned. [Send me an email](mailto:iigulzaib@gmail.com).
