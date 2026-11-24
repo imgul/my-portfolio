@@ -70,7 +70,7 @@ export default function Education() {
   )
 
   return (
-    <section className="edu" ref={root} data-shape="0" data-index="7" id="learning">
+    <section className="edu" ref={root} data-shape="7" data-index="7" id="learning">
       <header className="section-head">
         <p className="eyebrow mono">
           <span>(07)</span> Learning

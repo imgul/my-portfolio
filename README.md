@@ -6,7 +6,7 @@ A portfolio you can see, hear and feel, built for Muhammad Gulzaib (Gul): Founde
 
 | Layer | Tech |
 | --- | --- |
-| 3D | **Three.js**. A single GPU particle system (up to 18k points) that morphs between 7 shapes as you scroll: core sphere → torus knot → Margalla-style terrain → galaxy → DNA helix → neural constellation → the word "GUL". Custom GLSL adds noise, mouse repulsion, scroll turbulence and audio reactivity. |
+| 3D | **Three.js**. A single GPU particle system (up to 20k points) with its own animated shape for every section: galaxy (Intro) → DNA (Manifesto) → winding road with milestones (Journey) → city of boxes (Ventures) → open book with a turning page (Notes) → floating stack layers (Stack) → neural network (Agents) → tree with roots (Learning) → Margalla Hills with a trail and sun (Beyond) → globe with arcs from Islamabad (Contact). Custom GLSL crossfades the shapes and adds per-shape motion, mouse repulsion, scroll turbulence and audio reactivity. |
 | Motion | **GSAP + ScrollTrigger** (pinned manifesto, horizontal journey, stacking venture cards, counters, split-letter reveals) and **Lenis** smooth scroll |
 | Sound | **Web Audio API**, fully generative with no audio files: evolving ambient pad, pentatonic "music box", hover/click/whoosh SFX. Scroll speed opens the filter. |
 | Haptics | **Vibration API** on Android, plus the iOS 18+ Safari switch-checkbox haptic trick |
@@ -53,7 +53,8 @@ All copy (experience, ventures, skills, certifications, agents and so on) lives 
 ```
 src/
   data/content.ts         all portfolio content
-  three/ParticleField.ts  morphing particle scene (GLSL)
+  three/ParticleField.ts  morphing particle scene (GLSL, per-shape motion + framing)
+  three/shapes.ts         point-cloud builders, one per section
   lib/audio.ts            generative music + SFX engine
   lib/haptics.ts          vibration / iOS haptics
   lib/scroll.ts           Lenis + ScrollTrigger wiring

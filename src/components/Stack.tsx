@@ -49,7 +49,7 @@ export default function Stack() {
   }, [entered])
 
   return (
-    <section className="stack" ref={root} data-shape="4" data-index="5" id="stack">
+    <section className="stack" ref={root} data-shape="5" data-index="5" id="stack">
       <header className="section-head">
         <p className="eyebrow mono">
           <span>(05)</span> Stack

@@ -28,7 +28,7 @@ export default function Contact() {
   const words = ["Let's build", "what's next."]
 
   return (
-    <section className="contact" ref={root} data-shape="6" data-index="9" id="contact">
+    <section className="contact" ref={root} data-shape="9" data-index="9" id="contact">
       <p className="eyebrow mono">
         <span>(09)</span> Contact
       </p>
