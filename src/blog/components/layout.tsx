@@ -425,6 +425,11 @@ export function Header() {
   }, [prefs.theme, prefs.size])
 
   const isHidden = hidden && !open
+  // sticky bars below the header (the /blog filters) move up into its place while it's hidden
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-header-hidden', isHidden)
+  }, [isHidden])
+  useEffect(() => () => document.documentElement.removeAttribute('data-header-hidden'), [])
   const nSaved = hydrated ? saved.length : 0
   return (
     <>
