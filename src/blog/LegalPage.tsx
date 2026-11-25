@@ -105,7 +105,7 @@ function Privacy() {
 
       <h2 id="recommendations">Personalised suggestions</h2>
       <p>
-        If you choose <em>Accept</em>, this browser keeps a separate suggestion history of post IDs, activity type, time and a small strength value. It records estimated reading engagement, saves, search result matches,
+        If you choose <em>Accept optional</em>, this browser keeps a separate suggestion history of post IDs, activity type, time and a small strength value. It records estimated reading engagement, saves, search result matches,
         votes and attempts to share or copy a link. A share attempt does not mean you completed a share. The suggestion history does not contain the words you searched for or a share destination.
       </p>
       <p>
@@ -120,7 +120,7 @@ function Privacy() {
       </p>
       <p>
         The history holds at most 100 entries. Entries older than 90 days are ignored and removed on the next history update. Use <em>Clear suggestion history</em> on the blog or below to delete it without
-        deleting your saved posts and reading positions. Choose <em>Essential only</em> to stop this feature and delete optional storage. The separate recent-search list can contain the actual search terms;
+        deleting your saved posts and reading positions. Choose <em>Reject optional</em> to stop this feature and delete optional storage. The separate recent-search list can contain the actual search terms;
         searches placed in a URL may also appear in ordinary server logs if you load or share that URL.
       </p>
 
@@ -158,7 +158,7 @@ function Privacy() {
         <li>Request logs and the vote rate limit: legitimate interest in keeping the site online and free of spam.</li>
         <li>Votes, feedback and emails: consent. You choose to send them, and you can take them back.</li>
         <li>
-          Optional browser storage (recent searches, suggestion history and the link-preview cache): consent, given with the <em>Accept</em> button.
+          Optional browser storage (recent searches, suggestion history and the link-preview cache): consent, given with the <em>Accept optional</em> button.
         </li>
       </ul>
 
@@ -372,10 +372,10 @@ function Cookies() {
       <h2 id="choices">What the buttons do</h2>
       <ul>
         <li>
-          <strong>Accept</strong> allows the optional items too. The notice goes away and doesn’t come back.
+          <strong>Accept optional</strong> allows the optional items too. Your choice is remembered on this device.
         </li>
         <li>
-          <em>Essential only</em> deletes the optional items and stops them being saved. The notice goes away for good this way as well.
+          <strong>Reject optional</strong> deletes the optional items and stops them being saved. Essential settings and saved posts remain.
         </li>
       </ul>
       <p>The notice only returns if this policy changes in a way you should know about. You can change your answer below at any time.</p>
@@ -411,7 +411,7 @@ function StoragePanel() {
 
   const choose = (c: 'all' | 'essential') => {
     saveConsent(c)
-    toast(c === 'all' ? 'Saved: accepted' : 'Saved: essential only')
+    toast(c === 'all' ? 'Saved: optional accepted' : 'Saved: optional rejected')
   }
   const copyId = async () => {
     try {
@@ -437,7 +437,7 @@ function StoragePanel() {
         <div>
           <dt>Your answer</dt>
           <dd>
-            {consent ? (consent.choice === 'all' ? 'Accepted' : 'Essential only') : 'Not answered yet'}
+            {consent ? (consent.choice === 'all' ? 'Optional accepted' : 'Optional rejected') : 'Not answered yet'}
             {consent?.at ? ` (${new Date(consent.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, policy v${CONSENT_VERSION})` : ''}
           </dd>
         </div>
@@ -449,11 +449,11 @@ function StoragePanel() {
         </div>
       </dl>
       <div className="b-legal__actions">
-        <button type="button" className="b-btn is-sm" onClick={() => choose('all')} aria-pressed={consent?.choice === 'all'}>
-          Accept
+        <button type="button" className="b-btn is-sm is-ghost" onClick={() => choose('all')} aria-pressed={consent?.choice === 'all'}>
+          Accept optional
         </button>
         <button type="button" className="b-btn is-sm is-ghost" onClick={() => choose('essential')} aria-pressed={consent?.choice === 'essential'}>
-          Essential only
+          Reject optional
         </button>
         {id && (
           <button type="button" className="b-btn is-sm is-ghost" onClick={copyId}>
