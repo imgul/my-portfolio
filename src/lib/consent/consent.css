@@ -89,8 +89,8 @@
   padding: 0.55rem 0.9rem;
   border: 1px solid var(--cc-button-border);
   border-radius: 999px;
-  background: var(--cc-button);
-  color: var(--cc-button-ink);
+  background: var(--cc-bg);
+  color: var(--cc-fg);
   font: 600 0.88rem/1.2 var(--cc-font);
   cursor: pointer;
   transition:
@@ -99,7 +99,13 @@
     transform 0.15s;
 }
 .cc__btn:hover {
-  border-color: var(--cc-fg);
+  background: color-mix(in srgb, var(--cc-fg) 12%, var(--cc-bg));
+}
+.cc__btn--accept {
+  background: var(--cc-button);
+  color: var(--cc-button-ink);
+}
+.cc__btn--accept:hover {
   background: var(--cc-button-hover);
 }
 .cc__btn:active {
