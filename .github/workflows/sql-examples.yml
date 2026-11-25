@@ -1,0 +1,35 @@
+# Runs the SQL published with blog posts against a real MySQL server, so every schema and every
+# "the database enforces this" claim in a post is checked. Runs when the SQL or its tests change.
+name: SQL examples
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'public/downloads/**.sql'
+      - 'tests/sql/**'
+      - '.github/workflows/sql-examples.yml'
+
+jobs:
+  mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        mysql: ['8.0', '8.4']
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: School ERP schema
+        run: bash tests/sql/school-erp-schema.test.sh
+        env:
+          MYSQL: mysql -h127.0.0.1 -uroot
+          MYSQL_PWD: root
