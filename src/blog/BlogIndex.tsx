@@ -10,41 +10,11 @@ import { useCounts } from './reactions'
 import { toggleSaved, useReader } from './store'
 import { useHydrated } from './hydrated'
 import { indexHead, setHead } from './head'
-
-/* ------------------------------------------------------------------ search */
-
-const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-const words = (q: string) => norm(q).split(/\s+/).filter(Boolean)
-
-/** Weighted match: title > tags/series > description. Returns 0 for no match. */
-function score(p: PostMeta, q: string) {
-  const ws = words(q)
-  if (!ws.length) return 1
-  const title = norm(p.title)
-  const meta = norm(`${p.category} ${p.tags.join(' ')} ${p.series ?? ''} ${p.level ?? ''}`)
-  const desc = norm(p.description)
-  const heads = norm(p.headings.map((h) => h.text).join(' '))
-  let s = 0
-  for (const w of ws) {
-    const t = title.includes(w) ? 6 : meta.includes(w) ? 3 : desc.includes(w) ? 2 : heads.includes(w) ? 1 : 0
-    if (!t) return 0
-    s += t
-  }
-  return s
-}
-
-/** Highlight query words in a string with <mark>. */
-function Hl({ text, q }: { text: string; q: string }) {
-  const ws = words(q).filter((w) => w.length > 1)
-  if (!ws.length) return <>{text}</>
-  const re = new RegExp(`(${ws.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'ig')
-  const parts = text.split(re)
-  return <>{parts.map((part, i) => (i % 2 ? <mark key={i}>{part}</mark> : part))}</>
-}
+import { Hl, didYouMean, search as runSearch, useSearchIndex, type SectionHit } from './search'
 
 /* -------------------------------------------------------------------- card */
 
-export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 3 }: { p: PostMeta; big?: boolean; q?: string; likes?: number; view?: 'grid' | 'list'; headingLevel?: 2 | 3 }) {
+export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 3, hit }: { p: PostMeta; big?: boolean; q?: string; likes?: number; view?: 'grid' | 'list'; headingLevel?: 2 | 3; hit?: SectionHit }) {
   const { saved, progress } = useReader()
   const hydrated = useHydrated()
   const isSaved = hydrated && saved.includes(p.slug)
@@ -83,6 +53,22 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
         <p className="b-card__desc">
           <Hl text={p.description} q={q} />
         </p>
+        {hit && (hit.h || hit.snippet) && (
+          <p className="b-card__hit">
+            {hit.id ? (
+              <Link href={`${postUrl(p)}#${hit.id}`} className="b-card__hitlink">
+                # <Hl text={hit.h} q={q} />
+              </Link>
+            ) : (
+              <span className="b-card__hitlink">In the introduction</span>
+            )}
+            {hit.snippet && (
+              <span className="b-card__snip">
+                <Hl text={hit.snippet} q={q} />
+              </span>
+            )}
+          </p>
+        )}
         <div className="b-card__foot">
           {p.series ? (
             <span className="b-card__series">
@@ -238,9 +224,12 @@ export default function BlogIndex() {
   }, [draft])
 
   const likes = (slug: string) => counts(slug)?.likes ?? 0
+  // full text is fetched only once someone searches; until then titles, topics and headings are searched
+  const sections = useSearchIndex(!!q)
+  const hits = useMemo(() => new Map(runSearch(q, sections).map((h) => [h.p.slug, h])), [q, sections])
   const filtered = useMemo(() => {
     const list = posts
-      .map((p) => ({ p, s: score(p, q) }))
+      .map((p) => ({ p, s: hits.get(p.slug)?.score ?? 0 }))
       .filter(({ p, s }) => s > 0 && (!tag || p.tags.includes(tag)) && (!cat || p.category === cat) && (!savedOnly || (hydrated && saved.includes(p.slug))))
     const by: Record<Sort, (a: (typeof list)[0], b: (typeof list)[0]) => number> = {
       new: (a, b) => (q ? b.s - a.s : 0) || (a.p.date < b.p.date ? 1 : -1),
@@ -250,8 +239,9 @@ export default function BlogIndex() {
     }
     return list.sort(by[sort] ?? by.new).map((x) => x.p)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, tag, cat, savedOnly, saved, hydrated, sort, counts])
+  }, [q, hits, tag, cat, savedOnly, saved, hydrated, sort, counts])
 
+  const suggestion = useMemo(() => (q && !filtered.length ? didYouMean(q, sections) : null), [q, filtered.length, sections])
   const filtering = !!(q || tag || cat || savedOnly || sort !== 'new')
   // the tab title, description and share tags follow the active filter
   useEffect(() => {
@@ -436,6 +426,15 @@ export default function BlogIndex() {
             ) : (
               <p>No posts match that yet. Try fewer words, or a broader topic.</p>
             )}
+            {q && suggestion && (
+              <p>
+                Did you mean{' '}
+                <button type="button" className="b-linkbtn is-strong" onClick={() => setParam('q', suggestion)}>
+                  {suggestion}
+                </button>
+                ?
+              </p>
+            )}
             <button type="button" className="b-btn is-ghost" onClick={() => navigate('/blog', { keepScroll: true })}>
               Clear filters
             </button>
@@ -444,7 +443,7 @@ export default function BlogIndex() {
         {filtering ? (
           <div className={`b-grid ${view === 'list' ? 'is-list' : ''}`}>
             {filtered.map((p) => (
-              <PostCard key={p.slug} p={p} q={q} likes={likes(p.slug)} view={view} />
+              <PostCard key={p.slug} p={p} q={q} likes={likes(p.slug)} view={view} hit={q ? hits.get(p.slug)?.sections[0] : undefined} />
             ))}
           </div>
         ) : (

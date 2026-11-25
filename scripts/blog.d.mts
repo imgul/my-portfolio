@@ -8,6 +8,7 @@ export const RESEARCH_DESCRIPTION: string
 export const NOT_FOUND_DESCRIPTION: string
 export function loadPosts(dir?: string, opts?: { includeDrafts?: boolean }): (Record<string, unknown> & { slug: string; cover?: { style: string; alt?: string } & Record<string, unknown> })[]
 export function coverVersions(): Record<string, string>
+export function searchIndex(dir?: string, opts?: { includeDrafts?: boolean }): Record<string, { id: string; h: string; t: string }[]>
 export const COVER_STYLES: string[]
 export const PUBLISH_TZ: string
 export function todayISO(): string

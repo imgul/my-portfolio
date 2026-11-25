@@ -159,6 +159,59 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
   return posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.title.localeCompare(b.title)))
 }
 
+/* ----------------------------------------------------------------- search */
+
+/** Readable plain text of a markdown/MDX fragment, for search snippets (keeps punctuation, unlike plainText). */
+function readable(md) {
+  return md
+    .replace(/^(import|export)\s.*$/gm, ' ')
+    .replace(/^```.*$/gm, ' ')
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ')
+    // JSX: keep visible text that lives in props (titles, captions, pros/cons), drop the tag itself
+    .replace(/<[^>]+>/g, (m) => ' ' + (m.match(/"[^"]*"/g) || []).filter((q) => /\s/.test(q)).map((q) => q.slice(1, -1)).join('. ') + ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[\^[^\]]*\]/g, '')
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(^|\W)[*_](\S.*?\S|\S)[*_](?=\W|$)/g, '$1$2')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/^\s*(?:[-*+]|\d+\.|>|\|)\s?/gm, '')
+    .replace(/\|/g, ' ')
+    .replace(/^[\s:-]+$/gm, ' ')
+    .replace(/[{}]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Full-text search index: for each post, its sections (intro + every h2/h3) as
+ * `{ id, h, t }` (heading id, heading text, plain text). Loaded lazily by the
+ * search dialog (virtual:blog-search), so it never weighs on the first page load.
+ */
+export function searchIndex(dir = POSTS_DIR, { includeDrafts = false } = {}) {
+  const out = {}
+  for (const p of loadPosts(dir, { includeDrafts })) {
+    const { content } = matter(fs.readFileSync(path.join(dir, `${p.slug}.mdx`), 'utf8'))
+    const slugger = new GithubSlugger()
+    const sections = [{ id: '', h: '', lines: [] }]
+    let fence = false
+    for (const line of content.split('\n')) {
+      if (/^```/.test(line)) fence = !fence
+      const m = !fence && /^(#{2,3})\s+(.+?)\s*#*\s*$/.exec(line)
+      if (m) {
+        const h = readable(m[2])
+        sections.push({ id: slugger.slug(h), h, lines: [] })
+      } else sections.at(-1).lines.push(line)
+    }
+    // use the exact ids the TOC uses when the heading count lines up (it always should)
+    if (sections.length - 1 === p.headings.length) p.headings.forEach((h, i) => (sections[i + 1].id = h.id))
+    out[p.slug] = sections.map((s) => ({ id: s.id, h: s.h, t: readable(s.lines.join('\n')) })).filter((s) => s.h || s.t)
+  }
+  return out
+}
+
 /* ------------------------------------------------------------------- lint */
 
 /**

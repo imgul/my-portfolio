@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, navigate, useHashScroll } from './router'
+import { Link, useHashScroll } from './router'
 import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, neighbours, postUrl, posts, related, seriesOf, SITE_URL, type PostMeta } from './data'
 import { getBody, loadBody, type Body } from './content'
 import { PostCover } from './components/PostCover'
+import { openSearch } from './components/SearchDialog'
 import { Faq, mdxComponents, PostContext, References } from './components/mdx'
 import { AuthorCard, isTypingEvent, Newsletter } from './components/layout'
 import { Reactions } from './components/reactions'
@@ -491,7 +492,7 @@ export function NotFound() {
         role="search"
         onSubmit={(e) => {
           e.preventDefault()
-          navigate(`/blog?q=${encodeURIComponent(q)}`)
+          openSearch(q)
         }}
       >
         <Icon name="search" />
