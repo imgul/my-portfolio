@@ -5,6 +5,8 @@ import { useReader } from '../store'
 import { useHydrated } from '../hydrated'
 import { Icon, toast } from './ui'
 import { OrcidLink, ResearchProfiles } from './scholar'
+import SearchDialog from './SearchDialog'
+import { loadSearchIndex } from '../search'
 import { activeProfiles, AUTHOR } from '../scholar.mjs'
 
 /* ------------------------------------------------------------ focus music */
@@ -293,6 +295,7 @@ export function Settings({ open, onClose, returnFocus }: { open: boolean; onClos
 
 const SHORTCUTS: [string[], string][] = [
   [['/'], 'Search posts'],
+  [['Ctrl', 'K'], 'Search posts (⌘ K on a Mac)'],
   [['j', 'k'], 'Next / previous section (in a post)'],
   [['s'], 'Save or unsave this post'],
   [['f'], 'Focus mode: hide everything but the text'],
@@ -363,6 +366,18 @@ export function Header() {
   const { path } = useLocation()
   const [hidden, setHidden] = useState(false)
   const btn = useRef<HTMLButtonElement>(null)
+  const searchBtn = useRef<HTMLButtonElement>(null)
+  // the search dialog is mounted on first use, then kept (so it reopens instantly)
+  const [search, setSearch] = useState<{ open: boolean; q: string; used: boolean }>({ open: false, q: '', used: false })
+  const openSearch = (q = '') => setSearch({ open: true, q, used: true })
+  const closeSearch = () => {
+    setSearch((s) => ({ ...s, open: false }))
+  }
+  useEffect(() => {
+    const on = (e: Event) => openSearch(String((e as CustomEvent).detail ?? ''))
+    window.addEventListener('gul:search', on)
+    return () => window.removeEventListener('gul:search', on)
+  }, [])
 
   useEffect(() => {
     // hide on scroll down, show on scroll up: more room for reading
@@ -380,7 +395,16 @@ export function Header() {
   useEffect(() => {
     let g = 0
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        return openSearch()
+      }
       if (typing(e) || e.defaultPrevented) return
+      // on /blog, "/" focuses the search field on the page itself (BlogIndex)
+      if (e.key === '/' && location.pathname.replace(/\/+$/, '') !== '/blog') {
+        e.preventDefault()
+        return openSearch()
+      }
       if (e.key === '?') return setHelp(true)
       if (e.key === 't') {
         const i = THEME_CYCLE.indexOf(prefs.theme as Prefs['theme'])
@@ -427,7 +451,17 @@ export function Header() {
             <a href="/">Portfolio</a>
           </nav>
           <div className="b-header__tools">
-            <button type="button" className="b-iconbtn" onClick={() => navigate('/blog?focus=search')} aria-label="Search posts" title="Search (/)">
+            <button
+              ref={searchBtn}
+              type="button"
+              className="b-iconbtn"
+              onClick={() => openSearch()}
+              onPointerEnter={() => loadSearchIndex().catch(() => {})}
+              onFocus={() => loadSearchIndex().catch(() => {})}
+              aria-label="Search posts"
+              aria-haspopup="dialog"
+              title="Search (/ or Ctrl K)"
+            >
               <Icon name="search" />
             </button>
             <button type="button" className="b-iconbtn is-desk" onClick={() => setHelp(true)} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
@@ -453,6 +487,7 @@ export function Header() {
         <Settings open={open} onClose={() => setOpen(false)} returnFocus={() => btn.current?.focus()} />
       </header>
       <ShortcutsDialog open={help} onClose={() => setHelp(false)} />
+      {search.used && <SearchDialog open={search.open} initial={search.q} onClose={closeSearch} />}
     </>
   )
 }

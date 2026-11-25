@@ -7,10 +7,13 @@ import remarkFrontmatter from 'remark-frontmatter'
 import rehypeKatex from 'rehype-katex'
 import rehypeSlug from 'rehype-slug'
 import rehypePrettyCode from 'rehype-pretty-code'
-import { loadPosts, coverVersions, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
+import { loadPosts, coverVersions, searchIndex, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
 
 const VIRTUAL = 'virtual:blog'
 const RESOLVED = '\0' + VIRTUAL
+// full text of every post, split by section: its own lazily loaded chunk, used only by the search dialog
+const SEARCH = 'virtual:blog-search'
+const SEARCH_RESOLVED = '\0' + SEARCH
 
 /**
  * Blog plugin:
@@ -66,8 +69,10 @@ function blog(): Plugin {
     },
     resolveId(id) {
       if (id === VIRTUAL) return RESOLVED
+      if (id === SEARCH) return SEARCH_RESOLVED
     },
     load(id) {
+      if (id === SEARCH_RESOLVED) return `export const sections = ${JSON.stringify(searchIndex(POSTS_DIR, { includeDrafts: !isBuild }))}`
       if (id !== RESOLVED) return
       // the client only needs to know a cover exists (and its alt text); the rest is for scripts/covers.mjs
       const v = coverVersions()
@@ -79,8 +84,10 @@ function blog(): Plugin {
       server.watcher.add(POSTS_DIR)
       const reload = (file: string) => {
         if (!file.replace(/\\/g, '/').startsWith(POSTS_DIR)) return
-        const mod = server.moduleGraph.getModuleById(RESOLVED)
-        if (mod) server.moduleGraph.invalidateModule(mod)
+        for (const m of [RESOLVED, SEARCH_RESOLVED]) {
+          const mod = server.moduleGraph.getModuleById(m)
+          if (mod) server.moduleGraph.invalidateModule(mod)
+        }
         server.ws.send({ type: 'full-reload' })
       }
       server.watcher.on('add', reload)

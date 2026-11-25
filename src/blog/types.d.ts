@@ -11,3 +11,8 @@ declare module 'virtual:blog' {
   /** shared with scripts/blog.mjs so the client-side <head> matches the pre-rendered one */
   export const SEO: { BLOG_TITLE: string; BLOG_INDEX_TITLE: string; BLOG_DESCRIPTION: string; RESEARCH_DESCRIPTION: string; NOT_FOUND_DESCRIPTION: string }
 }
+
+declare module 'virtual:blog-search' {
+  /** per post slug: intro + every h2/h3 section as { id, h (heading), t (plain text) } */
+  export const sections: Record<string, { id: string; h: string; t: string }[]>
+}

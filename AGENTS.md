@@ -40,6 +40,7 @@ There is no ESLint/Prettier config and no test suite; **`npm run build` is the c
 | `src/three/` | Particle scene (`ParticleField.ts`) and shape builders. Loaded lazily, on idle, after `load` (see `src/App.tsx`). |
 | `src/blog/posts/*.mdx` | Blog posts. File name = URL slug. |
 | `src/blog/components/mdx.tsx` | Every component usable inside posts. |
+| `src/blog/search.tsx`, `components/SearchDialog.tsx` | Blog search: the dialog (header button, `/`, Ctrl/⌘ K) on every page and the `/blog` filter. Full text by section comes from `virtual:blog-search` (`searchIndex` in `scripts/blog.mjs`), loaded only when someone searches. |
 | `src/blog/blog.css` | Blog themes/typography. Colours must pass WCAG AA in every theme (the footer promises this). |
 | `src/blog/scholar.mjs` | Author, ORCID, licences, citation formats. |
 | `scripts/blog.mjs` | Frontmatter loader, post lint, feeds, sitemap, robots, llms.txt, all `<head>` tags and JSON-LD. |
