@@ -31,6 +31,8 @@ export interface PostMeta {
   /** dated in the future: visible in dev only, published on its date */
   scheduled?: boolean
   art: Art
+  /** featured image at /covers/<slug>.webp (scripts/covers.mjs); without it the generative `art` is used */
+  cover?: { style: string; alt: string; v?: string }
   level?: 'Beginner' | 'Intermediate' | 'Advanced'
   references: Reference[]
   faq: { q: string; a: string }[]

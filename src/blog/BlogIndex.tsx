@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, navigate, useHashScroll, useLocation } from './router'
 import { allSeries, allTags, audienceLower, CATEGORIES, CATEGORY_COLOR, featuredPost, formatDate, getPost, postUrl, posts, totalMinutes, type Category, type PostMeta } from './data'
-import { CoverArt } from './components/CoverArt'
+import { PostCover } from './components/PostCover'
 import { Newsletter, isTypingEvent } from './components/layout'
 import { LikeCount } from './components/reactions'
 import { Icon } from './components/ui'
@@ -59,7 +59,7 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
       onFocus={() => prefetchBody(p.slug)}
     >
       <span className="b-card__art" aria-hidden="true">
-        <CoverArt art={p.art} seed={p.slug} color={CATEGORY_COLOR[p.category]} />
+        <PostCover p={p} eager={big} sizes={big ? '(max-width: 900px) 100vw, 640px' : view === 'list' ? '220px' : '(max-width: 720px) 100vw, 400px'} />
         {prog?.done ? (
           <span className="b-card__badge">
             <Icon name="check" size={12} /> Read

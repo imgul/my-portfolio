@@ -5,3 +5,6 @@ dist
 .DS_Store
 .vercel
 .ssr
+
+# contact sheet from `npm run covers` (for reviewing every cover at once)
+public/covers/_sheet.webp

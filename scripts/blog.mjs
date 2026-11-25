@@ -22,6 +22,7 @@
  *   featured:     optional, true pins it as the featured post
  *   draft:        optional, true hides it in production builds
  *   art:          cover art: galaxy | dna | road | city | book | stack | network | tree | mountains | globe
+ *   cover:        featured image, rendered by scripts/covers.mjs: { style, alt, …style fields }. See docs/COVERS.md.
  *   level:        optional: Beginner | Intermediate | Advanced
  *   references:   optional list of { id, title, authors, year, venue, url } for <Cite id="…" />
  *   faq:          optional list of { q, a }: rendered at the end + FAQPage structured data
@@ -54,9 +55,16 @@ export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'f3b9c27e6a5d4e81b0c4d2a
 /** URLs under /blog/ that are pages, not posts. */
 export const RESERVED_SLUGS = ['research']
 export const ARTS = ['galaxy', 'dna', 'road', 'city', 'book', 'stack', 'network', 'tree', 'mountains', 'globe']
+/** Keep in sync with STYLES in scripts/covers.mjs (not imported here, so blog.mjs stays free of sharp/resvg). */
+export const COVER_STYLES = ['number', 'versus', 'code', 'image', 'headline', 'quote', 'face', 'list', 'mockup', 'terminal']
 
 /** Absolute path of the posts folder (forward slashes). */
 export const POSTS_DIR = fileURLToPath(new URL('../src/blog/posts', import.meta.url)).replace(/\\/g, '/')
+/** Content hash per cover, written by scripts/covers.mjs; appended as ?v= so a changed cover is never served stale. */
+export function coverVersions() {
+  const f = fileURLToPath(new URL('../public/covers/manifest.json', import.meta.url))
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {}
+}
 
 const WPM = 230
 const toISO = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : d ? String(d).slice(0, 10) : undefined)
@@ -125,6 +133,7 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
         draft: !!data.draft,
         scheduled: (toISO(data.date) ?? '1970-01-01') > todayISO(),
         art: data.art ?? 'galaxy',
+        cover: data.cover && typeof data.cover === 'object' ? { ...data.cover, style: String(data.cover.style ?? '') } : undefined,
         level: data.level,
         references: Array.isArray(data.references)
           ? data.references.map((r) => ({
@@ -181,6 +190,11 @@ export function lintPosts(dir = POSTS_DIR) {
     if (p.updated && p.updated < p.date) err('updated is before date')
     if (!CATEGORIES.includes(p.category)) err(`category must be one of ${CATEGORIES.join(', ')}`)
     if (!ARTS.includes(p.art)) err(`art must be one of ${ARTS.join(', ')}`)
+    if (p.cover) {
+      if (!COVER_STYLES.includes(p.cover.style)) err(`cover.style must be one of ${COVER_STYLES.join(', ')}`)
+      if (!p.cover.alt) err('cover.alt is required: describe what the featured image shows (it has text in it)')
+      if (p.cover.style === 'image' && !fs.existsSync(path.join(POSTS_DIR, '../../../assets/covers', p.cover.file ?? `${p.slug}.png`))) err(`cover image assets/covers/${p.cover.file ?? `${p.slug}.png`} not found`)
+    } else warn('no cover: add a featured image (docs/COVERS.md); posts with a cover get more clicks from cards and shares')
     const fm = matter(fs.readFileSync(path.join(dir, `${p.slug}.mdx`), 'utf8')).data
     if (fm.license && !LICENSES[fm.license]) err(`license must be one of ${Object.keys(LICENSES).join(', ')}`)
     if (p.doi && !DOI_RE.test(p.doi)) err(`doi "${p.doi}" is not a DOI (10.xxxx/…)`)
