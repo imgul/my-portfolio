@@ -1,0 +1,292 @@
+---
+title: "laravel-agent-guard: brakes and budgets for Laravel AI agents"
+seoTitle: "laravel-agent-guard: stop runaway Laravel AI agent loops"
+description: "Why I built laravel-agent-guard, a free MIT package that stops looping Laravel AI agents, caps spend per tenant across workers and switches to a cheaper model."
+date: 2026-11-25
+category: Engineering
+cover:
+  style: code
+  kicker: "Engineering · laravel/ai + laravel/mcp · MIT"
+  hook: "Brake the loop before the next step is billed."
+  file: "app/Ai/Agents/ReportWriter.php"
+  badge: "imgul/laravel-agent-guard v1.0.0"
+  highlight: [8]
+  code: |
+    GuardAgentSteps::make()
+        ->forTenant(fn () => (string) $tenants->id())
+        ->budget([
+            'run' => [40_000, 60_000, 'tokens'],
+            'tenant' => [2_000_000, 2_500_000, 'tokens'],
+        ])
+        ->downshiftAt(0.80, toModel: 'claude-haiku-4-5')
+        ->breakLoops(maxRepeats: 3)
+        ->enforce()
+  alt: "Laravel code that wraps an AI agent in GuardAgentSteps with token budgets per run and per tenant, a downshift to claude-haiku-4-5 at 80 percent, and breakLoops with maxRepeats 3. Headline: Brake the loop before the next step is billed."
+tags: [laravel, ai, agents, open-source, php]
+art: network
+level: Intermediate
+references:
+  - id: loop47k
+    authors: Vectara (awesome-agent-failures)
+    title: "Case study: the $47,000 LangChain A2A infinite loop"
+    year: 2026
+    url: https://github.com/vectara/awesome-agent-failures/blob/main/docs/case-studies/langchain-a2a-47k-infinite-loop.md
+  - id: laravelai
+    authors: Laravel
+    title: "Laravel AI SDK (Laravel 13.x documentation)"
+    year: 2026
+    url: https://laravel.com/docs/13.x/ai-sdk
+  - id: redislua
+    authors: Redis
+    title: "Scripting with Lua"
+    year: 2026
+    url: https://redis.io/docs/latest/develop/programmability/eval-intro/
+  - id: intercept
+    authors: PromptPHP
+    title: "intercept-budget-guard: budget guard middleware for Laravel AI agents"
+    year: 2026
+    url: https://github.com/promptphp/intercept-budget-guard
+  - id: clutch
+    authors: Obaid
+    title: "laravel-clutch: an agent harness for Laravel AI"
+    year: 2026
+    url: https://github.com/obaid/laravel-clutch
+faq:
+  - q: "How do I stop a Laravel AI agent from looping?"
+    a: "Add step middleware that watches the tool calls of each run. laravel-agent-guard fingerprints every call, and when the same call repeats (3 times by default) or the context grows fast with no new tool output, it opens a circuit breaker and returns StepResult::stop() before the next step is sent to the provider."
+  - q: "Isn't MaxSteps enough to stop a runaway agent?"
+    a: "MaxSteps caps how many steps one run may take, which is a good backstop. It doesn't know that the steps are repeating, and it can't limit what one tenant spends across many runs and many queue workers. laravel-agent-guard adds those two checks on top of MaxSteps."
+  - q: "Is laravel-agent-guard free to use?"
+    a: "Yes. It's MIT-licensed on GitHub and Packagist. Install it with composer require imgul/laravel-agent-guard. It needs PHP 8.3+, Laravel 12 or 13, laravel/ai 1.x and laravel/mcp 1.x, and works best with Redis."
+---
+
+<TLDR>
+
+**laravel-agent-guard** is a free, MIT-licensed package I wrote for Laravel apps that run AI agents with `laravel/ai` or serve tools with `laravel/mcp`. It runs inside every agent step. It stops a run that keeps repeating the same tool call, keeps each tenant’s spend under a cap even when ten queue workers spend at once, and moves the run to a cheaper model near the cap so the customer still gets an answer. Install it with `composer require imgul/laravel-agent-guard`. It starts in observe mode, so adding it changes nothing until you switch enforcement on.
+
+</TLDR>
+
+In November 2025 a team ran a four-agent market research pipeline. Two of the agents, an analyser and a verifier, kept handing the same work back to each other for 11 days. Nothing crashed and no error fired. A billing alert finally caught it, at about $47,000 <Cite id="loop47k" />. Their post-mortem names the missing pieces plainly: no budget per agent and no rule for when to stop.
+
+Laravel now has the same kind of agent loop built in. That’s good news, and it’s why I built this package.
+
+## Why Laravel agents need a brake
+
+With `laravel/ai`, an agent calls the model, the model asks for a tool, your tool runs, and the result goes back to the model. That cycle is one **step**. The SDK repeats it until the model gives a final answer or the run hits the `MaxSteps` limit you set <Cite id="laravelai" />.
+
+Each step re-sends the whole conversation so far. So a loop costs more on every step, not the same amount each time. And from the outside, a looping agent looks healthy: the provider returns 200s, the queue job is “processing” and your health check is green.
+
+When I looked at running agents in a multi-tenant app, three failure cases kept coming up:
+
+| Problem | What actually happens | Why the usual fix falls short |
+| --- | --- | --- |
+| Runaway loop | The model calls `search` with the same arguments again and again | `MaxSteps` stops it eventually, but only after paying for every step up to the limit |
+| Budget race | Ten Horizon workers each read “80% spent”, each decide one more call fits, and together they blow past the cap | A read-then-write check in PHP is a race. Two workers can pass it at the same moment |
+| Hard failure | The budget check throws, the controller returns a 500, and a paying user sees an error page | Failing closed protects your bill but hurts the customer you most wanted to keep |
+
+## Why I wrote it
+
+I build multi-tenant Laravel SaaS. Oxygen LMS keeps many schools in one database, with a `tenant_id` on every row (I wrote up [how that tenancy works](/blog/multi-tenant-laravel-saas)). AI work in that setup runs on queue workers, as I described in [shipping AI features without blocking the app](/blog/ai-features-in-laravel-queues-streaming). The question that bothered me was simple: what stops one school’s looping agent from spending the money meant for everyone else?
+
+`laravel/ai` already gives you the right place to answer it. Agent middleware wraps every step, and each step arrives as a `PendingStep` that you can change before it leaves the server, for example with `withModel()` or `withoutTools()`. A middleware can also return `StepResult::stop()` to end the run cleanly.
+
+So I looked at what existed in November 2026. I found good pieces. [intercept-budget-guard](https://github.com/promptphp/intercept-budget-guard) estimates each step’s cost and can block, log or trim the prompt <Cite id="intercept" />. [laravel-clutch](https://github.com/obaid/laravel-clutch) is a full harness with durable runs, approvals and budgets <Cite id="clutch" />. What I couldn’t find was one middleware that does loop detection, a budget that holds across workers and a model downgrade, all inside the step. That’s the gap this package fills.
+
+## What laravel-agent-guard does on every step
+
+Here is the whole order, taken from the middleware’s `handle()` method:
+
+<Flow
+  steps={[
+    { label: "Circuit breaker", note: "tripped? stop the run" },
+    { label: "Reserve budget", note: "atomic, before the call" },
+    { label: "Downshift", note: "near the cap? cheaper model" },
+    { label: "Run the step", note: "the real provider call" },
+    { label: "Reconcile + detect", note: "real usage, loop checks" },
+  ]}
+  caption="Everything that can stop or change a step happens before the provider is called."
+/>
+
+There is also a kill switch check at the very start. I’ve left it out of this picture on purpose, for reasons I explain under “Before you rely on it”.
+
+The checks that cost money to skip run first. By the time the request leaves your server, the guard has already decided whether it should leave at all.
+
+### Loop braking
+
+Every tool call gets two fingerprints: a SHA-256 of the tool name plus its exact arguments, and a second one after cosmetic noise is removed (extra whitespace, page numbers and other numeric parameters). Changing `page: 2` to `page: 3` doesn’t hide a loop. Four detectors watch the last 50 calls of a run:
+
+| Detector | Trips when | Default |
+| --- | --- | --- |
+| Exact repeat | The same call with the same arguments repeats | 3 times |
+| Normalised arguments | The same call repeats once noise is stripped | 3 times |
+| Frequency | The same tool is called again, with any arguments | 3 calls |
+| Context growth | Input tokens jump step over step while tools return nothing new | ratio 2.5 |
+
+In enforce mode, a finding trips a circuit breaker. While it’s open, the next step returns `StepResult::stop()`, and `laravel/ai` ends the run with the steps it already finished. There is also an optional similarity check (simhash or trigrams) for calls that differ in wording but mean the same thing. It only runs once the frequency detector has fired, so it stays cheap.
+
+The frequency default is strict: a third call to the same tool in one run counts as a loop, even with different arguments. If a tool is meant to be called many times, such as a read-only lookup, list it in `exemptTools()`.
+
+### Budgets that hold across workers
+
+You can cap four scopes: one **run**, one **agent**, one **tenant** or one **tool**. Each takes a soft cap and a hard cap, in tokens or US dollars.
+
+The guard reserves before the step runs. It estimates the input from the messages (about 4 characters per token) plus an allowance for the output. That reservation runs as one Lua script inside Redis, and Redis runs each script atomically, with nothing else touching the data in between <Cite id="redislua" />. So the “read the total, check the cap, add my share” sequence can’t interleave between workers. The script returns one of three answers: allow, deny, or allow-but-the-soft-cap-is-crossed. After the step, the guard swaps the estimate for the real usage the provider reported.
+
+Without Redis there’s a database driver that uses row locks. It works, but it handles heavy concurrency less well, so use Redis for production.
+
+### Downshift instead of an error page
+
+When spend reaches a threshold of the soft cap (80% in the example below), the next step is sent to a cheaper model with `withModel()`. You can also drop expensive tools with `withoutTools()` and lower the output limit with `withMaxTokens()`. The customer gets a plainer answer instead of an error.
+
+The hard cap still means stop. In enforce mode, crossing it throws `BudgetExceededException`, which you catch and turn into whatever message suits your app. The space between the soft cap and the hard cap is where downshift does its work.
+
+## Adding it to an agent
+
+```bash
+composer require imgul/laravel-agent-guard
+php artisan vendor:publish --tag=agent-guard-config
+```
+
+Then add the middleware to any agent that implements `HasMiddleware`:
+
+```php title="app/Ai/Agents/ReportWriter.php"
+use App\Tenancy\TenantContext;
+use Imgul\AgentGuard\Middleware\GuardAgentSteps;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasMiddleware;
+use Laravel\Ai\Promptable;
+
+class ReportWriter implements Agent, HasMiddleware
+{
+    use Promptable;
+
+    public function middleware(): array
+    {
+        $tenants = app(TenantContext::class);
+
+        return [
+            GuardAgentSteps::make()
+                ->forTenant(fn () => (string) $tenants->id())
+                ->budget([
+                    'run' => [40_000, 60_000, 'tokens'],
+                    'tenant' => [2_000_000, 2_500_000, 'tokens'],
+                ])
+                ->downshiftAt(0.80, toModel: 'claude-haiku-4-5')
+                ->breakLoops(maxRepeats: 3)
+                ->enforce(),
+        ];
+    }
+}
+```
+
+<Callout type="warning" title="Return a string from forTenant()">
+
+The tenant resolver must return a non-empty string. If it returns an integer, such as a bare `Auth::id()`, the guard treats the run as having no tenant and quietly skips every tenant-scoped budget. Cast it, as above.
+
+</Callout>
+
+For a `laravel/mcp` server, add the `GuardedMcpTool` trait to a tool and return its limits from `guardBudget()`, for example `['tool_daily_calls' => 100, 'max_repeats' => 3]`. MCP calls are grouped by the authenticated user, not by the `MCP-Session-Id` header, because a client can change that header whenever it likes.
+
+## Rolling it out without breaking anything
+
+<Steps>
+<Step title="Install it in observe mode">
+
+Observe is the default. Every detector runs and every event fires (`LoopDetected`, `BudgetSoftCapReached`, `ModelDownshifted` and the rest), but no step is changed or stopped. Leave `->enforce()` off at first, or keep `AGENT_GUARD_MODE=observe` in `.env`.
+
+</Step>
+<Step title="Watch the events for a week">
+
+Send them to your logs or Slack. If a detector fires on normal traffic, raise its threshold or exempt the tool before it can stop a real customer’s run.
+
+</Step>
+<Step title="Switch enforcement on">
+
+Set `AGENT_GUARD_MODE=enforce` or call `->enforce()`. From then on, loops are stopped, soft caps downshift and hard caps throw.
+
+</Step>
+</Steps>
+
+## Testing it in Pest
+
+`AgentGuard::fake()` swaps in an in-memory guard, so tests need no Redis. It comes with assertions for each control:
+
+```php title="tests/Feature/ReportWriterTest.php"
+use Imgul\AgentGuard\Facades\AgentGuard;
+
+it('stops the writer when it repeats a search', function () {
+    AgentGuard::fake();
+
+    // ... run the agent with a faked provider that loops on `search`
+
+    AgentGuard::assertLoopDetected('search');
+});
+```
+
+There are also `assertDownshifted()`, `assertBudgetSoftCapReached()`, `assertCircuitTripped()` and `assertNothingDenied()`. The last one is useful in tests for normal traffic, so a threshold you tightened doesn’t start blocking good runs.
+
+## What the loop reproducer shows
+
+The repo ships a small script, `benchmarks/loop-budget-bench.php`. It simulates a run that calls the same `search` tool five times. The input grows by 300 tokens a step (1,300 on step one), and each step writes 300 output tokens. It runs once without the guard and once with it.
+
+I worked the token totals from the script’s own inputs:
+
+<BarChart
+  title="Simulated 5-step loop: tokens spent"
+  unit=" tokens"
+  data={[
+    { label: "Without the guard (5 steps)", value: 11000 },
+    { label: "With the guard (3 steps)", value: 5700 },
+  ]}
+  caption="From benchmarks/loop-budget-bench.php. The breaker opens on the third identical call, so steps 4 and 5 never reach the provider. A simulation, not production data."
+/>
+
+That’s 48% fewer tokens over five steps. In a real loop that would have run to `MaxSteps(20)`, the guard still stops it at step three, so the saving grows with every step it prevents. The package docs report about 2 microseconds per loop check in memory. I haven’t measured the Redis round trip under production load yet.
+
+## What it doesn’t do
+
+It decides how much an agent may spend and when a run must stop. It doesn’t decide what an agent may touch. Use it alongside these:
+
+| You need | Use |
+| --- | --- |
+| A human to approve a risky tool call | `laravel/ai` human tool approval <Cite id="laravelai" /> |
+| Gate checks per MCP tool | [laravel-umpire](https://github.com/MujahidAbbas/laravel-umpire) |
+| Sanctum abilities per MCP tool or token | [laravel-mcp-guard](https://github.com/OrtaMarco/laravel-mcp-guard) |
+| Runs that survive restarts, plus resumable sessions | [laravel-clutch](https://github.com/obaid/laravel-clutch) <Cite id="clutch" /> |
+
+It also doesn’t redact personal data or sandbox tool code. Trust scores and signed receipts per run are planned for version 2.
+
+## Why I made it open source
+
+I kept it MIT because every product I’ve built stands on free Laravel packages, including `laravel/ai` and `laravel/mcp` themselves. A guard for agent spend is also the kind of code every team ends up writing alone, usually right after its first surprise bill. One shared version, read and fixed by many people, will be safer than a hundred private ones.
+
+Some parts only get better with other people’s help:
+
+- **Prices.** `prices.json` is versioned, and providers change their prices often. If a model is missing or a number is out of date, a pull request fixes it for everyone.
+- **Loop traces.** If your agent looped and the detectors missed it, a cleaned-up list of the tool calls is the most useful issue you can open.
+- **Drivers and edge cases.** Other stores, other queue setups, other ways of naming tenants.
+
+## Before you rely on it
+
+This is version 1.0.0, released on 24 November 2026. It has Pest tests, including one that starts several PHP processes and has them reserve against the same Redis budget at once. It hasn’t had months of other people’s production traffic yet, and while writing this post I found rough edges of my own:
+
+- **The kill switch and the circuit breaker live in PHP memory.** The budget ledger is in Redis and is shared, but these two are not. So `php artisan agent-guard:kill` runs in its own process and can’t reach your queue workers. And in a long-running Horizon worker, a breaker that trips for a tenant stays open for that tenant until the worker restarts. Moving both into Redis, with the 60-second cooldown the breaker class already has, is my first fix.
+- **Check the dollar prices.** `prices.json` says its numbers are per 1,000 tokens, but they match providers’ prices per million, so dollar budgets fill about 1,000 times too fast. Token budgets aren’t affected. Until the fix ships, use token caps or override the prices in the config.
+
+So, on day one:
+
+- Start in observe mode and read the events before you enforce anything.
+- Use token caps first.
+- Use Redis, and treat the database driver as a fallback.
+
+The code is on [GitHub at imgul/laravel-agent-guard](https://github.com/imgul/laravel-agent-guard) and the package is on [Packagist](https://packagist.org/packages/imgul/laravel-agent-guard). If you’re still deciding what your agent should be allowed to do in the first place, start with [what makes an agent useful for real work](/blog/agents-that-do-work).
+
+<Takeaways>
+
+- `MaxSteps` limits how long a run can go. It doesn’t notice that the steps are repeating, so add loop detection on top.
+- A budget check that reads a total and then writes to it in PHP is a race between workers. Do the check and the write in one atomic step, such as a Redis Lua script.
+- Give the soft cap a job: move to a cheaper model there, and keep the hard cap for a real stop.
+- Roll out any guard in observe mode first, and tune thresholds on real events before it can block a customer.
+- `composer require imgul/laravel-agent-guard`. Issues and price updates are welcome.
+
+</Takeaways>
