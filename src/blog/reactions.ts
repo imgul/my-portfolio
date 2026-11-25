@@ -7,6 +7,7 @@
  */
 import { useEffect, useSyncExternalStore } from 'react'
 import { setVote, visitorId } from './store'
+import { recordActivity, removeActivity, watchRecommendationChoice } from './recommendation-history'
 
 const URL_ = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? 'https://okcynutijcqzftegrsci.supabase.co'
 const KEY_ = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ?? 'sb_publishable_p9k8o3XsIHqv31yFPVx4MA_7UgL-f2C'
@@ -58,6 +59,12 @@ export async function loadCounts(slugs: string[]) {
  * reconciled with the server's counts; on failure the vote is rolled back.
  */
 export async function react(slug: string, value: 1 | -1 | 0, prev: 1 | -1 | 0, reason?: string): Promise<boolean> {
+  const choice = watchRecommendationChoice()
+  const rememberVote = () => {
+    if (!choice.allowed()) return
+    removeActivity(slug, 'like', 'dislike')
+    if (value) recordActivity(value === 1 ? 'like' : 'dislike', slug)
+  }
   setVote(slug, value)
   const before = cache.get(slug)
   const c = { ...(before ?? { likes: 0, dislikes: 0 }) }
@@ -67,7 +74,11 @@ export async function react(slug: string, value: 1 | -1 | 0, prev: 1 | -1 | 0, r
   if (value === -1) c.dislikes++
   cache.set(slug, { likes: Math.max(0, c.likes), dislikes: Math.max(0, c.dislikes) })
   emit()
-  if (!reactionsEnabled) return true
+  if (!reactionsEnabled) {
+    rememberVote()
+    choice.close()
+    return true
+  }
   try {
     const [row] = await rpc<{ likes: number; dislikes: number; my_value: number | null }[]>('react', {
       p_slug: slug,
@@ -79,6 +90,7 @@ export async function react(slug: string, value: 1 | -1 | 0, prev: 1 | -1 | 0, r
       cache.set(slug, { likes: Number(row.likes), dislikes: Number(row.dislikes) })
       emit()
     }
+    rememberVote()
     return true
   } catch {
     setVote(slug, prev)
@@ -86,6 +98,8 @@ export async function react(slug: string, value: 1 | -1 | 0, prev: 1 | -1 | 0, r
     else cache.delete(slug)
     emit()
     return false
+  } finally {
+    choice.close()
   }
 }
 

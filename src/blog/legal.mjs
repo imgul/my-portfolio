@@ -2,14 +2,14 @@
 // Shared by the browser (src/blog/LegalPage.tsx, head.ts) and the build (scripts/blog.mjs, prerender).
 // Change `updated` whenever the wording changes in substance.
 
-export const LEGAL_UPDATED = '2026-11-24'
+export const LEGAL_UPDATED = '2026-11-25'
 
 export const LEGAL = [
   {
     id: 'privacy',
     path: '/privacy',
     title: 'Privacy Policy',
-    description: 'What gulzaib.vercel.app collects (very little), where it goes, how long it stays and how to have it deleted. No ads, no analytics, no tracking.',
+    description: 'What gulzaib.vercel.app collects, how local suggestions work, where data goes and how to delete it. No ads or analytics.',
   },
   {
     id: 'terms',

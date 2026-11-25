@@ -80,7 +80,7 @@ function Pre(props: ComponentProps<'pre'> & { 'data-language'?: string }) {
   return (
     <div className={`b-code ${wrap ? 'is-wrapped' : ''}`}>
       <div className="b-code__bar">
-        <span className="b-code__lang">{lang && lang !== 'plaintext' ? lang : 'text'}</span>
+        <span className="b-code__lang" data-language={lang}>{lang && lang !== 'plaintext' ? lang : 'text'}</span>
         <button type="button" className="b-code__btn" onClick={() => setWrap(!wrap)} aria-pressed={wrap} title="Wrap long lines">
           <Icon name="wrap" size={15} /> <span className="b-code__btnlabel">Wrap</span>
         </button>

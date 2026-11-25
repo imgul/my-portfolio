@@ -13,6 +13,7 @@ import { useHydrated } from './hydrated'
 import { visitorId } from './store'
 import { toast } from './components/ui'
 import { CONSENT_VERSION, openConsent, saveConsent, useConsent } from '../lib/consent/consent'
+import { clearRecommendationHistory } from './recommendation-history'
 
 const EMAIL = 'iigulzaib@gmail.com'
 const updatedLabel = new Date(`${LEGAL_UPDATED}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
@@ -75,6 +76,12 @@ function Privacy() {
               <td>While the conversation is useful. Ask and I’ll delete it.</td>
             </tr>
             <tr>
+              <td>Post activity used for suggestions: active reading estimates, saves, search matches, votes and share attempts</td>
+              <td>After you accept optional storage and use those features</td>
+              <td>Your browser only; not sent to me for recommendations</td>
+              <td>Up to 100 entries; ignored after 90 days and removed on the next update or when you clear them</td>
+            </tr>
+            <tr>
               <td>The address of a link you hover</td>
               <td>When a link preview card loads</td>
               <td>The site’s own preview function, which fetches that public page</td>
@@ -95,6 +102,27 @@ function Privacy() {
           No social media widgets. Share buttons are plain links that open the other site only when you click them. A post with a video loads it from youtube-nocookie.com only after you press play.
         </li>
       </ul>
+
+      <h2 id="recommendations">Personalised suggestions</h2>
+      <p>
+        If you choose <em>Accept</em>, this browser keeps a separate suggestion history of post IDs, activity type, time and a small strength value. It records estimated reading engagement, saves, search result matches,
+        votes and attempts to share or copy a link. A share attempt does not mean you completed a share. The suggestion history does not contain the words you searched for or a share destination.
+      </p>
+      <p>
+        To estimate active reading, the page uses scroll position and signals from pointer movement, touch, the mouse wheel and navigation keys. Time counts only while the article is visible, the tab is focused
+        and there has been recent input; it stops after 30 seconds without input and is capped per visit. This is an estimate, not proof that you read. Raw movements, coordinates, keys and time measurements are not stored or sent;
+        only a derived reading or brief-visit strength may enter the suggestion history. A brief visit is weak evidence, not a dislike, and short or inactive visits do not count against you.
+      </p>
+      <p>
+        The site ranks available posts on this device using topic overlap, category, series, the kind and recency of activity, and variety among results. It avoids recommending posts marked fully read, saved or
+        disliked in that history; dislikes also lower related topics, while brief visits have a much smaller effect. A reason may appear beside a suggestion. Without optional storage, you get non-personalised suggestions.
+        No recommendation profile is sent to my server, linked to your visitor ID, used for ads or used to make decisions about you beyond ordering these posts. This history starts after consent and does not import earlier activity.
+      </p>
+      <p>
+        The history holds at most 100 entries. Entries older than 90 days are ignored and removed on the next history update. Use <em>Clear suggestion history</em> on the blog or below to delete it without
+        deleting your saved posts and reading positions. Choose <em>Essential only</em> to stop this feature and delete optional storage. The separate recent-search list can contain the actual search terms;
+        searches placed in a URL may also appear in ordinary server logs if you load or share that URL.
+      </p>
 
       <h2 id="visitor-id">The visitor ID</h2>
       <p>
@@ -130,7 +158,7 @@ function Privacy() {
         <li>Request logs and the vote rate limit: legitimate interest in keeping the site online and free of spam.</li>
         <li>Votes, feedback and emails: consent. You choose to send them, and you can take them back.</li>
         <li>
-          Optional browser storage (recent searches, the link-preview cache): consent, given with the <em>Accept</em> button.
+          Optional browser storage (recent searches, suggestion history and the link-preview cache): consent, given with the <em>Accept</em> button.
         </li>
       </ul>
 
@@ -286,6 +314,12 @@ const STORAGE: { key: string; what: string; when: string; needed: boolean }[] = 
     needed: false,
   },
   {
+    key: 'gul:recommendations:v2',
+    what: 'Up to 100 post IDs, activity types, times and derived strengths for suggestions; entries are ignored after 90 days',
+    when: 'After you accept and interact with posts or search',
+    needed: false,
+  },
+  {
     key: 'gul:lp:v2',
     what: 'A cache of link previews, kept up to 14 days so cards open faster',
     when: 'After you accept',
@@ -332,8 +366,7 @@ function Cookies() {
         </table>
       </div>
       <p>
-        Essential here means something you asked for stops working without it: your theme would reset on every page, and saved posts would vanish. Optional items only save you a few milliseconds or a
-        few keystrokes.
+        Essential here means something you asked for stops working without it: your theme would reset on every page, and saved posts would vanish. Optional items support recent searches, link-preview caching and personalised suggestions.
       </p>
 
       <h2 id="choices">What the buttons do</h2>
@@ -427,6 +460,9 @@ function StoragePanel() {
             Copy visitor ID
           </button>
         )}
+        <button type="button" className="b-btn is-sm is-ghost" onClick={() => (clearRecommendationHistory(), toast('Suggestion history cleared'))}>
+          Clear suggestion history
+        </button>
         <button type="button" className="b-btn is-sm is-ghost is-danger" onClick={clearAll}>
           Delete all site data
         </button>
@@ -443,8 +479,7 @@ function StoragePanel() {
 const LEDE: Record<LegalId, ReactNode> = {
   privacy: (
     <>
-      Short version: this site doesn’t track you. No ads, no analytics, no cookies. Data leaves your browser in three cases only: the requests any website needs, a like or dislike if you press one,
-      and an email if you write to me.
+      No ads, analytics or cookies. With your permission, post suggestions use activity stored on this device. Hosting requests, link previews, votes, emails and sharing with other sites can involve other services; this page explains each one.
     </>
   ),
   terms: <>These terms cover gulzaib.vercel.app, both the portfolio and Gul’s Notebook. They’re short because the deal is simple: I write, you read, and nobody pays anybody.</>,

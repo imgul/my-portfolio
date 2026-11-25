@@ -1466,8 +1466,37 @@ section {
   margin-top: 28px;
 }
 .hud__blog {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(236, 235, 230, 0.32);
+  border-radius: 999px;
+  background: rgba(10, 10, 14, 0.72);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
   text-decoration: none;
-  color: inherit;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.hud__blog svg {
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+}
+.hud__blog-arrow {
+  color: var(--muted);
+  font-size: 13px;
+}
+.hud__blog:hover {
+  border-color: var(--accent);
+  background: rgba(198, 255, 61, 0.1);
+}
+.hud__blog:hover .hud__blog-arrow {
+  color: var(--accent);
 }
 
 /* ---------- Stack ---------- */

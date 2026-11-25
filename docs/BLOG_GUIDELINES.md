@@ -23,7 +23,7 @@ How to write a post for Gul’s Notebook that is pleasant to read for a long tim
 | `license` ✅ | Optional. Defaults to `CC-BY-4.0` for AI Research, Engineering and Writing and `all-rights-reserved` for Founder. Open posts get Google Scholar tags, the open-access feed and free DOIs ([SCHOLARLY_INDEXING.md](SCHOLARLY_INDEXING.md)). |
 | `doi` ✅ | Optional. Filled in by `npm run blog:dois` after Rogue Scholar registers the post. Don't invent one. |
 
-The file name is the URL: lowercase words with hyphens, short, no dates (`multi-tenant-laravel-saas.mdx`). Put the words people search for in it (`how-to-write-a-readme`, not `readme-people-read`), and keep the clever phrase for the title. ✅
+The file name is the URL: use the full visible title in lowercase, drop apostrophes, replace other runs of non-alphanumeric characters with hyphens, and trim leading and trailing hyphens (`multi-tenant-laravel-saas-the-architecture-i-actually-use.mdx`). ✅
 
 Avoid renaming a published post. If a slug really has to change, do all four in the same PR: `git mv` the post and its covers, add 301 redirects for `/blog/<old>`, `/blog/<old>.md`, `/blog/<old>.pdf` and `/og/<old>.png` to `vercel.json`, update every `<PostLink>` and `src/data/content.ts`, and add a Supabase migration that moves `post_reactions` rows to the new slug (apply it at deploy). Never rename a post that has a `doi`.
 

@@ -1,5 +1,5 @@
 -- School ERP core schema (MySQL 8.4)
--- From "Designing the database for a school ERP", https://gulzaib.vercel.app/blog/school-erp-database-design
+-- From "Designing the database for a school ERP", https://gulzaib.vercel.app/blog/designing-the-database-for-a-school-erp
 -- Licence: CC BY 4.0. Muhammad Gulzaib.
 --
 -- Run in an empty practice database:

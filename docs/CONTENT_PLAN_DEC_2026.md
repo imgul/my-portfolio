@@ -89,7 +89,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | # | Date | Category | Title | Primary search intent |
 |---|---|---|---|---|
 | 1 | Tue 1 Dec | Founder | ~~Fee vouchers, not dashboards~~ published 24 Nov (notes dated 1 May 2026). Slot open: pick a reserve topic | school management software features Pakistan |
-| 2 | Wed 2 Dec | Engineering | ~~Designing the database for a school ERP~~ published 24 Nov (dated 2 May 2026, `school-erp-database-design`). Slot open: pick a reserve topic | school management system database design |
+| 2 | Wed 2 Dec | Engineering | ~~Designing the database for a school ERP~~ published 24 Nov (dated 2 May 2026, `designing-the-database-for-a-school-erp`). Slot open: pick a reserve topic | school management system database design |
 | 3 | Thu 3 Dec | Engineering | An attendance flow teachers finish in under a minute | attendance app design for schools |
 | 4 | Fri 4 Dec | Engineering | Roles and permissions in a multi-tenant Laravel app | laravel multi tenant roles permissions |
 | 5 | Sat 5 Dec | Founder | How I priced school software: per student or per branch? | how to price SaaS for schools |
@@ -134,37 +134,37 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 
 ### Week 1: Building Oxygen LMS
 
-**1. Fee vouchers, not dashboards: what schools pay for** · `fee-vouchers-not-dashboards` · Founder, Building Oxygen LMS 1
+**1. Fee vouchers, not dashboards: what schools pay for** · `fee-vouchers-not-dashboards-what-schools-pay-for` · Founder, Building Oxygen LMS 1
 - **TL;DR answers:** which features Pakistani private schools pay for first, and which ones they ignore.
 - **Talk through:** the top requests from calls and visits, in order. A feature you built that nobody used. The moment a school agreed to pay, and what tipped it. What the owner, the clerk and the teachers each asked for.
 - **Asset:** a ranked table of requests from your call log (count per request), plus a redacted fee voucher.
-- **Links:** selling-software-to-schools, designing-for-non-technical-users.
+- **Links:** distribution-beats-features-notes-from-cold-calling-schools, simple-wins-designing-for-the-least-technical-user-in-the-room.
 - **FAQ:** “What should a school management system include?” “Do schools pay for attendance software?”
 
-**2. Designing the database for a school ERP** · `school-erp-database-design` · Engineering, Building Oxygen LMS 2
+**2. Designing the database for a school ERP** · `designing-the-database-for-a-school-erp` · Engineering, Building Oxygen LMS 2
 - **TL;DR answers:** the core tables and relationships, and the two design choices you’d defend.
 - **Talk through:** students vs enrolments vs sessions. How you model classes, sections and subjects across academic years. Fee heads, concessions, and partial payments. One migration you regretted.
 - **Asset:** ER diagram (Mermaid or image) and two real migrations.
-- **Links:** multi-tenant-laravel-saas.
+- **Links:** multi-tenant-laravel-saas-the-architecture-i-actually-use.
 
 **3. An attendance flow teachers finish in under a minute** · `attendance-flow-for-teachers` · Engineering, Building Oxygen LMS 3
 - **TL;DR answers:** the screen design and backend shape that let a teacher mark a full class fast on a cheap phone.
 - **Talk through:** watching a teacher use the first version. Defaults (“everyone present, tap the absentees”). Bulk inserts and idempotency. Time per class before and after.
 - **Asset:** before/after screenshots and your measured times.
-- **Links:** designing-for-non-technical-users.
+- **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room.
 
 **4. Roles and permissions in a multi-tenant Laravel app** · `laravel-multi-tenant-permissions` · Engineering, Building Oxygen LMS 4
 - **TL;DR answers:** how to scope roles per tenant (school/branch) without leaking data, with the package and code you use.
 - **Talk through:** owner, principal, clerk, teacher and parent roles. A permissions bug you shipped. Policies vs middleware. Testing tenant isolation.
 - **Asset:** the policy and test code; a role-to-permission table.
-- **Links:** multi-tenant-laravel-saas.
+- **Links:** multi-tenant-laravel-saas-the-architecture-i-actually-use.
 - **References:** Laravel authorization docs, the permissions package docs.
 
 **5. How I priced school software: per student or per branch?** · `pricing-school-software` · Founder, Building Oxygen LMS 5
 - **TL;DR answers:** the pricing model you chose, the numbers, and what schools pushed back on.
 - **Talk through:** the models you tried or quoted. Annual vs monthly in a cash-heavy market. Setup fees. Discounts you regret.
 - **Asset:** your price table (or ranges if exact prices are private) and objections from real calls.
-- **Links:** validate-saas-idea, selling-software-to-schools.
+- **Links:** code-is-not-a-business-what-20-paying-customers-taught-me, distribution-beats-features-notes-from-cold-calling-schools.
 
 **6. WhatsApp fee reminders parents read (and reply to)** · `whatsapp-fee-reminders` · Engineering, Building Oxygen LMS 6 (field note)
 - **TL;DR answers:** how you send fee reminders over WhatsApp, what it costs, and what changed in payments.
@@ -176,7 +176,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the techniques that kept the app usable during outages and on weak networks.
 - **Talk through:** what broke first in the field. Local queueing of attendance. Payload sizes. Retries and conflict handling.
 - **Asset:** network panel numbers before/after; the sync code.
-- **Links:** ai-features-in-laravel-queues-streaming.
+- **Links:** shipping-ai-features-in-laravel-without-blocking-your-app.
 
 ### Week 2: AI in production
 
@@ -184,14 +184,14 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the criteria and scale you use to accept or reject generated questions, with pass rates.
 - **Talk through:** how teachers judged ZeroExam drafts. Common failure types. Inter-rater disagreement.
 - **Asset:** the rubric table and pass/fail counts from a real batch.
-- **Links:** rag-for-exam-generation.
+- **Links:** grounded-exam-generation-with-rag-retrieval-and-evaluation.
 - **References:** Bloom’s taxonomy source, one paper on automatic question generation evaluation.
 
 **9. What an AI feature costs: token maths for a SaaS** · `ai-feature-token-costs` · Engineering, AI in production 2
 - **TL;DR answers:** cost per user per month for one real feature, and the three levers that cut it.
 - **Talk through:** your actual monthly bill for a feature. Caching, smaller models, batching. When you pass cost to customers.
 - **Asset:** a cost table with your real token counts (prices linked to the provider’s pricing page with the date checked).
-- **Links:** ai-features-in-laravel-queues-streaming.
+- **Links:** shipping-ai-features-in-laravel-without-blocking-your-app.
 
 **10. Voice agents in Urdu, Punjabi and Pashto: where they break** · `urdu-punjabi-pashto-voice-agents` · AI Research, AI in production 3
 - **TL;DR answers:** which parts of the speech-to-LLM-to-speech pipeline fail first in local languages, from your tests.
@@ -209,19 +209,19 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** how close AI grades got to a teacher’s grades in your R&D, and where it went wrong.
 - **Talk through:** the setup, the marking scheme, agreement with human graders, handwriting/OCR issues.
 - **Asset:** agreement numbers on your sample, with sample size stated.
-- **Links:** rubric-for-ai-exam-questions, rag-for-exam-generation.
+- **Links:** rubric-for-ai-exam-questions, grounded-exam-generation-with-rag-retrieval-and-evaluation.
 
 **13. The evals I run before shipping a prompt change** · `prompt-change-evals` · AI Research, AI in production 6 (field note)
 - **TL;DR answers:** the small test set and checks you run before any prompt or model change goes live.
 - **Talk through:** a regression you caught (or didn’t). Golden examples. How long the run takes.
 - **Asset:** the eval script or test file.
-- **Links:** agents-that-do-work.
+- **Links:** agents-that-do-real-work-a-pragmatic-multi-agent-design.
 
 **14. RAG over textbooks with tables, formulas and Urdu text** · `rag-over-textbooks` · AI Research, AI in production 7
 - **TL;DR answers:** the chunking and parsing approach that worked on real syllabus PDFs.
 - **Talk through:** what broke with naive chunking. Tables and formulas. Right-to-left text. Retrieval quality before/after.
 - **Asset:** retrieval hit-rate before/after on your question set.
-- **Links:** rag-for-exam-generation.
+- **Links:** grounded-exam-generation-with-rag-retrieval-and-evaluation.
 
 ### Week 3: Running a studio and building in public
 
@@ -229,13 +229,13 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the concrete changes (pricing, clients, process) when you moved from freelancing to SynergyFlow Labs.
 - **Talk through:** the month you decided. Your first productised offer. What you stopped doing. Revenue mix before/after (ranges are fine).
 - **Asset:** a before/after table of how you sell and deliver.
-- **Links:** validate-saas-idea.
+- **Links:** code-is-not-a-business-what-20-paying-customers-taught-me.
 
 **16. How I scope an MVP in one call: my question list** · `scope-an-mvp-in-one-call` · Founder lessons 5
 - **TL;DR answers:** the questions you ask on a first call and how answers turn into a scope and a price.
 - **Talk through:** a call that went well and one that didn’t. Questions that save the most rework. Red flags.
 - **Asset:** your actual question list as a downloadable checklist.
-- **Links:** designing-for-non-technical-users.
+- **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room.
 
 **17. Building AnySub in public: the first month in numbers** · `anysub-month-one` · Founder lessons 6
 - **TL;DR answers:** visitors, signups and what moved them in AnySub’s first month, with real numbers.
@@ -246,7 +246,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** how AnySub models subscriptions, trials, renewals, currencies and budgets.
 - **Talk through:** billing cycles that don’t fit months. Currency. Audit history. A schema change you had to make.
 - **Asset:** schema diagram and migrations.
-- **Links:** multi-tenant-laravel-saas, anysub-month-one.
+- **Links:** multi-tenant-laravel-saas-the-architecture-i-actually-use, anysub-month-one.
 
 **19. Fixed price or retainer for AI projects? What I charge** · `pricing-ai-projects` · Founder lessons 7
 - **TL;DR answers:** which model you use for which kind of AI project, and why.
@@ -272,14 +272,14 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the queue failures you’ve met in production and the fix for each.
 - **Talk through:** timeouts vs retry_after, memory leaks in workers, jobs that ran twice, a 3 am incident.
 - **Asset:** config snippets and a failure → cause → fix table.
-- **Links:** ai-features-in-laravel-queues-streaming.
+- **Links:** shipping-ai-features-in-laravel-without-blocking-your-app.
 - **References:** Laravel queue docs.
 
 **23. Writing a software proposal clients sign** · `software-proposal-clients-sign` · Writing
 - **TL;DR answers:** the sections and wording of a proposal that gets signed, from your own.
 - **Talk through:** a proposal that won and one that lost. Pricing presentation. Scope exclusions.
 - **Asset:** a redacted outline of a real proposal.
-- **Links:** scope-an-mvp-in-one-call, how-i-write-technical-posts.
+- **Links:** scope-an-mvp-in-one-call, how-i-write-technical-posts-a-field-guide-with-examples.
 
 **24. My code review checklist for junior Laravel developers** · `laravel-code-review-checklist` · Engineering
 - **TL;DR answers:** what you check in every review, in order, from mentoring at Exertlogics.
@@ -296,7 +296,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the format and tone of release notes that customers open and act on.
 - **Talk through:** a release note that caused support tickets, one that reduced them. Who you write for.
 - **Asset:** two real release notes, before and after.
-- **Links:** how-to-write-a-readme, how-i-write-technical-posts.
+- **Links:** write-a-readme-people-actually-read, how-i-write-technical-posts-a-field-guide-with-examples.
 
 **27. My 2026 stack, and what I’d drop in 2027** · `my-stack-2026` · Engineering, field note
 - **TL;DR answers:** the tools you use for each layer and the ones you plan to replace.
@@ -316,7 +316,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the table design and queries you use to trace, replay and cost agent runs.
 - **Talk through:** a bug you found by replaying a run. Storage growth. What you’d move to a proper tracing tool.
 - **Asset:** schema and three useful queries.
-- **Links:** agents-that-do-work, prompt-change-evals.
+- **Links:** agents-that-do-real-work-a-pragmatic-multi-agent-design, prompt-change-evals.
 
 **30. 30 posts in 30 days: traffic, citations and what I’d change** · `30-posts-in-30-days` · Writing
 - **TL;DR answers:** what a month of daily posts did for impressions, clicks and AI citations, with real numbers.
