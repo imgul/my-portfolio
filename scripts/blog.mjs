@@ -233,6 +233,9 @@ export function lintPosts(dir = POSTS_DIR) {
 
     if (!/^[a-z0-9][a-z0-9-]*$/.test(p.slug)) err('file name must be lowercase-with-hyphens (it becomes the URL)')
     if (RESERVED_SLUGS.includes(p.slug)) err(`"${p.slug}" is a reserved page URL; rename the file`)
+    // remark-math reads "$0.50 … $0.525" as inline math, so prices must be written \$0.50
+    const money = body.replace(/`[^`\n]*`/g, '').match(/(?<![\\$])\$\d[\d,.]*(?![\d,.]*[/^_\\{}+*=<>-])/)
+    if (money) err(`"${money[0]}" will render as math: escape the dollar sign: \\${money[0]}`)
     if (!p.title || p.title === p.slug) err('missing title')
     else if (p.title.length > 70) warn(`title is ${p.title.length} chars; search results show ~60`)
     else if (p.title.length < 20) warn(`title is only ${p.title.length} chars; be more specific`)

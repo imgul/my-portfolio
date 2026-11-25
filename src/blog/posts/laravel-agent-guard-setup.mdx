@@ -162,7 +162,7 @@ Two details from that table matter. The `agent` key has no agent name in it, so 
 
 ### The hard cap can be passed by one step
 
-The hard-cap check compares against the estimate, and the estimate leaves out the system prompt and tool definitions. When a step costs more than estimated, it still runs. The next step is refused. In my run with a $0.50 hard cap and no downshift, spend reached $0.525 after step 4, and step 5 threw `BudgetExceededException`. Raise `estimate.output_tokens` closer to your real output size, and catch the exception where you call the agent:
+The hard-cap check compares against the estimate, and the estimate leaves out the system prompt and tool definitions. When a step costs more than estimated, it still runs. The next step is refused. In my run with a \$0.50 hard cap and no downshift, spend reached \$0.525 after step 4, and step 5 threw `BudgetExceededException`. Raise `estimate.output_tokens` closer to your real output size, and catch the exception where you call the agent:
 
 ```php title="app/Http/Controllers/FeeChatController.php"
 try {
@@ -174,11 +174,11 @@ try {
 
 ## Check that your model has a price
 
-The catalog that ships with v1.2.0 prices six models: `gpt-5`, `gpt-5-mini`, `claude-opus-4-1`, `claude-sonnet-4-5`, `claude-haiku-4-5` and `gemini-3-pro`. The lookup is an exact match. Any other model is costed at $0, so USD caps never fill up and no event fires.
+The catalog that ships with v1.2.0 prices six models: `gpt-5`, `gpt-5-mini`, `claude-opus-4-1`, `claude-sonnet-4-5`, `claude-haiku-4-5` and `gemini-3-pro`. The lookup is an exact match. Any other model is costed at \$0, so USD caps never fill up and no event fires.
 
-I ran six steps on `claude-opus-4-5` with USD caps and the run ended at $0.0000 spent. The same run with a token budget counted 41,700 tokens. If you can’t keep the catalog current, budget in tokens: `'run' => [20000, 40000, 'tokens']`.
+I ran six steps on `claude-opus-4-5` with USD caps and the run ended at \$0.0000 spent. The same run with a token budget counted 41,700 tokens. If you can’t keep the catalog current, budget in tokens: `'run' => [20000, 40000, 'tokens']`.
 
-To price a missing model, add it to your copied `prices.json` in dollars per million tokens, or override it at boot. Opus 4.5 is $5 input and $25 output per million tokens <Cite id="claudeprices" />:
+To price a missing model, add it to your copied `prices.json` in dollars per million tokens, or override it at boot. Opus 4.5 is \$5 input and \$25 output per million tokens <Cite id="claudeprices" />:
 
 ```php title="app/Providers/AppServiceProvider.php"
 $this->app->make(PricingCatalog::class)->override(
@@ -204,11 +204,11 @@ The first row is the one to watch. A tool that fetches records by numeric ID loo
 
 ### Where the run actually stops
 
-The detector runs after the step, so the tool calls from the step that tripped it still execute. The breaker stops the next step. With paged searches, steps 0 to 2 ran and steps 3 to 5 came back `STOPPED`. laravel/ai ends the loop there, and you get whatever earlier steps produced. A streamed response ends with the `cancelled` finish reason. The benchmark that ships with the package (`php benchmarks/loop-budget-bench.php`) shows the same shape over 5 steps: 11,000 tokens and $0.26 without the guard, 5,700 tokens and $0.05 with it. The breaker trips at step 3, which saves 5,300 tokens.
+The detector runs after the step, so the tool calls from the step that tripped it still execute. The breaker stops the next step. With paged searches, steps 0 to 2 ran and steps 3 to 5 came back `STOPPED`. laravel/ai ends the loop there, and you get whatever earlier steps produced. A streamed response ends with the `cancelled` finish reason. The benchmark that ships with the package (`php benchmarks/loop-budget-bench.php`) shows the same shape over 5 steps: 11,000 tokens and \$0.26 without the guard, 5,700 tokens and \$0.05 with it. The breaker trips at step 3, which saves 5,300 tokens.
 
 ## Downshift reads the first budget, and has a bug
 
-The downshift threshold is a fraction of the soft cap of the first scope you set, checked in the order `run`, `agent`, `tenant`. With `'run' => [0.25, 0.50]` and `downshiftAt(0.80, …)`, it fires once the run has spent $0.20, including the current step’s estimate. A tier can also drop tools with `withoutTools` and lower `withMaxTokens`. Chained tiers must go in rising order of threshold.
+The downshift threshold is a fraction of the soft cap of the first scope you set, checked in the order `run`, `agent`, `tenant`. With `'run' => [0.25, 0.50]` and `downshiftAt(0.80, …)`, it fires once the run has spent \$0.20, including the current step’s estimate. A tier can also drop tools with `withoutTools` and lower `withMaxTokens`. Chained tiers must go in rising order of threshold.
 
 <Callout type="warning" title="In v1.2.0 a downshift lasts one step">
 
