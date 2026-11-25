@@ -4,17 +4,29 @@ import { allSeries, allTags, audienceLower, CATEGORIES, CATEGORY_COLOR, featured
 import { PostCover } from './components/PostCover'
 import { Newsletter, isTypingEvent } from './components/layout'
 import { LikeCount } from './components/reactions'
-import { Icon } from './components/ui'
+import { Icon, toast } from './components/ui'
 import { prefetchBody } from './content'
 import { useCounts } from './reactions'
 import { toggleSaved, useReader } from './store'
+import { clearRecommendationHistory, recordSearchMatches, useRecommendationHistory } from './recommendation-history'
+import { recommendPosts } from './recommendations'
+import { openConsent } from '../lib/consent/consent'
 import { useHydrated } from './hydrated'
 import { indexHead, setHead } from './head'
 import { Hl, didYouMean, search as runSearch, useSearchIndex, type SectionHit } from './search'
 
 /* -------------------------------------------------------------------- card */
 
-export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 3, hit }: { p: PostMeta; big?: boolean; q?: string; likes?: number; view?: 'grid' | 'list'; headingLevel?: 2 | 3; hit?: SectionHit }) {
+export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 3, hit, reason }: {
+  p: PostMeta
+  big?: boolean
+  q?: string
+  likes?: number
+  view?: 'grid' | 'list'
+  headingLevel?: 2 | 3
+  hit?: SectionHit
+  reason?: string
+}) {
   const { saved, progress } = useReader()
   const hydrated = useHydrated()
   const isSaved = hydrated && saved.includes(p.slug)
@@ -50,6 +62,7 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
             <Hl text={p.title} q={q} />
           </Link>
         </H>
+        {reason && <p className="b-card__reason">{reason}</p>}
         <p className="b-card__desc">
           <Hl text={p.description} q={q} />
         </p>
@@ -111,6 +124,34 @@ function Section({ id, title, kicker, children, action, className = '' }: { id: 
       </div>
       {children}
     </section>
+  )
+}
+
+/** Same on-device ranking on the index and after an article; static fallback works without consent. */
+export function RecommendedPosts({ context }: { context?: PostMeta }) {
+  const hydrated = useHydrated()
+  const { allowed, history } = useRecommendationHistory()
+  const results = recommendPosts(posts, hydrated && allowed ? history : [], { context, limit: 3 })
+  if (!results.length) return null
+  const personal = hydrated && allowed && results.some((r) => r.personalized)
+  return (
+    <Section
+      id="recommended"
+      title={context ? 'Keep reading' : 'Recommended reading'}
+      kicker={personal ? 'Based on your activity on this device' : 'Explore the notebook'}
+      className={context ? 'b-related' : ''}
+    >
+      <p className="b-recommendations__note">
+        Suggestions can use your activity on this device when you accept optional storage.{' '}
+        <button type="button" className="b-linkbtn" onClick={openConsent}>Cookie settings</button>
+        {hydrated && allowed && history.length > 0 && (
+          <> · <button type="button" className="b-linkbtn" onClick={() => (clearRecommendationHistory(), toast('Suggestion history cleared'))}>Clear suggestion history</button></>
+        )}
+      </p>
+      <div className="b-grid">
+        {results.map(({ post, reason, personalized }) => <PostCard key={post.slug} p={post} reason={personalized || context ? reason : undefined} />)}
+      </div>
+    </Section>
   )
 }
 
@@ -228,6 +269,12 @@ export default function BlogIndex() {
   // full text is fetched only once someone searches; until then titles, topics and headings are searched
   const sections = useSearchIndex(!!q)
   const hits = useMemo(() => new Map(runSearch(q, sections).map((h) => [h.p.slug, h])), [q, sections])
+  // Record matched post IDs only after a search settles, never the query in the recommendation profile.
+  useEffect(() => {
+    if (q.trim().length < 2 || !hits.size) return
+    const t = window.setTimeout(() => recordSearchMatches([...hits.values()].filter((h) => !h.p.draft && !h.p.scheduled).map((h) => h.p.slug)), 1500)
+    return () => window.clearTimeout(t)
+  }, [q, hits])
   const filtered = useMemo(() => {
     const list = posts
       .map((p) => ({ p, s: hits.get(p.slug)?.score ?? 0 }))
@@ -298,6 +345,7 @@ export default function BlogIndex() {
       </section>
 
       {!filtering && <ContinueReading />}
+      {!filtering && <RecommendedPosts />}
 
       {!filtering && (
         <Section id="paths" title="Pick your path" kicker="Who it’s for">

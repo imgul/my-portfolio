@@ -976,6 +976,11 @@ h3:focus-visible {
 .b-card:hover .b-card__title a {
   background-size: 100% 1px;
 }
+.b-card__reason {
+  margin: 0 0 0.45rem;
+  font: 600 0.78rem/1.4 var(--sans);
+  color: var(--text-2);
+}
 .b-card__desc {
   margin: 0;
   font: 400 1rem/1.55 var(--serif);
@@ -3002,6 +3007,17 @@ figure[data-rehype-pretty-code-figure] > .b-code {
 .b-related > .b-section-title {
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--line);
+}
+
+/* recommendation controls */
+.b-recommendations__note {
+  margin: -0.35rem 0 1.25rem;
+  font: 400 0.85rem/1.5 var(--sans);
+  color: var(--text-2);
+}
+.b-recommendations__note .b-linkbtn {
+  min-height: 24px;
+  font: inherit;
 }
 
 /* continue reading */

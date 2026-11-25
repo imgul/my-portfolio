@@ -9,6 +9,7 @@
     "build": "node scripts/covers.mjs && tsc --noEmit && vite build && vite build --ssr src/blog/ssr.tsx && node scripts/prerender.mjs && node scripts/link-previews.mjs",
     "lint:blog": "node scripts/lint-blog.mjs",
     "lint:slop": "node scripts/slop.mjs",
+    "test:recommendations": "node --experimental-strip-types --test tests/recommendations.test.mjs tests/recommendation-data.test.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "seo:check": "node scripts/seo-check.mjs",
     "blog:dois": "node scripts/blog-dois.mjs",

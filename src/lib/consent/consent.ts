@@ -4,7 +4,7 @@
  * The site sets no cookies and runs no analytics. What it does keep is a few
  * items in localStorage. The ones that make a feature work (theme, saved posts,
  * the visitor id behind a like) are written regardless; the ones that are only
- * a convenience (recent searches, the link-preview cache) wait for "Accept".
+ * a convenience (recent searches, personalised suggestions, the link-preview cache) wait for "Accept".
  *
  * The choice itself is stored under `gul:consent` with a version number: bump
  * CONSENT_VERSION when the policy changes in a way people should see again.
@@ -21,9 +21,9 @@ export interface Consent {
 }
 
 export const CONSENT_KEY = 'gul:consent'
-export const CONSENT_VERSION = 1
+export const CONSENT_VERSION = 2
 /** Convenience storage that is written only after "Accept" (and wiped on "Essential only"). */
-export const OPTIONAL_KEYS = ['gul:recent-searches', 'gul:lp:v2'] as const
+export const OPTIONAL_KEYS = ['gul:recent-searches', 'gul:lp:v2', 'gul:recommendations:v1'] as const
 
 const CHANGE = 'gul:consent-change'
 const OPEN = 'gul:consent-open'

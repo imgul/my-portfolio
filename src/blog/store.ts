@@ -5,6 +5,7 @@
  * except the visitor id + vote when they press like / dislike.
  */
 import { useSyncExternalStore } from 'react'
+import { recordActivity, removeActivity } from './recommendation-history'
 
 export interface Progress {
   /** 0..1 of the article read */
@@ -71,6 +72,8 @@ export function useReader() {
 export function toggleSaved(slug: string) {
   const has = data.saved.includes(slug)
   commit({ ...data, saved: has ? data.saved.filter((s) => s !== slug) : [slug, ...data.saved] })
+  if (has) removeActivity(slug, 'save')
+  else recordActivity('save', slug)
   return !has
 }
 
@@ -84,6 +87,8 @@ export function setProgress(slug: string, p: Partial<Progress>) {
   // keep the store small: only the 50 most recent posts
   const entries = Object.entries({ ...data.progress, [slug]: next }).sort((a, b) => b[1].t - a[1].t).slice(0, 50)
   commit({ ...data, progress: Object.fromEntries(entries) })
+  const fraction = p.p ?? 0
+  if (fraction >= 0.2) recordActivity('read', slug, fraction >= 1 ? 1 : fraction >= 0.75 ? 0.75 : 0.25)
 }
 
 export function setVote(slug: string, v: 1 | -1 | 0) {
@@ -91,4 +96,6 @@ export function setVote(slug: string, v: 1 | -1 | 0) {
   if (v === 0) delete votes[slug]
   else votes[slug] = v
   commit({ ...data, votes })
+  removeActivity(slug, 'like', 'dislike')
+  if (v) recordActivity(v === 1 ? 'like' : 'dislike', slug)
 }

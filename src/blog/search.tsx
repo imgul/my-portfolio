@@ -200,6 +200,7 @@ export function Hl({ text, q }: { text: string; q: string }) {
 
 const RECENT = 'gul:recent-searches'
 export function recentSearches(): string[] {
+  if (!optionalAllowed()) return []
   try {
     const v = JSON.parse(localStorage.getItem(RECENT) ?? '[]')
     return Array.isArray(v) ? v.filter((x) => typeof x === 'string').slice(0, 5) : []

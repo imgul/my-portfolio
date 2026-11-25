@@ -7,6 +7,8 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as Reac
 import { CATEGORIES, CATEGORY_COLOR, allTags, formatDate, postUrl, posts, type PostMeta } from '../data'
 import { navigate, useLocation } from '../router'
 import { Hl, clearRecentSearches, didYouMean, recentSearches, rememberSearch, search, useSearchIndex } from '../search'
+import { recordSearchMatches } from '../recommendation-history'
+import { useConsent } from '../../lib/consent/consent'
 import { PostCover } from './PostCover'
 import { Icon } from './ui'
 
@@ -44,7 +46,12 @@ export default function SearchDialog({ open, initial, onClose }: { open: boolean
   const [q, setQ] = useState(initial)
   const [active, setActive] = useState(0)
   const [recent, setRecent] = useState<string[]>([])
+  const consent = useConsent()
   const sections = useSearchIndex(open)
+
+  useEffect(() => {
+    if (consent?.choice !== 'all') setRecent([])
+  }, [consent])
 
   useEffect(() => {
     const d = ref.current
@@ -89,7 +96,10 @@ export default function SearchDialog({ open, initial, onClose }: { open: boolean
 
   const go = (o: Option | undefined) => {
     if (!o) return
-    if (query) rememberSearch(query)
+    if (query) {
+      rememberSearch(query)
+      recordSearchMatches(hits.filter((h) => !h.p.draft && !h.p.scheduled).map((h) => h.p.slug))
+    }
     onClose()
     const [to, id] = o.href.split('#')
     navigate(o.href, { keepScroll: !!id })

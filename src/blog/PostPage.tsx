@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useHashScroll } from './router'
-import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, neighbours, postUrl, posts, related, seriesOf, SITE_URL, type PostMeta } from './data'
+import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, neighbours, postUrl, posts, seriesOf, SITE_URL, type PostMeta } from './data'
 import { getBody, loadBody, type Body } from './content'
 import { PostCover } from './components/PostCover'
 import { openSearch } from './components/SearchDialog'
@@ -9,7 +9,7 @@ import { AuthorCard, isTypingEvent, Newsletter } from './components/layout'
 import { Reactions } from './components/reactions'
 import { Listen, toggleListen } from './components/listen'
 import { copy, dismissToast, Icon, toast } from './components/ui'
-import { PostCard } from './BlogIndex'
+import { RecommendedPosts } from './BlogIndex'
 import { setProgress, toggleSaved, useReader } from './store'
 import { reduceMotion } from './prefs'
 import { useHydrated } from './hydrated'
@@ -17,6 +17,7 @@ import { notFoundHead, postHead, setHead } from './head'
 import { AUTHOR } from './scholar.mjs'
 import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
 import { readFraction, scrollForFraction } from './reading-progress'
+import { recordActivity } from './recommendation-history'
 
 /** Document coordinates of the article start and the end of the body. */
 function readingBounds(article: HTMLElement, end: HTMLElement) {
@@ -194,8 +195,12 @@ function Share({ p }: { p: PostMeta }) {
       <h2 className="b-kicker" id="share-title">
         Share this post
       </h2>
-      <div className="b-share__btns">
-        <button type="button" onClick={() => copy(url, 'Link copied')}>
+      <div
+        className="b-share__btns"
+        onClick={(e) => { if ((e.target as HTMLElement).closest('a')) recordActivity('share', p.slug) }}
+        onAuxClick={(e) => { if (e.button === 1 && (e.target as HTMLElement).closest('a')) recordActivity('share', p.slug) }}
+      >
+        <button type="button" onClick={() => (recordActivity('share', p.slug), copy(url, 'Link copied'))}>
           <Icon name="link" size={16} /> Copy link
         </button>
         <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
@@ -211,7 +216,7 @@ function Share({ p }: { p: PostMeta }) {
           <Icon name="mail" size={16} /> Email
         </a>
         {native && (
-          <button type="button" onClick={() => navigator.share({ title: p.title, text: p.description, url }).catch(() => {})}>
+          <button type="button" onClick={() => (recordActivity('share', p.slug), navigator.share({ title: p.title, text: p.description, url }).catch(() => {}))}>
             <Icon name="share" size={16} /> More…
           </button>
         )}
@@ -266,7 +271,7 @@ function Actions({ p, prose }: { p: PostMeta; prose: React.RefObject<HTMLElement
         <Icon name="focus" size={16} />
         <span>Focus</span>
       </button>
-      <button type="button" className="b-action" onClick={() => copy(`${SITE_URL}/blog/${p.slug}`, 'Link copied')} title="Copy link">
+      <button type="button" className="b-action" onClick={() => (recordActivity('share', p.slug), copy(`${SITE_URL}/blog/${p.slug}`, 'Link copied'))} title="Copy link">
         <Icon name="link" size={16} />
         <span>Copy link</span>
       </button>
@@ -373,7 +378,6 @@ export default function PostPage({ slug }: { slug: string }) {
   }, [onKey])
 
   if (!p || failed) return <NotFound />
-  const rel = related(p)
   const color = CATEGORY_COLOR[p.category]
   const audience = CATEGORIES.find((c) => c.id === p.category)?.audience
 
@@ -484,18 +488,7 @@ export default function PostPage({ slug }: { slug: string }) {
             </div>
           </div>
         </article>
-        {rel.length > 0 && (
-          <section className="b-related" aria-labelledby="related-title">
-            <h2 className="b-section-title" id="related-title">
-              Keep reading
-            </h2>
-            <div className="b-grid">
-              {rel.map((q) => (
-                <PostCard key={q.slug} p={q} />
-              ))}
-            </div>
-          </section>
-        )}
+        <RecommendedPosts context={p} />
       </main>
     </PostContext.Provider>
   )
