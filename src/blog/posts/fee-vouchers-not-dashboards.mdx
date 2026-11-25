@@ -1,0 +1,165 @@
+---
+title: "Fee vouchers, not dashboards: what schools pay for"
+seoTitle: "What Pakistani schools pay for in school software"
+description: "What Pakistani private schools asked for when I pitched school software: fee vouchers that follow their rules, a defaulter list they trust and Urdu SMS."
+# Notes first written in May 2026 while building Oxygen LMS; expanded and published on the
+# `updated` date. This is the documented exception to the "never backdate" rule in AGENTS.md.
+date: 2026-05-01
+updated: 2026-11-24
+category: Founder
+tags: [edtech, saas, product, lessons]
+art: city
+level: Beginner
+references:
+  - id: pie2024
+    authors: Pakistan Institute of Education
+    title: "Pakistan Education Statistics 2023-24"
+    venue: Ministry of Federal Education and Professional Training
+    year: 2025
+    url: https://pie.gov.pk/SiteImage/Publication/PES%202024.pdf
+  - id: rise2022
+    authors: RISE Programme
+    title: "The Missing Link: Low-Fee Private Tuition and Education Options for the Poor in Pakistan"
+    year: 2022
+    url: https://riseprogramme.org/sites/default/files/2022-09/Missing_Link_Low-Fee_Private_Tuition_PAKISTAN.pdf
+  - id: dawn2021
+    authors: Dawn
+    title: "Peira directs private schools not to increase fees by more than 5pc"
+    year: 2021
+    url: https://www.dawn.com/news/1640522
+  - id: dawn2019
+    authors: Dawn
+    title: "SC overturns ruling on private school fee cut"
+    year: 2019
+    url: https://www.dawn.com/news/1487909
+  - id: techjuice2026
+    authors: TechJuice
+    title: "Sindh Sets New Private School Fee Rules for 2026–27 Session"
+    year: 2026
+    url: https://www.techjuice.pk/sindh-sets-new-private-school-fee-rules-for-2026-27-session/
+  - id: sbp2026
+    authors: The Nation
+    title: "SBP releases Report on Payment Systems for Oct-Dec quarter"
+    year: 2026
+    url: https://www.nation.com.pk/20-Mar-2026/sbp-releases-report-payment-systems-oct-dec-quarter
+  - id: curran2024
+    authors: Curran, F. C., Carlo, S. M. and Harris-Walls, K.
+    title: "Making the Data Visible: A Systematic Review of Systems-Level Data Dashboards for Leadership and Policy in Education"
+    venue: Review of Educational Research
+    year: 2024
+    doi: 10.3102/00346543241288249
+faq:
+  - q: "What features should school management software have in Pakistan?"
+    a: "Start with fee vouchers that follow the school's own fee heads, discounts and arrears, a defaulter list that matches what the bank received, and absence and fee messages to parents in Urdu. Attendance and result cards come next. Analytics dashboards matter least to most private schools."
+  - q: "What should a school fee voucher include?"
+    a: "The family's children, each fee head on its own line (tuition, transport, exam, annual charges), any concession or sibling discount, arrears, the due date and late fine, and copies for the bank, the school and the parent. A 1Bill consumer number or Raast QR lets parents pay from a phone."
+  - q: "Why do schools ignore dashboards in school software?"
+    a: "Dashboards answer questions the office isn't asking on a normal day. The clerk needs to print vouchers and find who hasn't paid; the owner needs the money in. Research on education dashboards also finds that use is lower than designers expect unless the dashboard fits an existing routine."
+---
+
+<TLDR>
+
+Private schools in Pakistan pay for software that brings the fee money in: vouchers that follow their own fee rules, a defaulter list they can trust, and messages to parents in Urdu. The analytics dashboard I put at the front of my demos was the part nobody asked about.
+
+</TLDR>
+
+I first wrote these notes in May 2026, a few months into building Oxygen LMS, after a stretch of calling and visiting private schools. In November I added the sources and the fee rules I’d read since, and published them.
+
+## Where I started
+
+My early demo had a dashboard full of charts. I had built a reporting dashboard before, for a point-of-sale product, and almost nobody opened it. I led with one again anyway.
+
+The schools corrected me. In one office I showed the dashboard to an admin clerk. She nodded politely and asked one question: *“Where do I click to print the fee voucher?”*
+
+Everyone was already “digitized” in some way. Nobody was actually helped.
+
+## What do schools in Pakistan pay for first?
+
+Across the calls and visits, the same requests kept coming back. Fees and messages to parents came up most:
+
+| What they asked for | Who asked | What it really means |
+| --- | --- | --- |
+| Print this month’s fee vouchers | Clerk, owner | One run for the whole school, in their own layout |
+| Who hasn’t paid? | Owner | A defaulter list that matches what the bank received |
+| Tell parents | Principal, owner | Absence and fee reminders in Urdu, on the phone parents already use |
+| Result cards | Principal | Their own format and grading, printed |
+| Attendance | Teachers | Fast on a cheap phone, or it goes back to the register |
+| Charts and analytics | Nobody, unprompted | |
+
+I expected smart timetables near the top. They hardly came up. Fee collection and talking to parents came up on almost every call.
+
+There’s a plain reason. Most private schools run on low fees. Low-fee private schools charge a few hundred to a few thousand rupees a month <Cite id="rise2022" />, and they teach close to half of the 58.3 million children enrolled in Pakistan <Cite id="pie2024" />. On margins like that, one month of unpaid vouchers is the difference between paying teachers on time or not. The owner doesn’t need a chart to know that. They need the money.
+
+## What goes on a fee voucher?
+
+A voucher looks simple until you try to generate one. Here is the shape of a family voucher, with made-up names and figures:
+
+| Line | Amount (Rs) |
+| --- | --- |
+| Ali, Class 5: tuition | 4,500 |
+| Sara, Class 2: tuition | 4,500 |
+| Sibling discount (10% on second child) | −450 |
+| Transport, Route 3 | 3,000 |
+| Exam fee (term 1) | 800 |
+| Arrears from last month | 1,200 |
+| **Total due by the 10th** | **13,550** |
+| Late fine after the due date | 5%, capped by the rules |
+
+It prints as one sheet with three parts: a copy for the bank, one for the school and one for the parent. Every school has its own fee heads, its own discount rules for siblings and staff children, and its own bank. Some put a 1Bill consumer number or a Raast QR on the voucher so parents can pay from Easypaisa, JazzCash or any banking app.
+
+That last part matters more each year. In October to December 2025, 92% of retail payments in Pakistan’s formal banking system went through digital channels, and Raast merchant payments rose to 33.6 million <Cite id="sbp2026" />. Parents who pay from a phone still need the school to know they paid. That is the reconciliation job, and it’s why “who hasn’t paid?” is the question owners care about most.
+
+## Why can’t a spreadsheet do it?
+
+Because fees in Pakistan come with rules, and the rules differ by city.
+
+| Rule | Where | Source |
+| --- | --- | --- |
+| Yearly increase up to 5%; 6–8% only with approval | Islamabad (PEIRA) | <Cite id="dawn2021" /> |
+| No fee increase during the academic session | Islamabad (PEIRA) | <Cite id="dawn2021" /> |
+| Fees charged monthly; late fine at most 5% within 30 days, 10% within 60 | Islamabad (PEIRA) | <Cite id="dawn2021" /> |
+| Annual increase capped (5% in Sindh, upheld by the Supreme Court in 2019) | Sindh, Punjab | <Cite id="dawn2019" /> |
+| June and July fees may be collected early, but each month on its own voucher | Sindh, 2026–27 session | <Cite id="techjuice2026" /> |
+
+Put that together with sibling discounts, arrears and transport routes, and a voucher is a small rules engine. A spreadsheet can hold the numbers. It can’t stop a clerk from adding a mid-session increase or a late fine above the limit. The software can, and owners will pay for that.
+
+## Who in the school decides?
+
+Three people, and they want different things:
+
+- **The owner pays.** They care about fee recovery and not getting into trouble with the regulator.
+- **The teachers use it** for attendance and marks, a few minutes a day.
+- **The clerk runs the office.** She prints the vouchers, takes the cash and answers parents. If the software makes her month-end harder, she can quietly kill it, and the school goes back to the old system.
+
+“My staff can’t use complicated software” was one of the most common objections I heard.
+
+## Why don’t schools use dashboards?
+
+Partly it’s timing. A dashboard answers questions like “how did attendance change this term?”. Nobody in the office asks those on a normal day. On the 1st of the month, the question is how fast the vouchers can be printed.
+
+It isn’t only a Pakistan thing. A systematic review of education data dashboards found that educators use them less than their designers hope, and that use improves when the dashboard fits a routine people already have <Cite id="curran2024" />. For a school office, that routine is the fee cycle.
+
+## What I built first because of this
+
+It changed the order I build Oxygen LMS in. Fee vouchers and the defaulter list come first, because that’s the job the office does every month. Messages to parents come next, from the same records. Reports still exist for the owner who wants them. They just stopped being the first thing anyone sees.
+
+When I pitch a school now, I open with one question: how do you handle fees today?
+
+<Takeaways>
+
+- In a school office, the fee voucher is the product. Build it around the school’s own heads, discounts and bank.
+- “Who hasn’t paid?” is the owner’s real question. Answer it with reconciled data, not a chart.
+- Fee rules (caps, no mid-session increases, late fine limits) are where spreadsheets fail.
+- Design for the clerk. She decides whether the software survives the first month-end.
+
+</Takeaways>
+
+<Update date="24 Nov 2026">
+
+Since writing these notes I’ve written about how I found the schools in the first place, and about designing for the least technical person in the office:
+
+<PostLink slug="distribution-beats-features" />
+
+<PostLink slug="simple-wins" />
+
+</Update>
