@@ -17,14 +17,14 @@ applyPrefs()
 document.documentElement.style.background = ''
 
 const root = document.getElementById('root')!
-const page = root.dataset.ssr // "index" | "post" | "research" | "404" when pre-rendered
+const page = root.dataset.ssr // "index" | "post" | "research" | "legal" | "404" when pre-rendered
 const notFound = page === '404'
 
 async function start() {
   // Pre-rendered markup can be hydrated only if the URL renders the same thing
   // (filters in ?query change the index, so those render fresh).
   const slug = location.pathname.replace(/\/+$/, '').split('/blog/')[1]
-  const canHydrate = page === 'post' ? !!slug : page === 'index' ? !location.search : page === 'research' || notFound
+  const canHydrate = page === 'post' ? !!slug : page === 'index' ? !location.search : page === 'research' || page === 'legal' || notFound
   if (page && canHydrate) {
     if (page === 'post' && slug) await loadBody(decodeURIComponent(slug)).catch(() => undefined)
     hydrateRoot(root, <BlogApp notFound={notFound} />, {

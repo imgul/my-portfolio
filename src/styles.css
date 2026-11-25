@@ -2306,6 +2306,24 @@ section {
   text-transform: uppercase;
   color: var(--fg);
 }
+.footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+}
+.footer__legal a,
+.footer__legal button {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer__legal a:hover,
+.footer__legal button:hover {
+  color: var(--fg);
+}
 
 /* ---------- Toast ---------- */
 .toast {

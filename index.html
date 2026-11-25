@@ -20,9 +20,9 @@
     <meta name="twitter:card" content="summary_large_image" />
     <!-- /seo -->
     <script>
-      // blog: apply the reader's settings before first paint (no flash of the wrong theme or size)
+      // blog (and the legal pages it renders): apply the reader's settings before first paint (no flash of the wrong theme or size)
       try {
-        if (location.pathname.indexOf('/blog') === 0) {
+        if (/^\/(blog|privacy|terms|cookies)(\/|$)/.test(location.pathname)) {
           var p = JSON.parse(localStorage.getItem('gul:blog-prefs') || '{}'), t = p.theme || 'auto', d = document.documentElement.dataset
           if (t === 'dark') t = 'dim'
           if (t === 'auto') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dim' : 'light'

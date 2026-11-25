@@ -23,6 +23,7 @@ import Contact from './components/Contact'
 import Toast from './components/Toast'
 import LinkPreviews, { type LinkPreviewFeedback } from './lib/linkPreview/LinkPreviews'
 import { haptics } from './lib/haptics'
+import CookieConsent from './lib/consent/CookieConsent'
 
 // link preview cards follow the site's sound toggle and haptics
 const previewFeedback: LinkPreviewFeedback = {
@@ -143,6 +144,8 @@ export default function App() {
       </main>
       <Toast />
       <LinkPreviews theme="portfolio" feedback={previewFeedback} reducedMotion={reduced} />
+      {/* after the intro, so it doesn't sit on top of the loader */}
+      {entered && <CookieConsent variant="portfolio" delay={1400} onHover={fx.hover} onPress={fx.click} />}
     </>
   )
 }

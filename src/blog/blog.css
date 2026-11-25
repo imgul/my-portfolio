@@ -4473,6 +4473,9 @@ a.b-card__hitlink:hover {
   .b-filters {
     /* solid on phones: text scrolling underneath stayed readable through the translucent bar */
     background: var(--bg);
+    /* the scrolling chip row leaked its full width into the page in mobile Chrome, which zoomed
+       the whole /blog page out to ~715px; clip keeps it to the screen (and sticky still works) */
+    overflow-x: clip;
     margin-bottom: 1.75rem;
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
@@ -4516,5 +4519,137 @@ a.b-card__hitlink:hover {
   }
   .b-filters .b-active-tag {
     margin-top: 0.45rem;
+  }
+}
+
+/* ------------------------------------------- legal pages + footer legal row */
+
+.b-footer__legal {
+  flex-basis: 100%;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.84rem;
+}
+.b-footer__btn,
+.b-legal__settings {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text-2);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.b-footer__btn:hover,
+.b-legal__settings:hover {
+  color: var(--text);
+}
+
+.b-legal__updated {
+  margin: 0.75rem 0 0;
+  font: 500 0.85rem/1.4 var(--sans);
+  color: var(--muted);
+}
+.b-legal__body {
+  margin-top: 2.25rem;
+}
+/* no drop cap: these open with a section heading, not a story */
+.b-legal__body > p:first-child::first-letter {
+  float: none;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+.b-legal__body h2 {
+  margin-top: 2em;
+  font-size: 1.35em;
+}
+.b-legal__body > h2:first-child {
+  margin-top: 0;
+}
+.b-legal__body .b-table {
+  font-size: 0.86em;
+}
+.b-legal__body .b-table td:first-child code {
+  white-space: nowrap;
+}
+.b-legal__panel {
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: 400 0.92rem/1.5 var(--sans);
+}
+.b-legal__panel.is-loading {
+  min-height: 11.5rem;
+}
+.b-legal__panel dl {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+.b-legal__panel dl > div {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+.b-legal__panel dt {
+  color: var(--muted);
+  font-weight: 500;
+}
+.b-legal__panel dd {
+  margin: 0;
+  min-width: 0;
+}
+.b-legal__id {
+  font-size: 0.86em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.b-legal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.b-legal__actions .b-btn[aria-pressed='true']::before {
+  content: '✓';
+  font-weight: 700;
+}
+.b-btn.is-danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 45%, transparent);
+}
+.b-btn.is-danger:hover {
+  border-color: var(--bad);
+}
+.b-legal__hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+.b-legal__more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 3.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  font: 500 0.9rem/1.4 var(--sans);
+}
+.b-legal__more a {
+  color: var(--text-2);
+}
+.b-legal__more [aria-current] {
+  color: var(--text);
+  font-weight: 650;
+}
+@media (max-width: 520px) {
+  .b-legal__panel dl > div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
   }
 }

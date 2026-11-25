@@ -43,6 +43,8 @@ There is no ESLint/Prettier config and no test suite; **`npm run build` is the c
 | `src/blog/search.tsx`, `components/SearchDialog.tsx` | Blog search: the dialog (header button, `/`, Ctrl/⌘ K) on every page and the `/blog` filter. Full text by section comes from `virtual:blog-search` (`searchIndex` in `scripts/blog.mjs`), loaded only when someone searches. |
 | `src/blog/blog.css` | Blog themes/typography. Colours must pass WCAG AA in every theme (the footer promises this). |
 | `src/blog/scholar.mjs` | Author, ORCID, licences, citation formats. |
+| `src/blog/LegalPage.tsx`, `src/blog/legal.mjs` | `/privacy`, `/terms`, `/cookies` (rendered by the blog bundle, pre-rendered, in the sitemap). Written from what the code really does. **Adding a tracker, form, third-party script or `localStorage` key means updating these pages, `LEGAL_UPDATED`, and `CONSENT_VERSION`.** |
+| `src/lib/consent/` | Cookie notice shared by the portfolio and the blog. The answer lives in `localStorage['gul:consent']`; once given, the notice never shows again (footer “Cookie settings” reopens it). Convenience storage must check `optionalAllowed()`. |
 | `scripts/blog.mjs` | Frontmatter loader, post lint, feeds, sitemap, robots, llms.txt, all `<head>` tags and JSON-LD. |
 | `scripts/prerender.mjs` | Static pages, Markdown copies, PDFs, OG images, feeds. |
 | `scripts/og.mjs` | OG image renderers (`/og/*.png?v=<hash>`). |

@@ -5,6 +5,9 @@ import PostPage, { NotFound } from './PostPage'
 import { BackToTop, Footer, Header } from './components/layout'
 import { Toaster } from './components/ui'
 import { ResearchPage } from './components/scholar'
+import LegalPage from './LegalPage'
+import { legalByPath } from './legal.mjs'
+import CookieConsent from '../lib/consent/CookieConsent'
 import { useHydrated } from './hydrated'
 import { getPrefs, reduceMotion, usePrefs } from './prefs'
 import { haptics } from '../lib/haptics'
@@ -22,6 +25,7 @@ const previewFeedback = {
 export default function BlogApp({ notFound }: { notFound?: boolean }) {
   const { path } = useLocation()
   const slug = path.startsWith('/blog/') ? decodeURIComponent(path.slice('/blog/'.length)) : ''
+  const legal = legalByPath(path)
   const first = useRef(true)
   const hydrated = useHydrated()
   const { previews } = usePrefs()
@@ -38,10 +42,23 @@ export default function BlogApp({ notFound }: { notFound?: boolean }) {
   return (
     <div className="b-app">
       <Header />
-      {notFound ? <NotFound /> : path === '/blog' ? <BlogIndex /> : path === '/blog/research' ? <ResearchPage /> : slug && !slug.includes('/') ? <PostPage key={slug} slug={slug} /> : <NotFound />}
+      {notFound ? (
+        <NotFound />
+      ) : legal ? (
+        <LegalPage key={legal.id} id={legal.id} />
+      ) : path === '/blog' ? (
+        <BlogIndex />
+      ) : path === '/blog/research' ? (
+        <ResearchPage />
+      ) : slug && !slug.includes('/') ? (
+        <PostPage key={slug} slug={slug} />
+      ) : (
+        <NotFound />
+      )}
       <Footer />
       <BackToTop />
       <Toaster />
+      {hydrated && <CookieConsent variant="blog" />}
       {hydrated && previews === 'on' && (
         <Suspense fallback={null}>
           <LinkPreviews theme="blog" feedback={previewFeedback} reducedMotion={reduceMotion} />
