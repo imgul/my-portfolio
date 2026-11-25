@@ -302,7 +302,10 @@ export function lintPosts(dir = POSTS_DIR) {
   // Renamed posts: every /blog/<old> redirect must land on a real post and must not shadow one.
   const vercel = path.join(dir, '../../../vercel.json')
   if (dir === POSTS_DIR && fs.existsSync(vercel)) {
-    for (const r of JSON.parse(fs.readFileSync(vercel, 'utf8')).redirects ?? []) {
+    const redirects = JSON.parse(fs.readFileSync(vercel, 'utf8')).redirects ?? []
+    const sources = new Set(redirects.map((r) => r.source))
+    for (const r of redirects) {
+      if (sources.has(r.destination)) errors.push(`vercel.json: redirect ${r.source} points to another redirect ${r.destination} (chain or loop)`)
       const from = /^\/blog\/([a-z0-9-]+)$/.exec(r.source)?.[1]
       if (!from) continue
       const to = /^\/blog\/([a-z0-9-]+)$/.exec(r.destination)?.[1]

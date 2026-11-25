@@ -5,82 +5,342 @@
   "redirects": [
     {
       "source": "/blog/simple-wins",
-      "destination": "/blog/designing-for-non-technical-users",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room",
       "statusCode": 301
     },
     {
       "source": "/blog/simple-wins.md",
-      "destination": "/blog/designing-for-non-technical-users.md",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room.md",
       "statusCode": 301
     },
     {
       "source": "/blog/simple-wins.pdf",
-      "destination": "/blog/designing-for-non-technical-users.pdf",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room.pdf",
       "statusCode": 301
     },
     {
       "source": "/og/simple-wins.png",
-      "destination": "/og/designing-for-non-technical-users.png",
+      "destination": "/og/simple-wins-designing-for-the-least-technical-user-in-the-room.png",
       "statusCode": 301
     },
     {
       "source": "/blog/readme-people-read",
-      "destination": "/blog/how-to-write-a-readme",
+      "destination": "/blog/write-a-readme-people-actually-read",
       "statusCode": 301
     },
     {
       "source": "/blog/readme-people-read.md",
-      "destination": "/blog/how-to-write-a-readme.md",
+      "destination": "/blog/write-a-readme-people-actually-read.md",
       "statusCode": 301
     },
     {
       "source": "/blog/readme-people-read.pdf",
-      "destination": "/blog/how-to-write-a-readme.pdf",
+      "destination": "/blog/write-a-readme-people-actually-read.pdf",
       "statusCode": 301
     },
     {
       "source": "/og/readme-people-read.png",
-      "destination": "/og/how-to-write-a-readme.png",
+      "destination": "/og/write-a-readme-people-actually-read.png",
       "statusCode": 301
     },
     {
       "source": "/blog/code-is-not-a-business",
-      "destination": "/blog/validate-saas-idea",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me",
       "statusCode": 301
     },
     {
       "source": "/blog/code-is-not-a-business.md",
-      "destination": "/blog/validate-saas-idea.md",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me.md",
       "statusCode": 301
     },
     {
       "source": "/blog/code-is-not-a-business.pdf",
-      "destination": "/blog/validate-saas-idea.pdf",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me.pdf",
       "statusCode": 301
     },
     {
       "source": "/og/code-is-not-a-business.png",
-      "destination": "/og/validate-saas-idea.png",
+      "destination": "/og/code-is-not-a-business-what-20-paying-customers-taught-me.png",
       "statusCode": 301
     },
     {
       "source": "/blog/distribution-beats-features",
-      "destination": "/blog/selling-software-to-schools",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools",
       "statusCode": 301
     },
     {
       "source": "/blog/distribution-beats-features.md",
-      "destination": "/blog/selling-software-to-schools.md",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools.md",
       "statusCode": 301
     },
     {
       "source": "/blog/distribution-beats-features.pdf",
-      "destination": "/blog/selling-software-to-schools.pdf",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools.pdf",
       "statusCode": 301
     },
     {
       "source": "/og/distribution-beats-features.png",
-      "destination": "/og/selling-software-to-schools.png",
+      "destination": "/og/distribution-beats-features-notes-from-cold-calling-schools.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/agents-that-do-work",
+      "destination": "/blog/agents-that-do-real-work-a-pragmatic-multi-agent-design",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/agents-that-do-work.md",
+      "destination": "/blog/agents-that-do-real-work-a-pragmatic-multi-agent-design.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/agents-that-do-work.pdf",
+      "destination": "/blog/agents-that-do-real-work-a-pragmatic-multi-agent-design.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/agents-that-do-work.png",
+      "destination": "/og/agents-that-do-real-work-a-pragmatic-multi-agent-design.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/ai-features-in-laravel-queues-streaming",
+      "destination": "/blog/shipping-ai-features-in-laravel-without-blocking-your-app",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/ai-features-in-laravel-queues-streaming.md",
+      "destination": "/blog/shipping-ai-features-in-laravel-without-blocking-your-app.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/ai-features-in-laravel-queues-streaming.pdf",
+      "destination": "/blog/shipping-ai-features-in-laravel-without-blocking-your-app.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/ai-features-in-laravel-queues-streaming.png",
+      "destination": "/og/shipping-ai-features-in-laravel-without-blocking-your-app.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/designing-for-non-technical-users",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/designing-for-non-technical-users.md",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/designing-for-non-technical-users.pdf",
+      "destination": "/blog/simple-wins-designing-for-the-least-technical-user-in-the-room.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/designing-for-non-technical-users.png",
+      "destination": "/og/simple-wins-designing-for-the-least-technical-user-in-the-room.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/fee-vouchers-not-dashboards",
+      "destination": "/blog/fee-vouchers-not-dashboards-what-schools-pay-for",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/fee-vouchers-not-dashboards.md",
+      "destination": "/blog/fee-vouchers-not-dashboards-what-schools-pay-for.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/fee-vouchers-not-dashboards.pdf",
+      "destination": "/blog/fee-vouchers-not-dashboards-what-schools-pay-for.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/fee-vouchers-not-dashboards.png",
+      "destination": "/og/fee-vouchers-not-dashboards-what-schools-pay-for.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-i-write-technical-posts",
+      "destination": "/blog/how-i-write-technical-posts-a-field-guide-with-examples",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-i-write-technical-posts.md",
+      "destination": "/blog/how-i-write-technical-posts-a-field-guide-with-examples.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-i-write-technical-posts.pdf",
+      "destination": "/blog/how-i-write-technical-posts-a-field-guide-with-examples.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/how-i-write-technical-posts.png",
+      "destination": "/og/how-i-write-technical-posts-a-field-guide-with-examples.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-to-write-a-readme",
+      "destination": "/blog/write-a-readme-people-actually-read",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-to-write-a-readme.md",
+      "destination": "/blog/write-a-readme-people-actually-read.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/how-to-write-a-readme.pdf",
+      "destination": "/blog/write-a-readme-people-actually-read.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/how-to-write-a-readme.png",
+      "destination": "/og/write-a-readme-people-actually-read.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard-setup",
+      "destination": "/blog/setting-up-laravel-agent-guard-budgets-loops-kill-switch",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard-setup.md",
+      "destination": "/blog/setting-up-laravel-agent-guard-budgets-loops-kill-switch.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard-setup.pdf",
+      "destination": "/blog/setting-up-laravel-agent-guard-budgets-loops-kill-switch.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/laravel-agent-guard-setup.png",
+      "destination": "/og/setting-up-laravel-agent-guard-budgets-loops-kill-switch.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard",
+      "destination": "/blog/laravel-agent-guard-why-your-laravel-ai-agents-need-brakes",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard.md",
+      "destination": "/blog/laravel-agent-guard-why-your-laravel-ai-agents-need-brakes.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/laravel-agent-guard.pdf",
+      "destination": "/blog/laravel-agent-guard-why-your-laravel-ai-agents-need-brakes.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/laravel-agent-guard.png",
+      "destination": "/og/laravel-agent-guard-why-your-laravel-ai-agents-need-brakes.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/multi-tenant-laravel-saas",
+      "destination": "/blog/multi-tenant-laravel-saas-the-architecture-i-actually-use",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/multi-tenant-laravel-saas.md",
+      "destination": "/blog/multi-tenant-laravel-saas-the-architecture-i-actually-use.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/multi-tenant-laravel-saas.pdf",
+      "destination": "/blog/multi-tenant-laravel-saas-the-architecture-i-actually-use.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/multi-tenant-laravel-saas.png",
+      "destination": "/og/multi-tenant-laravel-saas-the-architecture-i-actually-use.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/rag-for-exam-generation",
+      "destination": "/blog/grounded-exam-generation-with-rag-retrieval-and-evaluation",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/rag-for-exam-generation.md",
+      "destination": "/blog/grounded-exam-generation-with-rag-retrieval-and-evaluation.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/rag-for-exam-generation.pdf",
+      "destination": "/blog/grounded-exam-generation-with-rag-retrieval-and-evaluation.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/rag-for-exam-generation.png",
+      "destination": "/og/grounded-exam-generation-with-rag-retrieval-and-evaluation.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/school-erp-database-design",
+      "destination": "/blog/designing-the-database-for-a-school-erp",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/school-erp-database-design.md",
+      "destination": "/blog/designing-the-database-for-a-school-erp.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/school-erp-database-design.pdf",
+      "destination": "/blog/designing-the-database-for-a-school-erp.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/school-erp-database-design.png",
+      "destination": "/og/designing-the-database-for-a-school-erp.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/selling-software-to-schools",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/selling-software-to-schools.md",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/selling-software-to-schools.pdf",
+      "destination": "/blog/distribution-beats-features-notes-from-cold-calling-schools.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/selling-software-to-schools.png",
+      "destination": "/og/distribution-beats-features-notes-from-cold-calling-schools.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/validate-saas-idea",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/validate-saas-idea.md",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/validate-saas-idea.pdf",
+      "destination": "/blog/code-is-not-a-business-what-20-paying-customers-taught-me.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/validate-saas-idea.png",
+      "destination": "/og/code-is-not-a-business-what-20-paying-customers-taught-me.png",
       "statusCode": 301
     }
   ],

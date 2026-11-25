@@ -3,7 +3,7 @@ title: "Designing the database for a school ERP"
 seoTitle: "School management system database design (MySQL)"
 description: "A tested MySQL schema for a school ERP: dated enrolments for promotions, composite tenant keys and an append-only fee ledger in paisa. With Laravel migration."
 # Schema first sketched in May 2026 while building Oxygen LMS; written up, tested and published on
-# the `updated` date. Same documented exception to "never backdate" as fee-vouchers-not-dashboards.
+# the `updated` date. Same documented exception to "never backdate" as fee-vouchers-not-dashboards-what-schools-pay-for.
 date: 2026-05-02
 updated: 2026-11-24
 category: Engineering
@@ -79,7 +79,7 @@ I first sketched this schema in May 2026, a few months into building Oxygen LMS.
 
 Most ER diagrams for a “school management system” put `class_id` on the students table. That works until the school promotes everyone at the end of the year. You update the column, and last year’s class lists, attendance registers and result sheets now point at the wrong class.
 
-This is the schema I’d start a school ERP with on Laravel and MySQL, for private schools in Pakistan. It goes with two other posts: the [multi-tenant Laravel setup](/blog/multi-tenant-laravel-saas) covers the application side of keeping schools apart, and [what schools pay for](/blog/fee-vouchers-not-dashboards) explains why the fee tables get the most care. It’s a cut-down, tested design for this post, not a dump of a production database.
+This is the schema I’d start a school ERP with on Laravel and MySQL, for private schools in Pakistan. It goes with two other posts: the [multi-tenant Laravel setup](/blog/multi-tenant-laravel-saas-the-architecture-i-actually-use) covers the application side of keeping schools apart, and [what schools pay for](/blog/fee-vouchers-not-dashboards-what-schools-pay-for) explains why the fee tables get the most care. It’s a cut-down, tested design for this post, not a dump of a production database.
 
 ## What tables does a school ERP need?
 
@@ -285,6 +285,6 @@ Download the file, run it in an empty database, and try to break it.
 
 </Takeaways>
 
-<PostLink slug="multi-tenant-laravel-saas" />
+<PostLink slug="multi-tenant-laravel-saas-the-architecture-i-actually-use" />
 
-<PostLink slug="fee-vouchers-not-dashboards" />
+<PostLink slug="fee-vouchers-not-dashboards-what-schools-pay-for" />

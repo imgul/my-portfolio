@@ -64,7 +64,7 @@ I see three problems again and again when I think about agents inside a Laravel 
 
 ## Why I built it
 
-I build multi-tenant software: one Laravel app, many customers, each with their own data. At Oxygen LMS, every school is a customer in the same system ([how I set that up](/blog/multi-tenant-laravel-saas)), and AI work runs in the background ([how I keep it from slowing the app down](/blog/ai-features-in-laravel-queues-streaming)).
+I build multi-tenant software: one Laravel app, many customers, each with their own data. At Oxygen LMS, every school is a customer in the same system ([how I set that up](/blog/multi-tenant-laravel-saas-the-architecture-i-actually-use)), and AI work runs in the background ([how I keep it from slowing the app down](/blog/shipping-ai-features-in-laravel-without-blocking-your-app)).
 
 So one question kept bothering me. If one school’s agent gets stuck at 2 a.m., what stops it from using up the AI budget meant for every other school?
 
@@ -132,7 +132,7 @@ The code is on [GitHub at imgul/laravel-agent-guard](https://github.com/imgul/la
 composer require imgul/laravel-agent-guard
 ```
 
-This post is the “why”. Next I’ll write the developer posts: how to set it up, how each check works and how to tune it for your app. If you’re still deciding what your agents should do in the first place, start with [what makes an AI agent useful for real work](/blog/agents-that-do-work).
+This post is the “why”. Next I’ll write the developer posts: how to set it up, how each check works and how to tune it for your app. If you’re still deciding what your agents should do in the first place, start with [what makes an AI agent useful for real work](/blog/agents-that-do-real-work-a-pragmatic-multi-agent-design).
 
 <Takeaways>
 

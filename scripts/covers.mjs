@@ -8,16 +8,16 @@
  *
  * Each style is a strategy for earning the click (docs/COVERS.md has the reasoning):
  *
- *   number     one big, true number and what it cost            (validate-saas-idea)
- *   versus     the thing people expect vs the thing that wins   (fee-vouchers-not-dashboards)
+ *   number     one big, true number and what it cost            (code-is-not-a-business-what-20-paying-customers-taught-me)
+ *   versus     the thing people expect vs the thing that wins   (fee-vouchers-not-dashboards-what-schools-pay-for)
  *   code       the real code from the post, in an editor window (ai-features-in-laravel-…)
- *   image      AI illustration from assets/covers + a hook       (multi-tenant, rag-for-exam-generation)
- *   headline   giant typographic claim on a bold colour          (selling-software-to-schools)
- *   quote      the line from the post that people remember       (designing-for-non-technical-users)
- *   face       the author's photo next to a two-line hook        (agents-that-do-work)
- *   list       "N steps" with the steps visible                  (how-i-write-technical-posts)
- *   mockup     the artifact the post teaches you to make         (how-to-write-a-readme)
- *   terminal   proof: real test output                           (school-erp-database-design)
+ *   image      AI illustration from assets/covers + a hook       (multi-tenant, grounded-exam-generation-with-rag-retrieval-and-evaluation)
+ *   headline   giant typographic claim on a bold colour          (distribution-beats-features-notes-from-cold-calling-schools)
+ *   quote      the line from the post that people remember       (simple-wins-designing-for-the-least-technical-user-in-the-room)
+ *   face       the author's photo next to a two-line hook        (agents-that-do-real-work-a-pragmatic-multi-agent-design)
+ *   list       "N steps" with the steps visible                  (how-i-write-technical-posts-a-field-guide-with-examples)
+ *   mockup     the artifact the post teaches you to make         (write-a-readme-people-actually-read)
+ *   terminal   proof: real test output                           (designing-the-database-for-a-school-erp)
  *
  * Posts without a `cover:` keep the generative dot art (src/blog/components/CoverArt.tsx).
  */

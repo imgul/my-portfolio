@@ -2,13 +2,13 @@
 
 Post 2 of the content plan (`docs/CONTENT_PLAN_DEC_2026.md`), series “Building Oxygen LMS”, part 2. Researched 24 November 2026.
 
-**Status:** published 24 Nov 2026 as `src/blog/posts/school-erp-database-design.mdx`, at Gul’s request dated `2026-05-02` with `updated: 2026-11-24` and an opening note (“I first sketched this schema in May 2026…”), the same pattern as post 1. Content from after May (NADRA/FBISE, Sept 2026; test versions) is covered by that note. First-person lines are limited to what Gul has already published. The schema is a cut-down design written for the post, and the post says so; it is not a copy of Oxygen LMS’s production schema.
+**Status:** published 24 Nov 2026 as `src/blog/posts/designing-the-database-for-a-school-erp.mdx`, at Gul’s request dated `2026-05-02` with `updated: 2026-11-24` and an opening note (“I first sketched this schema in May 2026…”), the same pattern as post 1. Content from after May (NADRA/FBISE, Sept 2026; test versions) is covered by that note. First-person lines are limited to what Gul has already published. The schema is a cut-down design written for the post, and the post says so; it is not a copy of Oxygen LMS’s production schema.
 
 | | |
 |---|---|
 | Title | Designing the database for a school ERP |
 | SEO title | School management system database design (MySQL) (48 chars) |
-| Slug | `school-erp-database-design` |
+| Slug | `designing-the-database-for-a-school-erp` |
 | Category / level / art | Engineering / Intermediate / `network` |
 | Primary query | school management system database design |
 | Assets | `public/downloads/school-erp-schema.sql`, `public/img/blog/school-erp-erd.svg`, `tests/sql/`, `tests/laravel/`, `.github/workflows/sql-examples.yml` |
@@ -39,9 +39,9 @@ PlanSmith is cited once, fairly, as the PostgreSQL route.
 
 ## 3. Overlap with existing posts
 
-`multi-tenant-laravel-saas` already covers shared DB plus `tenant_id`, tenant resolution, global scopes, queued jobs and `(tenant_id, …)` indexes. Post 2 links to it and only adds the database-level part (composite foreign keys), saying the global scope protects reads but not bad writes.
+`multi-tenant-laravel-saas-the-architecture-i-actually-use` already covers shared DB plus `tenant_id`, tenant resolution, global scopes, queued jobs and `(tenant_id, …)` indexes. Post 2 links to it and only adds the database-level part (composite foreign keys), saying the global scope protects reads but not bad writes.
 
-`fee-vouchers-not-dashboards` explains why fees matter. Post 2 reuses its example family (Ali and Sara, Rs 13,550 with Rs 1,200 arrears), and the test suite reproduces that total to the rupee.
+`fee-vouchers-not-dashboards-what-schools-pay-for` explains why fees matter. Post 2 reuses its example family (Ali and Sara, Rs 13,550 with Rs 1,200 arrears), and the test suite reproduces that total to the rupee.
 
 ## 4. Facts and sources
 

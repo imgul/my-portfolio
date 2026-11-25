@@ -28,16 +28,16 @@ Each existing post uses a different style so the strongest ones can be picked an
 
 | Style | Strategy | Use when the post has… | Example post |
 |---|---|---|---|
-| `number` | One big, true number and what it meant | a result or a cost you can count | `validate-saas-idea` |
-| `versus` | What people expect vs what actually wins | a contrarian claim ("X, not Y") | `fee-vouchers-not-dashboards` |
-| `code` | The key code from the post in an editor window, one line lit | one snippet that *is* the answer | `ai-features-in-laravel-queues-streaming` |
-| `image` | An illustration (`assets/covers/<slug>.png`) plus a hook | a concept that's easier to show than say | `multi-tenant-laravel-saas`, `rag-for-exam-generation` |
-| `headline` | A huge typographic claim on a bold colour | a short, punchy opinion | `selling-software-to-schools` |
-| `quote` | The one line people remember | a real quote from a user or customer | `designing-for-non-technical-users` |
-| `face` | The author's photo beside a two-line hook | an opinion or a lesson tied to you | `agents-that-do-work` |
-| `list` | "N steps" with the steps visible | a checklist or a process | `how-i-write-technical-posts` |
-| `mockup` | The thing the post teaches you to make | a template or an artifact | `how-to-write-a-readme` |
-| `terminal` | Proof: real test or command output | something you tested or measured | `school-erp-database-design` |
+| `number` | One big, true number and what it meant | a result or a cost you can count | `code-is-not-a-business-what-20-paying-customers-taught-me` |
+| `versus` | What people expect vs what actually wins | a contrarian claim ("X, not Y") | `fee-vouchers-not-dashboards-what-schools-pay-for` |
+| `code` | The key code from the post in an editor window, one line lit | one snippet that *is* the answer | `shipping-ai-features-in-laravel-without-blocking-your-app` |
+| `image` | An illustration (`assets/covers/<slug>.png`) plus a hook | a concept that's easier to show than say | `multi-tenant-laravel-saas-the-architecture-i-actually-use`, `grounded-exam-generation-with-rag-retrieval-and-evaluation` |
+| `headline` | A huge typographic claim on a bold colour | a short, punchy opinion | `distribution-beats-features-notes-from-cold-calling-schools` |
+| `quote` | The one line people remember | a real quote from a user or customer | `simple-wins-designing-for-the-least-technical-user-in-the-room` |
+| `face` | The author's photo beside a two-line hook | an opinion or a lesson tied to you | `agents-that-do-real-work-a-pragmatic-multi-agent-design` |
+| `list` | "N steps" with the steps visible | a checklist or a process | `how-i-write-technical-posts-a-field-guide-with-examples` |
+| `mockup` | The thing the post teaches you to make | a template or an artifact | `write-a-readme-people-actually-read` |
+| `terminal` | Proof: real test or command output | something you tested or measured | `designing-the-database-for-a-school-erp` |
 
 ### Fields
 
