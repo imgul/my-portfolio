@@ -1,6 +1,6 @@
 /**
  * The cookie / storage notice shown at the bottom of the page until the visitor
- * picks "Accept" or "Essential only". After that it never shows again (the
+ * picks "Accept optional" or "Reject optional". After that it never shows again (the
  * choice lives in localStorage), unless they reopen it from "Cookie settings".
  *
  * Client-only: it renders nothing until after hydration, so pre-rendered pages
@@ -79,30 +79,30 @@ export default function CookieConsent({ variant, delay = 900, onHover, onPress }
   return createPortal(
     <section ref={box} className={`cc cc--${variant}${closing ? ' is-leaving' : ''}`} aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`} data-lenis-prevent>
       <p className="cc__title" id={`${id}-t`} aria-live="polite">
-        No tracking cookies here
+        Your storage choices
       </p>
       <p className="cc__text" id={`${id}-d`}>
-        I don’t run ads or analytics. Your browser keeps settings and saved posts. If you accept, it also remembers recent searches, caches link previews and uses your reading activity and estimated active time,
-        saves, search matches, votes and share attempts on this device to suggest posts. Scroll, pointer, touch and navigation keys help estimate active time. You can clear suggestions or change this choice anytime.
+        This site uses no cookies or analytics. Your browser keeps settings and saved posts. Optional storage remembers searches, caches link previews and uses blog activity, including estimated reading time, to suggest posts.
       </p>
       {reopened && consent && (
         <p className="cc__now">
-          Your current choice: <strong>{consent.choice === 'all' ? 'Accepted' : 'Essential only'}</strong>
+          Your current choice: <strong>{consent.choice === 'all' ? 'Optional accepted' : 'Optional rejected'}</strong>
           {consent.at ? `, ${fmt(consent.at)}` : ''}
         </p>
       )}
       <div className="cc__row">
-        <button type="button" className="cc__btn cc__btn--main" onClick={() => choose('all')} onMouseEnter={onHover} data-cursor="Accept">
-          Accept
+        <button type="button" className="cc__btn" onClick={() => choose('all')} onMouseEnter={onHover} data-cursor="Accept">
+          Accept optional
         </button>
-        <button type="button" className="cc__btn" onClick={() => choose('essential')} onMouseEnter={onHover} data-cursor="Essential">
-          Essential only
+        <button type="button" className="cc__btn" onClick={() => choose('essential')} onMouseEnter={onHover} data-cursor="Reject">
+          Reject optional
         </button>
       </div>
       <p className="cc__links">
-        <a href="/cookies">Cookie policy</a>
+        <a href="/cookies">Storage details</a>
         <a href="/privacy">Privacy</a>
       </p>
+      <p className="cc__change">Change your choice anytime in the footer’s Cookie settings.</p>
     </section>,
     document.body,
   )

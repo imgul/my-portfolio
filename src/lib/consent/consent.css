@@ -6,8 +6,8 @@
   --cc-fg: var(--text, #25231f);
   --cc-2: var(--text-2, #4a463f);
   --cc-line: var(--line-2, #d3cdbf);
-  --cc-main: var(--text, #25231f);
-  --cc-main-ink: var(--bg, #f8f6f1);
+  --cc-button: color-mix(in srgb, var(--cc-fg) 6%, var(--cc-bg));
+  --cc-button-border: color-mix(in srgb, var(--cc-fg) 35%, var(--cc-bg));
   --cc-focus: var(--accent, #2c58b8);
   --cc-font: var(--sans, 'Inter Variable', Inter, system-ui, sans-serif);
   --cc-shadow: 0 2px 4px rgb(30 20 0 / 0.06), 0 18px 48px -16px rgb(30 20 0 / 0.32);
@@ -18,6 +18,9 @@
   z-index: 90;
   box-sizing: border-box;
   width: min(25.5rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0;
   padding: 1.1rem 1.15rem 0.95rem;
   border: 1px solid var(--cc-line);
@@ -38,8 +41,7 @@
   --cc-fg: var(--fg, #ecebe6);
   --cc-2: var(--muted, #9d9da8);
   --cc-line: rgba(236, 235, 230, 0.16);
-  --cc-main: var(--accent, #c6ff3d);
-  --cc-main-ink: #07070a;
+  --cc-heading: var(--accent, #c6ff3d);
   --cc-focus: var(--accent, #c6ff3d);
   --cc-font: var(--body, 'Inter Variable', Inter, system-ui, sans-serif);
   --cc-shadow: 0 24px 60px -18px rgb(0 0 0 / 0.75);
@@ -57,7 +59,7 @@
   font: 500 0.72rem/1.4 var(--mono, ui-monospace, monospace);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--cc-main);
+  color: var(--cc-heading);
 }
 .cc__text,
 .cc__now {
@@ -83,9 +85,9 @@
   flex: 1 1 0;
   min-height: 44px;
   padding: 0.55rem 0.9rem;
-  border: 1px solid var(--cc-line);
+  border: 1px solid var(--cc-button-border);
   border-radius: 999px;
-  background: transparent;
+  background: var(--cc-button);
   color: var(--cc-fg);
   font: 600 0.88rem/1.2 var(--cc-font);
   cursor: pointer;
@@ -96,18 +98,10 @@
 }
 .cc__btn:hover {
   border-color: var(--cc-fg);
+  background: color-mix(in srgb, var(--cc-fg) 12%, var(--cc-bg));
 }
 .cc__btn:active {
   transform: translateY(1px);
-}
-.cc__btn--main {
-  border-color: var(--cc-main);
-  background: var(--cc-main);
-  color: var(--cc-main-ink);
-}
-.cc__btn--main:hover {
-  border-color: var(--cc-main);
-  filter: brightness(1.08);
 }
 .cc--portfolio .cc__btn {
   border-radius: 4px;
@@ -136,6 +130,11 @@
 .cc__links a:hover {
   color: var(--cc-fg);
 }
+.cc__change {
+  margin: 0.35rem 0 0;
+  color: var(--cc-2);
+  font-size: 0.8rem;
+}
 
 @media (max-width: 640px) {
   .cc {
@@ -151,13 +150,11 @@
 @keyframes cc-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
   }
 }
 @keyframes cc-out {
   to {
     opacity: 0;
-    transform: translateY(10px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
