@@ -958,7 +958,8 @@ h3:focus-visible {
 }
 .b-cat {
   font-weight: 700;
-  color: color-mix(in srgb, var(--cat) 70%, var(--text));
+  /* 60% keeps small category labels at 4.5:1 or better in every theme */
+  color: color-mix(in srgb, var(--cat) 60%, var(--text));
 }
 .b-card__title {
   margin: 0.45rem 0 0.4rem;
@@ -1204,7 +1205,7 @@ h3:focus-visible {
   color: var(--line-2);
 }
 .b-crumbs li:nth-child(2) a {
-  color: color-mix(in srgb, var(--cat) 70%, var(--text));
+  color: color-mix(in srgb, var(--cat) 60%, var(--text));
   font-weight: 600;
 }
 .b-post__head h1 {
@@ -2430,7 +2431,7 @@ figure[data-rehype-pretty-code-figure] > .b-code {
 }
 .b-flow__n {
   font: 600 0.68rem/1 var(--mono);
-  color: var(--cat, var(--accent));
+  color: color-mix(in srgb, var(--cat, var(--accent)) 60%, var(--text));
 }
 .b-flow__label {
   margin-top: 0.3rem;
@@ -2859,8 +2860,14 @@ figure[data-rehype-pretty-code-figure] > .b-code {
   gap: 0.5rem 1.25rem;
 }
 .b-footer a {
-  text-decoration: none;
   color: var(--text-2);
+  text-decoration: none;
+}
+/* links inside a sentence need more than colour to stand out (WCAG 1.4.1) */
+.b-footer p a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 .b-footer a:hover {
   color: var(--text);
@@ -4026,4 +4033,11 @@ figure[data-rehype-pretty-code-figure] > .b-code {
     display: block;
     max-width: none;
   }
+}
+
+/* byline links: at least a 24×24 px target without moving the text (WCAG 2.5.8) */
+a[rel='author'] {
+  display: inline-block;
+  padding-block: 4px;
+  margin-block: -4px;
 }

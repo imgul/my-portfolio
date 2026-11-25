@@ -79,7 +79,7 @@ export function Reactions({ slug, title }: { slug: string; title: string }) {
             className={`b-react__btn is-dislike ${vote === -1 ? 'is-on' : ''}`}
             aria-pressed={vote === -1}
             onClick={() => cast(-1)}
-            aria-label={`Not useful${showCounts ? `, ${dislikes} ${dislikes === 1 ? 'reader' : 'readers'} said not useful` : ''}`}
+            aria-label={`Not really${showCounts ? `, ${dislikes} ${dislikes === 1 ? 'reader' : 'readers'} said not useful` : ''}`}
           >
             <Icon name="dislike" size={18} filled={vote === -1} />
             <span>Not really</span>

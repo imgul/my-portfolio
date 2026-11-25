@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ParticleField } from './three/ParticleField'
+import type { ParticleField } from './three/ParticleField'
 import { sceneRef } from './three/sceneRef'
 import { initScroll, prefersReducedMotion } from './lib/scroll'
 import { store, toast, useStore } from './lib/store'
@@ -39,14 +39,25 @@ export default function App() {
   // 3D scene + smooth scroll
   useEffect(() => {
     initScroll()
+    // three.js (~500 KB) and the WebGL setup (context, shaders, 10–20k particles) are decorative and
+    // hidden behind the intro panels until the visitor enters, so start them once the page has loaded
+    // and the main thread is idle instead of competing with the first render and the intro animation
     let field: ParticleField | null = null
-    try {
-      field = new ParticleField(canvas.current!)
-      sceneRef.current = field
-    } catch (e) {
-      console.warn('WebGL unavailable, continuing without 3D', e)
-    }
+    let cancelled = false
+    const start = () =>
+      import('./three/ParticleField')
+        .then(({ ParticleField }) => {
+          if (cancelled || !canvas.current) return
+          field = new ParticleField(canvas.current)
+          sceneRef.current = field
+        })
+        .catch((e) => console.warn('WebGL unavailable, continuing without 3D', e))
+    const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(() => void start(), { timeout: 1200 }) : setTimeout(start, 300))
+    if (document.readyState === 'complete') idle()
+    else window.addEventListener('load', idle, { once: true })
     return () => {
+      cancelled = true
+      window.removeEventListener('load', idle)
       field?.dispose()
       sceneRef.current = null
     }

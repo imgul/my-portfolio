@@ -4,7 +4,8 @@
  *
  *   hero-bw.webp, hero-color.webp   portfolio hero pill (black and white cut-out on lime / full colour)
  *   mark.webp                       portfolio logo: face on ink, inside the spinning ring
- *   avatar.webp, avatar-og.png      blog: warm-toned cut-out (transparent, the theme shows through)
+ *   avatar.webp, avatar-96.webp,    blog: warm-toned cut-out (transparent, the theme shows through);
+ *   avatar-og.png                   96 px for the header and bylines, 192 px for the author card
  *   gulzaib.jpg                     plain profile photo (structured data, link previews)
  *   assets/og-person.png            black and white cut-out for the portfolio share image (built by scripts/og.mjs)
  *   /favicon.svg, /favicon-32.png, /apple-touch-icon.png, /icon-192.png, /icon-512.png
@@ -86,6 +87,7 @@ await sharp(await faceOnInk(128))
 {
   const bust = warm(sharp(cut).extract(scale(BUST)))
   await bust.clone().resize(192, 192, { kernel: 'lanczos3' }).webp({ quality: 88, alphaQuality: 90 }).toFile(path.join(OUT, 'avatar.webp'))
+  await bust.clone().resize(96, 96, { kernel: 'lanczos3' }).webp({ quality: 88, alphaQuality: 90 }).toFile(path.join(OUT, 'avatar-96.webp'))
   await warm(sharp(cut).extract(scale(BUST))).resize(112, 112, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(path.join(OUT, 'avatar-og.png'))
 }
 

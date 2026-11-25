@@ -110,7 +110,8 @@ export default defineConfig(({ isSsrBuild }) => ({
           [
             rehypePrettyCode,
             {
-              theme: { dark: 'github-dark-dimmed', light: 'github-light' },
+              // high-contrast light theme: github-light's red (#d73a49) is 4.0:1 on the code background
+              theme: { dark: 'github-dark-dimmed', light: 'github-light-high-contrast' },
               keepBackground: false,
               defaultLang: 'plaintext',
             },
@@ -145,6 +146,8 @@ export default defineConfig(({ isSsrBuild }) => ({
             manualChunks(id: string) {
               if (id.includes('node_modules/three')) return 'three'
               if (id.includes('node_modules/gsap')) return 'gsap'
+              // React runtime in its own long-cached chunk (was auto-named after the first shared module)
+              if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
             },
           },
         },
