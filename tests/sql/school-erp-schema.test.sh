@@ -11,8 +11,14 @@ DB=school_erp_test
 q() { $MYSQL --batch --skip-column-names "$DB" -e "$1" 2>&1; }
 pass=0; fail=0
 ok()  { echo "  ✓ $1"; pass=$((pass + 1)); }
-bad() { echo "  ✗ $1"; echo "    $2"; fail=$((fail + 1)); }
+bad() {
+  echo "  ✗ $1"; echo "    $2"; fail=$((fail + 1))
+  [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=$1::$(tr '\n' ' ' <<<"$2")"
+  return 0
+}
 
+# step "description" "sql": run setup SQL and report the MySQL error if it fails
+step() { local out; out=$(q "$2") || bad "$1" "$out"; }
 # expect_error "description" "ERROR code" "sql"
 expect_error() {
   local out
@@ -27,11 +33,15 @@ expect_value() {
 }
 
 $MYSQL -e "DROP DATABASE IF EXISTS $DB; CREATE DATABASE $DB" 2>/dev/null
-$MYSQL "$DB" < public/downloads/school-erp-schema.sql
+if ! out=$($MYSQL "$DB" < public/downloads/school-erp-schema.sql 2>&1); then
+  echo "schema failed to load: $out"
+  [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=schema failed to load::$(tr '\n' ' ' <<<"$out")"
+  exit 1
+fi
 echo "schema loaded: $(q "SELECT VERSION()")"
 
 echo "seed"
-q "
+step "seed data" "
 INSERT INTO tenants (id, subdomain, name) VALUES (1, 'school-a', 'School A'), (2, 'school-b', 'School B');
 INSERT INTO academic_years (id, tenant_id, name, starts_on, ends_on) VALUES
   (1, 1, '2025-26', '2025-04-01', '2026-03-31'),
@@ -63,10 +73,10 @@ INSERT INTO fee_rates (tenant_id, academic_year_id, grade_level_id, fee_head_id,
   (1, 2, 3, 1, 450000), (1, 2, 1, 1, 450000), (1, 2, 3, 3, 80000);
 INSERT INTO concessions (tenant_id, student_id, fee_head_id, percent_bp, reason, approved_by, valid_from) VALUES
   (1, 2, 1, 1000, 'sibling', 'Principal', '2026-04-01');
-" >/dev/null
+"
 
 # April voucher: no arrears yet.
-q "
+step "April voucher and payment" "
 INSERT INTO vouchers (id, tenant_id, family_id, academic_year_id, period, voucher_no, consumer_no, due_on, balance_bf_paisa)
 VALUES (1, 1, 1, 2, '2026-04-01', 'V-2026-04-0001', '100200300400', '2026-04-10', 0);
 INSERT INTO ledger_entries (tenant_id, family_id, student_id, fee_head_id, voucher_id, entry_type, amount_paisa, memo) VALUES
@@ -79,7 +89,7 @@ INSERT INTO payments (id, tenant_id, family_id, voucher_id, method, external_ref
 VALUES (1, 1, 1, 1, '1bill', 'TXN-88231', 1115000, '2026-04-09 14:20:00', '1Bill import');
 INSERT INTO ledger_entries (tenant_id, family_id, payment_id, entry_type, amount_paisa, memo)
 VALUES (1, 1, 1, 'payment', -1115000, '1Bill TXN-88231');
-" >/dev/null
+"
 
 echo "fees"
 expect_value "April charges after discount (Rs)" "12350" \
@@ -88,7 +98,7 @@ expect_value "balance after a partial payment (Rs)" "1200" \
   "SELECT balance_paisa DIV 100 FROM family_balances WHERE tenant_id = 1 AND family_id = 1"
 
 # May voucher snapshots the balance as arrears; the arrears are not charged again.
-q "
+step "May voucher" "
 INSERT INTO vouchers (id, tenant_id, family_id, academic_year_id, period, voucher_no, consumer_no, due_on, balance_bf_paisa)
 SELECT 2, 1, 1, 2, '2026-05-01', 'V-2026-05-0001', '100200300401', '2026-05-10', balance_paisa
 FROM family_balances WHERE tenant_id = 1 AND family_id = 1;
@@ -97,7 +107,7 @@ INSERT INTO ledger_entries (tenant_id, family_id, student_id, fee_head_id, vouch
   (1, 1, 2, 1, 2, 'charge', 450000, 'Sara, Class 2: tuition, May'),
   (1, 1, 2, 1, 2, 'concession', -45000, 'Sibling discount 10%'),
   (1, 1, 1, 2, 2, 'charge', 300000, 'Transport, Route 3');
-" >/dev/null
+"
 expect_value "May voucher: arrears printed (Rs)" "1200" "SELECT balance_bf_paisa DIV 100 FROM vouchers WHERE id = 2"
 expect_value "May voucher: total due (Rs)" "12750" \
   "SELECT (v.balance_bf_paisa + SUM(l.amount_paisa)) DIV 100 FROM vouchers v JOIN ledger_entries l ON l.voucher_id = v.id WHERE v.id = 2 GROUP BY v.id"
@@ -151,4 +161,5 @@ expect_value "balance after the reversal (Rs)" "9750" \
 
 echo
 echo "$pass passed, $fail failed"
+[ -n "${GITHUB_ACTIONS:-}" ] && echo "::notice title=SQL tests::$(q "SELECT VERSION()"): $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
