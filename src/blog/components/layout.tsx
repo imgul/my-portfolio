@@ -409,11 +409,12 @@ export function Header() {
       </a>
       <header className={`b-header ${isHidden ? 'is-hidden' : ''}`} data-preview="hover">
         <div className="b-header__in">
-          <a href="/" className="b-logo" aria-label="Muhammad Gulzaib: portfolio home">
+          {/* the accessible name starts with the visible text (WCAG 2.5.3 label in name) */}
+          <a href="/" className="b-logo">
             <span className="b-logo__mark" aria-hidden="true">
-              <img src="/img/gul/avatar.webp" alt="" width="26" height="26" decoding="async" />
+              <img src="/img/gul/avatar-96.webp" alt="" width="26" height="26" decoding="async" />
             </span>
-            GUL
+            GUL<span className="sr-only">: Muhammad Gulzaib, portfolio home</span>
           </a>
           <Link href="/blog" className="b-header__title" aria-current={path === '/blog' ? 'page' : undefined}>
             Notebook
@@ -534,7 +535,7 @@ export function AuthorCard() {
   return (
     <section className="b-author" aria-labelledby="author-name">
       <span className="b-author__avatar" aria-hidden="true">
-        <img src="/img/gul/avatar.webp" alt="" width="56" height="56" decoding="async" />
+        <img src="/img/gul/avatar.webp" srcSet="/img/gul/avatar-96.webp 96w, /img/gul/avatar.webp 192w" sizes="56px" alt="" width="56" height="56" loading="lazy" decoding="async" />
       </span>
       <div>
         <p className="b-kicker">Written by</p>

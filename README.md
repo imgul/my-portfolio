@@ -230,6 +230,10 @@ docs/BLOG_GUIDELINES.md   how to write posts that read well, rank and get cited
 docs/SCHOLARLY_INDEXING.md  free setup: ORCID, Rogue Scholar DOIs, Google Scholar, Zenodo, IEEE…
 ```
 
+## Working with AI agents
+
+[`AGENTS.md`](AGENTS.md) holds the rules and commands for coding agents (`CLAUDE.md` imports it). Skills from [skills.sh](https://skills.sh) (UI/UX, accessibility, performance, SEO/GEO, copywriting, marketing, security) are installed in `.agents/skills/` and pinned in `skills-lock.json`. Restore them with `npx skills experimental_install`. `AGENTS.md` maps each skill to the work it covers.
+
 ## Deploy
 
 It's a static Vite app. On Vercel, import the repo and it auto-detects Vite (build `npm run build`, output `dist`). `vercel.json` turns on clean URLs (so `blog/<slug>.html` is served at `/blog/<slug>`) and sets content types for feeds, Markdown and `llms.txt` (PDFs get a canonical `Link` header pointing to the HTML post). Unknown URLs get the pre-rendered `404.html` with a real 404 status.

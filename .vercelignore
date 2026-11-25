@@ -1,0 +1,6 @@
+# agent tooling: not needed to build or serve the site
+.agents
+.claude
+skills-lock.json
+AGENTS.md
+CLAUDE.md

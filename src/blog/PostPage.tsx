@@ -373,7 +373,7 @@ export default function PostPage({ slug }: { slug: string }) {
             <p className="b-post__dek">{p.description}</p>
             <div className="b-byline">
               <span className="b-author__avatar is-sm" aria-hidden="true">
-                <img src="/img/gul/avatar.webp" alt="" width="42" height="42" decoding="async" />
+                <img src="/img/gul/avatar-96.webp" alt="" width="42" height="42" decoding="async" />
               </span>
               <div>
                 <p className="b-byline__name">
