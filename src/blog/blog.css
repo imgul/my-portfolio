@@ -1615,18 +1615,38 @@ h3:focus-visible {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.b-prose [data-rehype-pretty-code-title]::before {
-  content: '';
-  flex: none;
-  display: inline-block;
-  margin-right: 0.5rem;
-  vertical-align: -1px;
-  width: 9px;
-  height: 11px;
-  border: 1.5px solid currentColor;
-  border-radius: 2px;
-  opacity: 0.55;
+/* Icons are decorative: the filename or language remains visible as text. */
+.b-prose [data-rehype-pretty-code-title],
+.b-code__lang {
+  --code-language-icon: url('/icons/code/file-code.svg');
 }
+.b-prose [data-rehype-pretty-code-title]::before,
+.b-code__lang::before {
+  content: '';
+  display: inline-block;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-right: 0.5rem;
+  vertical-align: -0.3rem;
+  background: currentColor;
+  mask: var(--code-language-icon) center / contain no-repeat;
+}
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='php'] { --code-language-icon: url('/icons/code/php.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='bash'], [data-language='sh'], [data-language='shell']) { --code-language-icon: url('/icons/code/gnubash.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='ts'], [data-language='tsx'], [data-language='typescript']) { --code-language-icon: url('/icons/code/typescript.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='js'], [data-language='jsx'], [data-language='javascript']) { --code-language-icon: url('/icons/code/javascript.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='md'], [data-language='markdown']) { --code-language-icon: url('/icons/code/markdown.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='py'], [data-language='python']) { --code-language-icon: url('/icons/code/python.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='json'], [data-language='jsonc']) { --code-language-icon: url('/icons/code/json.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='sql'] { --code-language-icon: url('/icons/code/database.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='html'] { --code-language-icon: url('/icons/code/html5.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='css'] { --code-language-icon: url('/icons/code/css.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang):is([data-language='yml'], [data-language='yaml']) { --code-language-icon: url('/icons/code/yaml.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='go'] { --code-language-icon: url('/icons/code/go.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='rust'] { --code-language-icon: url('/icons/code/rust.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='c'] { --code-language-icon: url('/icons/code/c.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='cpp'] { --code-language-icon: url('/icons/code/cplusplus.svg'); }
+.b-prose :is([data-rehype-pretty-code-title], .b-code__lang)[data-language='dockerfile'] { --code-language-icon: url('/icons/code/docker.svg'); }
 figure:has(> [data-rehype-pretty-code-title]) .b-code__lang {
   visibility: hidden;
 }
