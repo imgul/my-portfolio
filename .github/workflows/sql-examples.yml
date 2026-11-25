@@ -34,3 +34,44 @@ jobs:
         env:
           MYSQL: mysql -h127.0.0.1 -uroot
           MYSQL_PWD: root
+
+  laravel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      MYSQL: mysql -h127.0.0.1 -uroot
+      MYSQL_PWD: root
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql
+          coverage: none
+      - name: Fresh Laravel app
+        run: |
+          out=$(composer create-project laravel/laravel app --prefer-dist --no-interaction 2>&1) \
+            || { echo "::error title=create-project::$(tail -20 <<<"$out" | tr '\n' ' ')"; exit 1; }
+          cp tests/laravel/*.php app/database/migrations/
+      - name: Migrate and check
+        working-directory: app
+        run: |
+          out=$(php artisan migrate --force 2>&1) \
+            || { echo "::error title=migrate::$(tail -30 <<<"$out" | tr '\n' ' ' | cut -c1-1500)"; exit 1; }
+          bash ../tests/laravel/check.sh

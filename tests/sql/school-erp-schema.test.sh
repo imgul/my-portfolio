@@ -83,16 +83,15 @@ INSERT INTO ledger_entries (tenant_id, family_id, student_id, fee_head_id, vouch
   (1, 1, 1, 1, 1, 'charge', 450000, 'Ali, Class 5: tuition, April'),
   (1, 1, 2, 1, 1, 'charge', 450000, 'Sara, Class 2: tuition, April'),
   (1, 1, 2, 1, 1, 'concession', -45000, 'Sibling discount 10%'),
-  (1, 1, 1, 2, 1, 'charge', 300000, 'Transport, Route 3'),
-  (1, 1, 1, 3, 1, 'charge', 80000, 'Exam fee, term 1');
+  (1, 1, 1, 2, 1, 'charge', 300000, 'Transport, Route 3');
 INSERT INTO payments (id, tenant_id, family_id, voucher_id, method, external_ref, amount_paisa, received_at, received_by)
-VALUES (1, 1, 1, 1, '1bill', 'TXN-88231', 1115000, '2026-04-09 14:20:00', '1Bill import');
+VALUES (1, 1, 1, 1, '1bill', 'TXN-88231', 1035000, '2026-04-09 14:20:00', '1Bill import');
 INSERT INTO ledger_entries (tenant_id, family_id, payment_id, entry_type, amount_paisa, memo)
-VALUES (1, 1, 1, 'payment', -1115000, '1Bill TXN-88231');
+VALUES (1, 1, 1, 'payment', -1035000, '1Bill TXN-88231');
 "
 
 echo "fees"
-expect_value "April charges after discount (Rs)" "12350" \
+expect_value "April charges after discount (Rs)" "11550" \
   "SELECT SUM(amount_paisa) DIV 100 FROM ledger_entries WHERE voucher_id = 1"
 expect_value "balance after a partial payment (Rs)" "1200" \
   "SELECT balance_paisa DIV 100 FROM family_balances WHERE tenant_id = 1 AND family_id = 1"
@@ -106,12 +105,13 @@ INSERT INTO ledger_entries (tenant_id, family_id, student_id, fee_head_id, vouch
   (1, 1, 1, 1, 2, 'charge', 450000, 'Ali, Class 5: tuition, May'),
   (1, 1, 2, 1, 2, 'charge', 450000, 'Sara, Class 2: tuition, May'),
   (1, 1, 2, 1, 2, 'concession', -45000, 'Sibling discount 10%'),
-  (1, 1, 1, 2, 2, 'charge', 300000, 'Transport, Route 3');
+  (1, 1, 1, 2, 2, 'charge', 300000, 'Transport, Route 3'),
+  (1, 1, 1, 3, 2, 'charge', 80000, 'Exam fee, term 1');
 "
 expect_value "May voucher: arrears printed (Rs)" "1200" "SELECT balance_bf_paisa DIV 100 FROM vouchers WHERE id = 2"
-expect_value "May voucher: total due (Rs)" "12750" \
+expect_value "May voucher: total due (Rs)" "13550" \
   "SELECT (v.balance_bf_paisa + SUM(l.amount_paisa)) DIV 100 FROM vouchers v JOIN ledger_entries l ON l.voucher_id = v.id WHERE v.id = 2 GROUP BY v.id"
-expect_value "family balance equals May total due (Rs)" "12750" \
+expect_value "family balance equals May total due (Rs)" "13550" \
   "SELECT balance_paisa DIV 100 FROM family_balances WHERE tenant_id = 1 AND family_id = 1"
 
 echo "history"
@@ -136,7 +136,7 @@ expect_error "ledger rows cannot be deleted" "ERROR 1644" \
 expect_error "a charge cannot be negative" "ERROR 3819" \
   "INSERT INTO ledger_entries (tenant_id, family_id, entry_type, amount_paisa, memo) VALUES (1, 1, 'charge', -100, 'x')"
 expect_error "the same bank transaction cannot be imported twice" "ERROR 1062" \
-  "INSERT INTO payments (tenant_id, family_id, method, external_ref, amount_paisa, received_at, received_by) VALUES (1, 1, '1bill', 'TXN-88231', 1115000, NOW(), 'import')"
+  "INSERT INTO payments (tenant_id, family_id, method, external_ref, amount_paisa, received_at, received_by) VALUES (1, 1, '1bill', 'TXN-88231', 1035000, NOW(), 'import')"
 expect_error "a bank payment needs a reference" "ERROR 3819" \
   "INSERT INTO payments (tenant_id, family_id, method, amount_paisa, received_at, received_by) VALUES (1, 1, 'bank', 500000, NOW(), 'clerk')"
 expect_error "one live voucher per family per month" "ERROR 1062" \
@@ -156,8 +156,31 @@ q "INSERT INTO ledger_entries (tenant_id, family_id, reverses_id, entry_type, am
   && ok "a wrong charge is fixed with a reversal" || bad "a wrong charge is fixed with a reversal" "insert failed"
 expect_error "a row can be reversed only once" "ERROR 1062" \
   "INSERT INTO ledger_entries (tenant_id, family_id, reverses_id, entry_type, amount_paisa, memo) VALUES (1, 1, 4, 'reversal', -300000, 'again')"
-expect_value "balance after the reversal (Rs)" "9750" \
+expect_value "balance after the reversal (Rs)" "10550" \
   "SELECT balance_paisa DIV 100 FROM family_balances WHERE tenant_id = 1 AND family_id = 1"
+
+echo "year-end promotion"
+step "next year's calendar" "
+INSERT INTO academic_years (id, tenant_id, name, starts_on, ends_on) VALUES (4, 1, '2027-28', '2027-04-01', '2028-03-31');
+INSERT INTO grade_levels (id, tenant_id, name, sort_order) VALUES (5, 1, 'Class 6', 6);
+INSERT INTO sections (id, tenant_id, academic_year_id, grade_level_id, name) VALUES (5, 1, 4, 5, 'B');"
+# The same statements the post shows: close this year's rows, then open next year's from them.
+step "promote 5-B to 6-B" "
+START TRANSACTION;
+UPDATE enrollments
+SET ends_on = '2027-03-31', end_reason = 'promoted'
+WHERE tenant_id = 1 AND section_id = 2 AND ends_on IS NULL;
+INSERT INTO enrollments (tenant_id, student_id, section_id, starts_on)
+SELECT tenant_id, student_id, 5, '2027-04-01'
+FROM enrollments
+WHERE tenant_id = 1 AND section_id = 2 AND ends_on = '2027-03-31' AND end_reason = 'promoted';
+COMMIT;"
+expect_value "Ali's class after promotion" "2027-28 Class 6 B" \
+  "SELECT academic_year, class_name, section FROM section_rosters WHERE tenant_id = 1 AND admission_no = 'A-1021' AND ends_on IS NULL"
+expect_value "Ali's history rows" "3" \
+  "SELECT COUNT(*) FROM enrollments WHERE tenant_id = 1 AND student_id = 1"
+expect_value "2026-27 5-B roster still lists Ali" "A-1021 promoted" \
+  "SELECT admission_no, end_reason FROM section_rosters WHERE tenant_id = 1 AND academic_year = '2026-27' AND class_name = 'Class 5'"
 
 echo
 echo "$pass passed, $fail failed"
