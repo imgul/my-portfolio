@@ -11,6 +11,7 @@
  */
 import { useEffect, useState } from 'react'
 import { posts as allPosts, type PostMeta } from './data'
+import { optionalAllowed } from '../lib/consent/consent'
 
 export type Section = { id: string; h: string; t: string }
 export type SectionIndex = Record<string, Section[]>
@@ -208,7 +209,8 @@ export function recentSearches(): string[] {
 }
 export function rememberSearch(q: string) {
   const t = q.trim()
-  if (t.length < 2) return
+  // a convenience, so only after the visitor accepted (src/lib/consent)
+  if (t.length < 2 || !optionalAllowed()) return
   try {
     localStorage.setItem(RECENT, JSON.stringify([t, ...recentSearches().filter((x) => norm(x) !== norm(t))].slice(0, 5)))
   } catch {

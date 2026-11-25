@@ -11,6 +11,7 @@
  *  5. a card built from the URL alone (brand name, colour, monogram)
  */
 import { BRANDS } from './brands'
+import { optionalAllowed } from '../consent/consent'
 
 export type Kind =
   | 'web' | 'article' | 'post' | 'page' | 'file' | 'feed' | 'repo' | 'profile' | 'paper' | 'email' | 'phone' | 'chat' | 'topic'
@@ -500,6 +501,8 @@ function readStore(): Record<string, Stored> {
 }
 
 function persist() {
+  // the browser cache is a convenience: written only after the visitor accepted (src/lib/consent)
+  if (!optionalAllowed()) return
   const s = readStore()
   const keys = Object.keys(s)
   if (keys.length > STORE_MAX) for (const k of keys.sort((a, b) => s[a].at - s[b].at).slice(0, keys.length - STORE_MAX)) delete s[k]

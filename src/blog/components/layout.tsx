@@ -8,6 +8,7 @@ import { OrcidLink, ResearchProfiles } from './scholar'
 import SearchDialog from './SearchDialog'
 import { loadSearchIndex } from '../search'
 import { activeProfiles, AUTHOR } from '../scholar.mjs'
+import { openConsent } from '../../lib/consent/consent'
 
 /* ------------------------------------------------------------ focus music */
 
@@ -636,6 +637,14 @@ export function Footer() {
           <a href="/llms.txt">llms.txt</a>
           <a href="/">Portfolio</a>
           <a href="mailto:iigulzaib@gmail.com">Contact</a>
+        </nav>
+        <nav className="b-footer__legal" aria-label="Legal">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/cookies">Cookies</Link>
+          <button type="button" className="b-footer__btn" onClick={openConsent}>
+            Cookie settings
+          </button>
         </nav>
       </div>
     </footer>

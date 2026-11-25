@@ -104,3 +104,13 @@ export const notFoundHead = (): Head => ({
   imageAlt: 'Page not found',
   noindex: true,
 })
+
+/** /privacy, /terms, /cookies (titles and descriptions live in ./legal.mjs, shared with the build). */
+export const legalHead = (m: { path: string; title: string; description: string }): Head => ({
+  title: `${m.title} · Muhammad Gulzaib`,
+  ogTitle: `${m.title}: gulzaib.vercel.app`,
+  description: m.description,
+  path: m.path,
+  image: 'legal',
+  imageAlt: `${m.title} for Muhammad Gulzaib’s portfolio and Gul’s Notebook`,
+})

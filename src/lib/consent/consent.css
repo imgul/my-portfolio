@@ -1,0 +1,177 @@
+/* Cookie notice (src/lib/consent/CookieConsent.tsx). A fixed card: it never moves the page. */
+
+.cc {
+  /* blog: follows the reader's theme (light, sepia, dim, night, high contrast) */
+  --cc-bg: var(--surface, #fdfcf9);
+  --cc-fg: var(--text, #25231f);
+  --cc-2: var(--text-2, #4a463f);
+  --cc-line: var(--line-2, #d3cdbf);
+  --cc-main: var(--text, #25231f);
+  --cc-main-ink: var(--bg, #f8f6f1);
+  --cc-focus: var(--accent, #2c58b8);
+  --cc-font: var(--sans, 'Inter Variable', Inter, system-ui, sans-serif);
+  --cc-shadow: 0 2px 4px rgb(30 20 0 / 0.06), 0 18px 48px -16px rgb(30 20 0 / 0.32);
+
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 90;
+  box-sizing: border-box;
+  width: min(25.5rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 1.1rem 1.15rem 0.95rem;
+  border: 1px solid var(--cc-line);
+  border-radius: 14px;
+  background: var(--cc-bg);
+  color: var(--cc-fg);
+  box-shadow: var(--cc-shadow);
+  font: 400 0.9rem/1.5 var(--cc-font);
+  text-align: left;
+  animation: cc-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cc.is-leaving {
+  animation: cc-out 0.22s ease-in both;
+  pointer-events: none;
+}
+.cc--portfolio {
+  --cc-bg: #111116;
+  --cc-fg: var(--fg, #ecebe6);
+  --cc-2: var(--muted, #9d9da8);
+  --cc-line: rgba(236, 235, 230, 0.16);
+  --cc-main: var(--accent, #c6ff3d);
+  --cc-main-ink: #07070a;
+  --cc-focus: var(--accent, #c6ff3d);
+  --cc-font: var(--body, 'Inter Variable', Inter, system-ui, sans-serif);
+  --cc-shadow: 0 24px 60px -18px rgb(0 0 0 / 0.75);
+  z-index: 450; /* above the HUD and toasts, below the custom cursor */
+  border-radius: 6px;
+}
+
+.cc__title {
+  margin: 0 0 0.35rem;
+  font-weight: 650;
+  font-size: 0.98rem;
+  letter-spacing: -0.005em;
+}
+.cc--portfolio .cc__title {
+  font: 500 0.72rem/1.4 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-main);
+}
+.cc__text,
+.cc__now {
+  margin: 0;
+  color: var(--cc-2);
+  text-wrap: pretty;
+}
+.cc__now {
+  margin-top: 0.5rem;
+  font-size: 0.84rem;
+}
+.cc__now strong {
+  color: var(--cc-fg);
+  font-weight: 600;
+}
+
+.cc__row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.cc__btn {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--cc-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cc-fg);
+  font: 600 0.88rem/1.2 var(--cc-font);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
+}
+.cc__btn:hover {
+  border-color: var(--cc-fg);
+}
+.cc__btn:active {
+  transform: translateY(1px);
+}
+.cc__btn--main {
+  border-color: var(--cc-main);
+  background: var(--cc-main);
+  color: var(--cc-main-ink);
+}
+.cc__btn--main:hover {
+  border-color: var(--cc-main);
+  filter: brightness(1.08);
+}
+.cc--portfolio .cc__btn {
+  border-radius: 4px;
+  font: 500 0.74rem/1.2 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cc__btn:focus-visible,
+.cc__links a:focus-visible {
+  outline: 2px solid var(--cc-focus);
+  outline-offset: 2px;
+}
+
+.cc__links {
+  display: flex;
+  gap: 1rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.8rem;
+}
+.cc__links a {
+  color: var(--cc-2);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+.cc__links a:hover {
+  color: var(--cc-fg);
+}
+
+@media (max-width: 640px) {
+  .cc {
+    left: max(0.6rem, env(safe-area-inset-left));
+    right: max(0.6rem, env(safe-area-inset-right));
+    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    width: auto;
+    padding: 0.95rem 1rem 0.8rem;
+    font-size: 0.86rem;
+  }
+}
+
+@keyframes cc-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@keyframes cc-out {
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc,
+  .cc.is-leaving {
+    animation-duration: 0.01ms;
+  }
+}
+:root[data-motion='reduce'] .cc,
+:root[data-motion='reduce'] .cc.is-leaving {
+  animation-duration: 0.01ms;
+}
+@media print {
+  .cc {
+    display: none;
+  }
+}

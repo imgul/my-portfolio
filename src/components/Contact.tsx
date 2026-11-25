@@ -5,6 +5,7 @@ import { fx } from '../lib/feedback'
 import { scrollTo } from '../lib/scroll'
 import { profile } from '../data/content'
 import HoldToCopy from './HoldToCopy'
+import { openConsent } from '../lib/consent/consent'
 
 export default function Contact() {
   const entered = useStore((s) => s.entered)
@@ -77,6 +78,20 @@ export default function Contact() {
 
       <footer className="footer mono">
         <span>© {new Date().getFullYear()} Muhammad Gulzaib</span>
+        <nav className="footer__legal" aria-label="Legal">
+          <a href="/privacy" className="link-u" onMouseEnter={fx.hover}>
+            Privacy
+          </a>
+          <a href="/terms" className="link-u" onMouseEnter={fx.hover}>
+            Terms
+          </a>
+          <a href="/cookies" className="link-u" onMouseEnter={fx.hover}>
+            Cookies
+          </a>
+          <button className="link-u" onClick={() => (fx.click(), openConsent())} onMouseEnter={fx.hover} data-cursor="Settings">
+            Cookie settings
+          </button>
+        </nav>
         <span className="footer__built">Three.js · GSAP · Web Audio · Vibration API. Press M for sound.</span>
         <button className="link-u" onClick={() => (fx.click(), scrollTo(0))} onMouseEnter={fx.hover} data-cursor="Up">
           Back to top ↑

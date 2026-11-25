@@ -40,6 +40,7 @@ import { fileURLToPath } from 'node:url'
 import matter from 'gray-matter'
 import GithubSlugger from 'github-slugger'
 import { analyse, prose as slopProse } from './slop.mjs'
+import { LEGAL, LEGAL_UPDATED } from '../src/blog/legal.mjs'
 import { AUTHOR as PERSON_INFO, BLOG_NAME, DOI_RE, LICENSES, PROFILES, activeProfiles, citationMeta, doiUrl, licenseFor, sameAs } from '../src/blog/scholar.mjs'
 
 export const SITE_URL = (process.env.VITE_SITE_URL || 'https://gulzaib.vercel.app').replace(/\/$/, '')
@@ -442,6 +443,7 @@ export function sitemap(posts) {
     { loc: `${SITE_URL}/blog`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogImage() },
     { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('research') },
     ...posts.map((p) => ({ loc: postUrl(p), lastmod: p.updated ?? p.date, image: ogImage(p) })),
+    ...LEGAL.map((l) => ({ loc: `${SITE_URL}${l.path}`, lastmod: LEGAL_UPDATED })),
   ]
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
@@ -664,7 +666,8 @@ const TWITTER = PERSON_INFO.x ? [`<meta name="twitter:site" content="@${PERSON_I
 export const postTitle = (p) => p.seoTitle ?? (`${p.title} · ${BLOG_TITLE}`.length <= 65 ? `${p.title} · ${BLOG_TITLE}` : p.title)
 
 /** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
-export function headTags({ post, posts, notFound, research }) {
+export function headTags({ post, posts, notFound, research, legal }) {
+  if (legal) return legalHeadTags(legal)
   const title = notFound
     ? `Page not found · ${BLOG_TITLE}`
     : post
@@ -737,6 +740,69 @@ export function headTags({ post, posts, notFound, research }) {
     notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
   ]
   return t.filter(Boolean).join('\n    ')
+}
+
+/** The graph for /privacy, /terms, /cookies: a WebPage of the site, published by the author. */
+function legalGraph(l) {
+  const url = `${SITE_URL}${l.path}`
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${url}#page`,
+        url,
+        name: l.title,
+        description: l.description,
+        inLanguage: 'en',
+        dateModified: LEGAL_UPDATED,
+        isPartOf: { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, url: `${SITE_URL}/`, name: PERSON_INFO.name },
+        publisher: { '@id': PERSON['@id'] },
+        breadcrumb: {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: l.title, item: url },
+          ],
+        },
+      },
+      PERSON,
+    ],
+  }
+}
+
+/** <head> tags for a legal page (src/blog/legal.mjs); mirrors src/blog/head.ts → legalHead. */
+export function legalHeadTags(l) {
+  const title = `${l.title} · ${PERSON_INFO.name}`
+  const ogTitle = `${l.title}: ${SITE_URL.replace(/^https?:\/\//, '')}`
+  const url = `${SITE_URL}${l.path}`
+  const img = ogUrl('legal')
+  const imgAlt = `${l.title} for ${PERSON_INFO.name}’s portfolio and ${BLOG_TITLE}`
+  return [
+    `<title>${esc(title)}</title>`,
+    `<meta name="description" content="${esc(l.description)}" />`,
+    `<meta name="author" content="${esc(AUTHOR.name)}" />`,
+    `<meta name="robots" content="index, follow, max-snippet:-1" />`,
+    `<link rel="canonical" href="${url}" />`,
+    `<meta property="og:site_name" content="${esc(PERSON_INFO.name)}" />`,
+    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:title" content="${esc(ogTitle)}" />`,
+    `<meta property="og:description" content="${esc(l.description)}" />`,
+    `<meta property="og:url" content="${url}" />`,
+    `<meta property="og:image" content="${img}" />`,
+    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${esc(imgAlt)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    ...TWITTER,
+    `<meta name="twitter:title" content="${esc(ogTitle)}" />`,
+    `<meta name="twitter:description" content="${esc(l.description)}" />`,
+    `<meta name="twitter:image" content="${img}" />`,
+    `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
+    `<script type="application/ld+json">${json(legalGraph(l))}</script>`,
+  ].join('\n    ')
 }
 
 /**

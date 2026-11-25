@@ -5,6 +5,7 @@
  *   index.html                                           the landing page's <head> (meta, OG, JSON-LD) + a no-JS summary
  *   blog.html, blog/<slug>.html, 404.html               pre-rendered pages (full text, JSON-LD, OG tags)
  *   blog/research.html                                   research & citation page (ORCID, profiles, open-access posts)
+ *   privacy.html, terms.html, cookies.html               legal pages (src/blog/LegalPage.tsx), served at /privacy etc.
  *   blog/<slug>.md                                       clean Markdown copy of each post (for AI tools / notes)
  *   blog/<slug>.pdf                                      PDF version (Google Scholar citation_pdf_url, Zenodo uploads)
  *   og/home.png, og/blog.png, og/research.png,
@@ -25,6 +26,7 @@ import { gfm } from 'turndown-plugin-gfm'
 import { createHash } from 'node:crypto'
 import { AUTHOR, CATEGORIES, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, homeHeadTags, homeHtml, homeNoscript, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, setOgVersions, sitemap } from './blog.mjs'
 import { LICENSES, ORCID, doiUrl } from '../src/blog/scholar.mjs'
+import { LEGAL } from '../src/blog/legal.mjs'
 import { createOg } from './og.mjs'
 import { coverPng } from './covers.mjs'
 import { loadPosts as loadSources, POSTS_DIR } from './blog.mjs'
@@ -104,6 +106,7 @@ const images = {
   blog: og.blog(posts, { title: BLOG_TITLE, description: 'Notes on building companies, shipping software and thinking with AI.' }),
   research: og.research(posts, { orcid: ORCID }),
   404: og.notFound(),
+  legal: og.page({ kicker: 'Privacy · Terms · Cookies', title: 'No ads, no analytics, no tracking cookies', sub: 'How gulzaib.vercel.app handles the little data it sees.', color: '#4f7fd8', right: [SITE_URL.replace(/^https?:\/\//, '')] }),
   ...Object.fromEntries(posts.map((p) => [p.slug, og.post(p)])),
 }
 // a post with a `cover:` block shares its featured image (plus a small brand pill) instead of the notebook card
@@ -131,8 +134,12 @@ const page = (url, opts, kind) =>
 write('blog.html', page('/blog', { posts }, 'index'))
 for (const p of posts) write(`blog/${p.slug}.html`, page(`/blog/${p.slug}`, { post: p, posts }, 'post'))
 write('blog/research.html', page('/blog/research', { posts, research: true }, 'research'))
+// privacy.html, terms.html, cookies.html: the legal pages, served at /privacy, /terms, /cookies
+for (const l of LEGAL) write(`${l.path.slice(1)}.html`, page(l.path, { legal: l, posts }, 'legal'))
 // the 404 page is served for any unknown URL, so its pre-paint script must always apply the blog theme
-write('404.html', page('404', { notFound: true }, '404').replace("location.pathname.indexOf('/blog') === 0", 'true'))
+const BLOG_PREPAINT = '/^\\/(blog|privacy|terms|cookies)(\\/|$)/.test(location.pathname)'
+if (!indexHtml.includes(BLOG_PREPAINT)) throw new Error('prerender: the pre-paint check in index.html changed; update BLOG_PREPAINT')
+write('404.html', page('404', { notFound: true }, '404').replace(BLOG_PREPAINT, 'true'))
 
 /* --------------------------------------------------------------- markdown */
 

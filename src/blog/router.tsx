@@ -1,9 +1,11 @@
 /**
- * A tiny client router for the blog (/blog, /blog/:slug, ?tag= / ?q= / ?category=).
+ * A tiny client router for the blog (/blog, /blog/:slug, ?tag= / ?q= / ?category=)
+ * and the legal pages it renders (/privacy, /terms, /cookies).
  * Links to the portfolio (/) are normal page loads: it is a separate app.
  * SSR-safe: during pre-rendering the location comes from setServerLocation().
  */
 import { useEffect, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent } from 'react'
+import { LEGAL_PATHS } from './legal.mjs'
 
 const isBrowser = typeof window !== 'undefined'
 let serverHref = '/blog'
@@ -49,7 +51,7 @@ export function useHashScroll(dep: unknown) {
   }, [dep])
 }
 
-const isInternal = (href: string) => href === '/blog' || href.startsWith('/blog/') || href.startsWith('/blog?') || href.startsWith('/blog#')
+const isInternal = (href: string) => href === '/blog' || href.startsWith('/blog/') || href.startsWith('/blog?') || href.startsWith('/blog#') || LEGAL_PATHS.includes(href.split(/[?#]/)[0])
 
 export function Link({ href = '', onClick, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   const handle = (e: MouseEvent<HTMLAnchorElement>) => {
