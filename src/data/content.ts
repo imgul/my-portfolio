@@ -342,9 +342,9 @@ export const certifications = [
 ]
 
 export const lessons = [
-  { n: '01', slug: 'code-is-not-a-business', title: 'Code is not a business.', body: 'I shipped a POS SaaS that reached around 20 paying customers. Then I learned the market needed offline-first. Now I validate before I build.' },
-  { n: '02', slug: 'distribution-beats-features', title: 'Distribution beats features.', body: 'Cold calls to schools taught me more than any framework did. Most of the work is getting the product in front of the right people.' },
-  { n: '03', slug: 'simple-wins', title: 'Simple wins.', body: 'People pick software they enjoy over software with the longest feature list, so I design for the least technical user in the room.' },
+  { n: '01', slug: 'validate-saas-idea', title: 'Code is not a business.', body: 'I shipped a POS SaaS that reached around 20 paying customers. Then I learned the market needed offline-first. Now I validate before I build.' },
+  { n: '02', slug: 'selling-software-to-schools', title: 'Distribution beats features.', body: 'Cold calls to schools taught me more than any framework did. Most of the work is getting the product in front of the right people.' },
+  { n: '03', slug: 'designing-for-non-technical-users', title: 'Simple wins.', body: 'People pick software they enjoy over software with the longest feature list, so I design for the least technical user in the room.' },
 ]
 
 export const beyond = [

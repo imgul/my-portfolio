@@ -68,8 +68,8 @@ Two live posts already touch this story:
 
 | Post (date) | What it already says | How post 1 differs |
 |---|---|---|
-| `simple-wins` (2026-10-26) | Opens with the clerk who asked “Where do I click to print the fee voucher?” and “She didn’t need a dashboard.” Then UX principles. | Post 1 is about **what schools buy and why**, with the ranked request list, voucher anatomy and rules. Retell the clerk moment in two lines at most, or tell it fully here and leave simple-wins as the UX follow-up. |
-| `distribution-beats-features` (2026-10-05) | The cold-calling process; one bullet says fee collection and parent communication came up most. | Post 1 is the full answer to that bullet: counts, examples and what it meant for the product. |
+| `designing-for-non-technical-users` (2026-10-26) | Opens with the clerk who asked “Where do I click to print the fee voucher?” and “She didn’t need a dashboard.” Then UX principles. | Post 1 is about **what schools buy and why**, with the ranked request list, voucher anatomy and rules. Retell the clerk moment in two lines at most, or tell it fully here and leave designing-for-non-technical-users as the UX follow-up. |
+| `selling-software-to-schools` (2026-10-05) | The cold-calling process; one bullet says fee collection and parent communication came up most. | Post 1 is the full answer to that bullet: counts, examples and what it meant for the product. |
 
 **Rule:** post 1 must carry facts neither of those has (counts from the call log, a redacted voucher, the request ranking), or Google will treat the three as near-duplicates and pick one.
 
@@ -206,7 +206,7 @@ Gul joined Oxygen LMS full time in January 2026 and the prototype was underway i
 | Sitemap | `lastmod` would say 2026-05-01 for a URL first seen in December. Google says it stops trusting `lastmod` on sites where it is inaccurate, which weakens the signal for **every** post. Fix: set `updated:` to the real publish day. |
 | Where readers see it | It sorts below every post from June to November, on the blog index and in RSS. Most subscribers and visitors won’t see it as new. |
 | AI citations | Perplexity and similar engines favour recent pages. A May date makes it look seven months old on day one. |
-| Content | It may only use facts published before May (the ✅ rows). It can’t link to `distribution-beats-features` or `simple-wins` from the body, because those come later. Those posts can link back to it instead. |
+| Content | It may only use facts published before May (the ✅ rows). It can’t link to `selling-software-to-schools` or `designing-for-non-technical-users` from the body, because those come later. Those posts can link back to it instead. |
 | Scholarly record | No issue: Founder posts are all-rights-reserved, so no DOI or Scholar metadata is created. Don’t add a DOI. |
 | House rules | `AGENTS.md` says never backdate. This post would be a recorded exception. |
 

@@ -28,15 +28,15 @@ Each existing post uses a different style so the strongest ones can be picked an
 
 | Style | Strategy | Use when the post has… | Example post |
 |---|---|---|---|
-| `number` | One big, true number and what it meant | a result or a cost you can count | `code-is-not-a-business` |
+| `number` | One big, true number and what it meant | a result or a cost you can count | `validate-saas-idea` |
 | `versus` | What people expect vs what actually wins | a contrarian claim ("X, not Y") | `fee-vouchers-not-dashboards` |
 | `code` | The key code from the post in an editor window, one line lit | one snippet that *is* the answer | `ai-features-in-laravel-queues-streaming` |
 | `image` | An illustration (`assets/covers/<slug>.png`) plus a hook | a concept that's easier to show than say | `multi-tenant-laravel-saas`, `rag-for-exam-generation` |
-| `headline` | A huge typographic claim on a bold colour | a short, punchy opinion | `distribution-beats-features` |
-| `quote` | The one line people remember | a real quote from a user or customer | `simple-wins` |
+| `headline` | A huge typographic claim on a bold colour | a short, punchy opinion | `selling-software-to-schools` |
+| `quote` | The one line people remember | a real quote from a user or customer | `designing-for-non-technical-users` |
 | `face` | The author's photo beside a two-line hook | an opinion or a lesson tied to you | `agents-that-do-work` |
 | `list` | "N steps" with the steps visible | a checklist or a process | `how-i-write-technical-posts` |
-| `mockup` | The thing the post teaches you to make | a template or an artifact | `readme-people-read` |
+| `mockup` | The thing the post teaches you to make | a template or an artifact | `how-to-write-a-readme` |
 | `terminal` | Proof: real test or command output | something you tested or measured | `school-erp-database-design` |
 
 ### Fields

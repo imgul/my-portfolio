@@ -296,6 +296,17 @@ export function lintPosts(dir = POSTS_DIR) {
     for (const f of slop.flags.filter((x) => x.weight >= 4)) warn(`AI tell (${f.label}): “${f.text}”. Say the specific thing instead`)
     if (slop.score < 90) warn(`slop score ${slop.score}/100; rewrite flagged passages in your own words (npm run lint:slop -- src/blog/posts/${p.slug}.mdx)`)
   }
+  // Renamed posts: every /blog/<old> redirect must land on a real post and must not shadow one.
+  const vercel = path.join(dir, '../../../vercel.json')
+  if (dir === POSTS_DIR && fs.existsSync(vercel)) {
+    for (const r of JSON.parse(fs.readFileSync(vercel, 'utf8')).redirects ?? []) {
+      const from = /^\/blog\/([a-z0-9-]+)$/.exec(r.source)?.[1]
+      if (!from) continue
+      const to = /^\/blog\/([a-z0-9-]+)$/.exec(r.destination)?.[1]
+      if (slugs.has(from)) errors.push(`vercel.json: redirect from /blog/${from} hides a post that still exists`)
+      if (to && !slugs.has(to)) errors.push(`vercel.json: redirect /blog/${from} points to /blog/${to}, which is not a post`)
+    }
+  }
   return { errors, warnings, count: posts.length }
 }
 

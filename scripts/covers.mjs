@@ -8,15 +8,15 @@
  *
  * Each style is a strategy for earning the click (docs/COVERS.md has the reasoning):
  *
- *   number     one big, true number and what it cost            (code-is-not-a-business)
+ *   number     one big, true number and what it cost            (validate-saas-idea)
  *   versus     the thing people expect vs the thing that wins   (fee-vouchers-not-dashboards)
  *   code       the real code from the post, in an editor window (ai-features-in-laravel-…)
  *   image      AI illustration from assets/covers + a hook       (multi-tenant, rag-for-exam-generation)
- *   headline   giant typographic claim on a bold colour          (distribution-beats-features)
- *   quote      the line from the post that people remember       (simple-wins)
+ *   headline   giant typographic claim on a bold colour          (selling-software-to-schools)
+ *   quote      the line from the post that people remember       (designing-for-non-technical-users)
  *   face       the author's photo next to a two-line hook        (agents-that-do-work)
  *   list       "N steps" with the steps visible                  (how-i-write-technical-posts)
- *   mockup     the artifact the post teaches you to make         (readme-people-read)
+ *   mockup     the artifact the post teaches you to make         (how-to-write-a-readme)
  *   terminal   proof: real test output                           (school-erp-database-design)
  *
  * Posts without a `cover:` keep the generative dot art (src/blog/components/CoverArt.tsx).
