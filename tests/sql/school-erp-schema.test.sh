@@ -146,8 +146,10 @@ expect_error "a voucher period is the first of a month" "ERROR 3819" \
 expect_error "a fee rate is set once per class, head and year" "ERROR 1062" \
   "INSERT INTO fee_rates (tenant_id, academic_year_id, grade_level_id, fee_head_id, amount_paisa) VALUES (1, 2, 3, 1, 480000)"
 
-expect_error "a B-Form number is 13 digits" "ERROR 3819" \
+expect_error "a B-Form number with dashes is too long" "ERROR 1406" \
   "INSERT INTO students (tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES (1, 1, 'A-2000', 'X', 'Y', '2018-01-01', '61101-1234567-1', '2026-04-01')"
+expect_error "a B-Form number is digits only" "ERROR 3819" \
+  "INSERT INTO students (tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES (1, 1, 'A-2000', 'X', 'Y', '2018-01-01', '61101-123456A', '2026-04-01')"
 expect_error "one student per B-Form in a school" "ERROR 1062" \
   "INSERT INTO students (tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES (1, 1, 'A-2001', 'X', 'Y', '2018-01-01', '6110112345671', '2026-04-01')"
 

@@ -120,7 +120,7 @@ Attendance then hangs off the enrolment, not the student. A mark for 14 October 
 
 ## How does year-end promotion work?
 
-Promotion becomes inserts and one update. Nothing is overwritten.
+Promotion becomes one update and one insert. The update only fills in end dates, so no row ever loses the class it recorded.
 
 Don’t hard-code when the year starts. Punjab’s 2026 session began on 1 April <Cite id="tribune2025" />, and a school running another calendar will have different dates, so `academic_years` stores `starts_on` and `ends_on` as data.
 
@@ -218,7 +218,7 @@ The May voucher stores the 1,200 in `balance_bf_paisa`, a snapshot of what the f
 
 </Callout>
 
-Two more keys do quiet work. `vouchers` allows one live voucher per family per month, using the same generated-column trick as enrolments, so a cancelled voucher can be replaced but never duplicated. `payments` has a unique key on the method and bank reference, so importing the same 1Bill file twice can’t record a payment twice.
+Two more unique keys matter. `vouchers` allows one live voucher per family per month, using the same generated-column trick as enrolments, so a cancelled voucher can be replaced but never duplicated. `payments` has a unique key on the method and bank reference, so importing the same 1Bill file twice can’t record a payment twice.
 
 ## What should a student record hold in Pakistan?
 
@@ -239,7 +239,7 @@ Enough to fill later posts. The same patterns carry over:
 
 ## How was this tested?
 
-On GitHub Actions, every time the SQL changes. The [SQL examples workflow](https://github.com/imgul/my-portfolio/blob/main/.github/workflows/sql-examples.yml) loads the [schema](/downloads/school-erp-schema.sql) into MySQL 8.0 and 8.4, seeds two schools and Ali’s family, and runs [28 checks](https://github.com/imgul/my-portfolio/blob/main/tests/sql/school-erp-schema.test.sh). A second job copies the migration into a fresh Laravel 13 app and runs it. Some of the rules it confirms:
+On GitHub Actions, every time the SQL changes. The [SQL examples workflow](https://github.com/imgul/my-portfolio/blob/main/.github/workflows/sql-examples.yml) loads the [schema](/downloads/school-erp-schema.sql) into MySQL 8.0 and 8.4, seeds two schools and Ali’s family, and runs [29 checks](https://github.com/imgul/my-portfolio/blob/main/tests/sql/school-erp-schema.test.sh). A second job copies the migration into a fresh Laravel 13 app and runs it. Some of the rules it confirms:
 
 | Attempt | MySQL says |
 | --- | --- |
@@ -248,7 +248,7 @@ On GitHub Actions, every time the SQL changes. The [SQL examples workflow](https
 | Close an enrolment without a reason | Error 3819, check constraint violated |
 | Edit or delete a ledger row | Error 1644, “append-only: add a reversal instead” |
 | Import the same 1Bill transaction twice | Error 1062 |
-| Enter a B-Form number with dashes | Error 3819 |
+| Enter a B-Form number with a letter in it | Error 3819 |
 
 Download the file, run it in an empty database, and try to break it.
 
