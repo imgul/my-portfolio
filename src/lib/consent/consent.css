@@ -6,8 +6,10 @@
   --cc-fg: var(--text, #25231f);
   --cc-2: var(--text-2, #4a463f);
   --cc-line: var(--line-2, #d3cdbf);
-  --cc-button: color-mix(in srgb, var(--cc-fg) 6%, var(--cc-bg));
-  --cc-button-border: color-mix(in srgb, var(--cc-fg) 35%, var(--cc-bg));
+  --cc-button: #202024;
+  --cc-button-hover: #3a3a3e;
+  --cc-button-ink: #fff;
+  --cc-button-border: var(--cc-fg);
   --cc-focus: var(--accent, #2c58b8);
   --cc-font: var(--sans, 'Inter Variable', Inter, system-ui, sans-serif);
   --cc-shadow: 0 2px 4px rgb(30 20 0 / 0.06), 0 18px 48px -16px rgb(30 20 0 / 0.32);
@@ -88,7 +90,7 @@
   border: 1px solid var(--cc-button-border);
   border-radius: 999px;
   background: var(--cc-button);
-  color: var(--cc-fg);
+  color: var(--cc-button-ink);
   font: 600 0.88rem/1.2 var(--cc-font);
   cursor: pointer;
   transition:
@@ -98,7 +100,7 @@
 }
 .cc__btn:hover {
   border-color: var(--cc-fg);
-  background: color-mix(in srgb, var(--cc-fg) 12%, var(--cc-bg));
+  background: var(--cc-button-hover);
 }
 .cc__btn:active {
   transform: translateY(1px);
