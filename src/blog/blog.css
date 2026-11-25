@@ -790,8 +790,9 @@ h3:focus-visible {
 
 .b-filters {
   position: sticky;
-  top: 60px;
+  top: var(--header-h);
   z-index: 10;
+  transition: top 0.3s ease;
   margin: 0 calc(var(--gutter) * -1) 2.5rem;
   padding: 0.9rem var(--gutter);
   background: color-mix(in srgb, var(--bg) 92%, transparent);
@@ -4454,4 +4455,66 @@ a.b-card__hitlink:hover {
 .b-card__snip {
   font-variant-ligatures: none;
   font-feature-settings: 'calt' 0, 'liga' 0;
+}
+
+/* the header slides away on scroll down (layout.tsx sets data-header-hidden): the filter bar
+   takes its place instead of leaving a header-sized gap above it */
+:root[data-header-hidden] .b-filters {
+  top: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .b-filters {
+    transition: none;
+  }
+}
+/* on phones the sticky bar stays short: search on one line, then chips, sort and layout
+   share one horizontally scrolling row, so it never covers half the screen */
+@media (max-width: 640px) {
+  .b-filters {
+    /* solid on phones: text scrolling underneath stayed readable through the translucent bar */
+    background: var(--bg);
+    margin-bottom: 1.75rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+  .b-filters .b-search input {
+    height: 42px;
+    font-size: 16px; /* 16px stops iOS zooming into the field */
+  }
+  .b-filters .b-search .b-kbd {
+    display: none;
+  }
+  .b-filters__row {
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    margin: 0.55rem calc(var(--gutter) * -1) 0;
+    padding: 0 var(--gutter) 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .b-filters__row::-webkit-scrollbar {
+    display: none;
+  }
+  .b-filters__row .b-chips {
+    flex: none;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .b-filters__tools {
+    flex: none;
+    gap: 0.45rem;
+  }
+  .b-filters .b-chips button,
+  .b-filters .b-select,
+  .b-filters .b-viewtoggle {
+    min-height: 34px;
+  }
+  .b-filters .b-results {
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+  }
+  .b-filters .b-active-tag {
+    margin-top: 0.45rem;
+  }
 }
