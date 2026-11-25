@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620" width="980" height="620" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<title id="t">School ERP core schema</title><desc id="d">Thirteen tables in three groups. Calendar: academic_years, grade_levels, sections. People: families, students, enrollments, attendance_marks. Fees: fee_heads, fee_rates, concessions, vouchers, payments, ledger_entries. Arrows point from child to parent.</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a8f99"/></marker></defs>
+<rect width="980" height="620" rx="14" fill="#f6f7f9"/>
+<text x="40" y="28" font-size="12" font-weight="700" letter-spacing="1.5" fill="#5b616e">CALENDAR</text>
+<text x="360" y="28" font-size="12" font-weight="700" letter-spacing="1.5" fill="#5b616e">PEOPLE AND DAILY WORK</text>
+<text x="700" y="28" font-size="12" font-weight="700" letter-spacing="1.5" fill="#5b616e">FEES</text>
+<polyline points="140,320 140,236" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="40,348 20,348 20,68 40,68" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="460,180 460,96" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="460,320 460,236" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="460,460 460,376" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="360,348 240,348" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="800,140 800,96" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="800,440 800,396" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="800,540 800,496" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="900,268 940,268" fill="none" stroke="#8a8f99" stroke-width="1.6"/>
+<polyline points="900,568 940,568" fill="none" stroke="#8a8f99" stroke-width="1.6"/>
+<polyline points="940,568 940,68 900,68" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="952" y="420" font-size="11" fill="#5b616e" transform="rotate(90 952 420)" text-anchor="middle">fee_head_id</text>
+<polyline points="700,368 640,368" fill="none" stroke="#8a8f99" stroke-width="1.6"/>
+<polyline points="700,468 640,468" fill="none" stroke="#8a8f99" stroke-width="1.6"/>
+<polyline points="700,568 640,568" fill="none" stroke="#8a8f99" stroke-width="1.6"/>
+<polyline points="640,568 640,68 560,68" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="630" y="150" font-size="11" fill="#5b616e" transform="rotate(-90 630 150)" text-anchor="middle">family_id</text>
+<polyline points="700,268 600,268 600,208 560,208" fill="none" stroke="#8a8f99" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="40" y="40" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="54" y="64" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">academic_years</text>
+<text x="54" y="83" font-size="12" fill="#4b515c">2026-27, starts_on, ends_on</text>
+<rect x="40" y="180" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="54" y="204" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">grade_levels</text>
+<text x="54" y="223" font-size="12" fill="#4b515c">“Class 5”, permanent</text>
+<rect x="40" y="320" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="54" y="344" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">sections</text>
+<text x="54" y="363" font-size="12" fill="#4b515c">“5-B”, one year only</text>
+<rect x="360" y="40" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="374" y="64" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">families</text>
+<text x="374" y="83" font-size="12" fill="#4b515c">one voucher per family</text>
+<rect x="360" y="180" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="374" y="204" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">students</text>
+<text x="374" y="223" font-size="12" fill="#4b515c">B-Form, father_name</text>
+<rect x="360" y="320" width="200" height="56" rx="8" fill="#ffffff" stroke="#3f6fd1" stroke-width="2.4"/>
+<text x="374" y="344" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">enrollments</text>
+<text x="374" y="363" font-size="12" fill="#4b515c">dated: starts_on, ends_on</text>
+<rect x="360" y="460" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="374" y="484" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">attendance_marks</text>
+<text x="374" y="503" font-size="12" fill="#4b515c">one per enrolment per day</text>
+<rect x="700" y="40" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="714" y="64" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">fee_heads</text>
+<text x="714" y="83" font-size="12" fill="#4b515c">tuition, transport, exam</text>
+<rect x="700" y="140" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="714" y="164" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">fee_rates</text>
+<text x="714" y="183" font-size="12" fill="#4b515c">head × class × year</text>
+<rect x="700" y="240" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="714" y="264" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">concessions</text>
+<text x="714" y="283" font-size="12" fill="#4b515c">percent_bp, approved_by</text>
+<rect x="700" y="340" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="714" y="364" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">vouchers</text>
+<text x="714" y="383" font-size="12" fill="#4b515c">family × month, arrears</text>
+<rect x="700" y="440" width="200" height="56" rx="8" fill="#ffffff" stroke="#c3c7cf" stroke-width="1.4"/>
+<text x="714" y="464" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">payments</text>
+<text x="714" y="483" font-size="12" fill="#4b515c">unique bank reference</text>
+<rect x="700" y="540" width="200" height="56" rx="8" fill="#ffffff" stroke="#3f6fd1" stroke-width="2.4"/>
+<text x="714" y="564" font-size="15" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#17191d">ledger_entries</text>
+<text x="714" y="583" font-size="12" fill="#4b515c">append-only, in paisa</text>
+<text x="40" y="604" font-size="12" fill="#5b616e">Main foreign keys only, pointing from child to parent. Every table also has tenant_id, and every key includes it.</text>
+</svg>

@@ -64,7 +64,7 @@ This is the schema I’d start a school ERP with on Laravel and MySQL, for priva
 
 ## What tables does a school ERP need?
 
-Fifteen tables cover the daily work. Each one has a clear answer to “what is one row?”:
+Fourteen tables cover the daily work. Each one has a clear answer to “what is one row?”:
 
 | Group | Table | One row is |
 | --- | --- | --- |
@@ -85,6 +85,8 @@ Fifteen tables cover the daily work. Each one has a clear answer to “what is o
 | Reports | `family_balances`, `section_rosters` | Views, not tables |
 
 If you can’t say what one row of a table means in a few words, the table is usually two tables.
+
+<Figure src="/img/blog/school-erp-erd.svg" alt="Entity relationship diagram of the school ERP schema. Calendar: sections point to academic_years and grade_levels. People: students point to families, enrollments point to students and sections, attendance_marks point to enrollments. Fees: fee_rates and concessions point to fee_heads, concessions also point to students, payments point to vouchers, ledger_entries point to payments and fee_heads, and vouchers, payments and ledger_entries all point to families." caption="The core tables and their main foreign keys. Enrolments and the ledger, outlined in blue, carry most of the design." wide />
 
 ## Why shouldn’t students have a class_id column?
 
