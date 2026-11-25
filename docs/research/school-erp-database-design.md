@@ -2,7 +2,7 @@
 
 Post 2 of the content plan (`docs/CONTENT_PLAN_DEC_2026.md`), series “Building Oxygen LMS”, part 2. Researched 24 November 2026.
 
-**Status:** written as `src/blog/posts/school-erp-database-design.mdx`, scheduled for `date: 2026-12-02` (goes live through the daily publish workflow). First-person lines are limited to what Gul has already published. The schema is a cut-down design written for the post, and the post says so; it is not a copy of Oxygen LMS’s production schema.
+**Status:** published 24 Nov 2026 as `src/blog/posts/school-erp-database-design.mdx`, at Gul’s request dated `2026-05-02` with `updated: 2026-11-24` and an opening note (“I first sketched this schema in May 2026…”), the same pattern as post 1. Content from after May (NADRA/FBISE, Sept 2026; test versions) is covered by that note. First-person lines are limited to what Gul has already published. The schema is a cut-down design written for the post, and the post says so; it is not a copy of Oxygen LMS’s production schema.
 
 | | |
 |---|---|
