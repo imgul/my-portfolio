@@ -126,7 +126,7 @@ expect_error "only one open enrolment per student" "ERROR 1062" \
 expect_error "no reference to another school's student" "ERROR 1452" \
   "INSERT INTO enrollments (tenant_id, student_id, section_id, starts_on) VALUES (2, 1, 4, '2026-08-01')"
 expect_error "no reference to another school's section" "ERROR 1452" \
-  "INSERT INTO enrollments (tenant_id, student_id, section_id, starts_on) VALUES (1, 1, 4, '2026-08-01')"
+  "INSERT INTO enrollments (tenant_id, student_id, section_id, starts_on, ends_on, end_reason) VALUES (1, 1, 4, '2024-04-01', '2025-03-31', 'promoted')"
 expect_error "closing an enrolment needs a reason" "ERROR 3819" \
   "UPDATE enrollments SET ends_on = '2026-06-30' WHERE student_id = 2 AND ends_on IS NULL"
 expect_error "ledger rows cannot be edited" "ERROR 1644" \
