@@ -2,6 +2,88 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/blog/simple-wins",
+      "destination": "/blog/designing-for-non-technical-users",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/simple-wins.md",
+      "destination": "/blog/designing-for-non-technical-users.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/simple-wins.pdf",
+      "destination": "/blog/designing-for-non-technical-users.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/simple-wins.png",
+      "destination": "/og/designing-for-non-technical-users.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/readme-people-read",
+      "destination": "/blog/how-to-write-a-readme",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/readme-people-read.md",
+      "destination": "/blog/how-to-write-a-readme.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/readme-people-read.pdf",
+      "destination": "/blog/how-to-write-a-readme.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/readme-people-read.png",
+      "destination": "/og/how-to-write-a-readme.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/code-is-not-a-business",
+      "destination": "/blog/validate-saas-idea",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/code-is-not-a-business.md",
+      "destination": "/blog/validate-saas-idea.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/code-is-not-a-business.pdf",
+      "destination": "/blog/validate-saas-idea.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/code-is-not-a-business.png",
+      "destination": "/og/validate-saas-idea.png",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/distribution-beats-features",
+      "destination": "/blog/selling-software-to-schools",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/distribution-beats-features.md",
+      "destination": "/blog/selling-software-to-schools.md",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/distribution-beats-features.pdf",
+      "destination": "/blog/selling-software-to-schools.pdf",
+      "statusCode": 301
+    },
+    {
+      "source": "/og/distribution-beats-features.png",
+      "destination": "/og/selling-software-to-schools.png",
+      "statusCode": 301
+    }
+  ],
   "headers": [
     {
       "source": "/rss.xml",

@@ -1,14 +1,15 @@
 {
-  "laravel-agent-guard": "883fe332fa",
-  "how-i-write-technical-posts": "8be51fec4a",
-  "agents-that-do-work": "1a324dfc95",
-  "simple-wins": "3cdca800bf",
-  "distribution-beats-features": "f7a00a2ecc",
-  "code-is-not-a-business": "cb2eea6190",
-  "multi-tenant-laravel-saas": "3fad41438b",
-  "rag-for-exam-generation": "cb60d5f659",
-  "ai-features-in-laravel-queues-streaming": "ae73539e60",
-  "school-erp-database-design": "ce60aa13a2",
-  "fee-vouchers-not-dashboards": "5b4486e109",
-  "readme-people-read": "9e7a09b1ce"
+  "laravel-agent-guard-setup": "e471dd4ca4",
+  "laravel-agent-guard": "ec816a4d83",
+  "how-i-write-technical-posts": "2e2c62e819",
+  "agents-that-do-work": "e2baed2e9b",
+  "designing-for-non-technical-users": "d9137beb07",
+  "selling-software-to-schools": "f256b17ecd",
+  "validate-saas-idea": "c8fbe2c264",
+  "multi-tenant-laravel-saas": "7d507a61a1",
+  "rag-for-exam-generation": "6c7edca663",
+  "ai-features-in-laravel-queues-streaming": "1bb87803f1",
+  "school-erp-database-design": "6884638e21",
+  "fee-vouchers-not-dashboards": "422412d53a",
+  "how-to-write-a-readme": "c13b8b160b"
 }

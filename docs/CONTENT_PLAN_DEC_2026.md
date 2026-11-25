@@ -138,7 +138,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** which features Pakistani private schools pay for first, and which ones they ignore.
 - **Talk through:** the top requests from calls and visits, in order. A feature you built that nobody used. The moment a school agreed to pay, and what tipped it. What the owner, the clerk and the teachers each asked for.
 - **Asset:** a ranked table of requests from your call log (count per request), plus a redacted fee voucher.
-- **Links:** distribution-beats-features, simple-wins.
+- **Links:** selling-software-to-schools, designing-for-non-technical-users.
 - **FAQ:** “What should a school management system include?” “Do schools pay for attendance software?”
 
 **2. Designing the database for a school ERP** · `school-erp-database-design` · Engineering, Building Oxygen LMS 2
@@ -151,7 +151,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the screen design and backend shape that let a teacher mark a full class fast on a cheap phone.
 - **Talk through:** watching a teacher use the first version. Defaults (“everyone present, tap the absentees”). Bulk inserts and idempotency. Time per class before and after.
 - **Asset:** before/after screenshots and your measured times.
-- **Links:** simple-wins.
+- **Links:** designing-for-non-technical-users.
 
 **4. Roles and permissions in a multi-tenant Laravel app** · `laravel-multi-tenant-permissions` · Engineering, Building Oxygen LMS 4
 - **TL;DR answers:** how to scope roles per tenant (school/branch) without leaking data, with the package and code you use.
@@ -164,7 +164,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the pricing model you chose, the numbers, and what schools pushed back on.
 - **Talk through:** the models you tried or quoted. Annual vs monthly in a cash-heavy market. Setup fees. Discounts you regret.
 - **Asset:** your price table (or ranges if exact prices are private) and objections from real calls.
-- **Links:** code-is-not-a-business, distribution-beats-features.
+- **Links:** validate-saas-idea, selling-software-to-schools.
 
 **6. WhatsApp fee reminders parents read (and reply to)** · `whatsapp-fee-reminders` · Engineering, Building Oxygen LMS 6 (field note)
 - **TL;DR answers:** how you send fee reminders over WhatsApp, what it costs, and what changed in payments.
@@ -229,13 +229,13 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the concrete changes (pricing, clients, process) when you moved from freelancing to SynergyFlow Labs.
 - **Talk through:** the month you decided. Your first productised offer. What you stopped doing. Revenue mix before/after (ranges are fine).
 - **Asset:** a before/after table of how you sell and deliver.
-- **Links:** code-is-not-a-business.
+- **Links:** validate-saas-idea.
 
 **16. How I scope an MVP in one call: my question list** · `scope-an-mvp-in-one-call` · Founder lessons 5
 - **TL;DR answers:** the questions you ask on a first call and how answers turn into a scope and a price.
 - **Talk through:** a call that went well and one that didn’t. Questions that save the most rework. Red flags.
 - **Asset:** your actual question list as a downloadable checklist.
-- **Links:** simple-wins.
+- **Links:** designing-for-non-technical-users.
 
 **17. Building AnySub in public: the first month in numbers** · `anysub-month-one` · Founder lessons 6
 - **TL;DR answers:** visitors, signups and what moved them in AnySub’s first month, with real numbers.
@@ -296,7 +296,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **TL;DR answers:** the format and tone of release notes that customers open and act on.
 - **Talk through:** a release note that caused support tickets, one that reduced them. Who you write for.
 - **Asset:** two real release notes, before and after.
-- **Links:** readme-people-read, how-i-write-technical-posts.
+- **Links:** how-to-write-a-readme, how-i-write-technical-posts.
 
 **27. My 2026 stack, and what I’d drop in 2027** · `my-stack-2026` · Engineering, field note
 - **TL;DR answers:** the tools you use for each layer and the ones you plan to replace.
