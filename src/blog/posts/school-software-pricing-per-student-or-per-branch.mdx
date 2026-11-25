@@ -1,6 +1,6 @@
 ---
 title: "School software pricing: per student or per branch?"
-description: "Compare per-student and per-branch school software pricing with worked PKR examples, costs to include, and contract terms to check."
+description: "A Pakistan-focused guide to school software pricing, with published local rates, practical PKR examples and costs to check before quoting."
 date: 2026-12-05
 category: Founder
 cover:
@@ -28,6 +28,21 @@ references:
     authors: Schooliee
     title: "Cloud School Management System & K-12 ERP"
     url: https://www.schooliee.com/
+  - id: mjfour
+    authors: MjFour
+    title: "School Management System in Pakistan"
+    url: https://mjfour.com/products/school-management
+  - id: pakeducate
+    authors: PakEducate
+    title: "School Management System for Pakistani Schools"
+    url: https://pakeducate.com/
+  - id: rise2022
+    authors: Masooda Bano
+    title: "The Missing Link: Low-Fee Private Tuition and Education Options for the Poor"
+    venue: RISE Working Paper 22/113
+    year: 2022
+    doi: 10.35489/BSG-RISEWP_2022/113
+    url: https://riseprogramme.org/sites/default/files/2022-09/Missing_Link_Low-Fee_Private_Tuition_PAKISTAN.pdf
   - id: twilio
     authors: Twilio
     title: "WhatsApp messaging pricing"
@@ -38,86 +53,104 @@ references:
     url: https://stripe.com/resources/more/saas-gross-margin-explained-what-it-is-and-why-it-is-important
 faq:
   - q: "Should school software be priced per student or per branch?"
-    a: "Per-student pricing follows enrolment but needs an agreed counting rule. A flat branch price is easier to budget, while branch size bands can balance predictability with differences in school size. Compare both against support and onboarding costs before choosing."
+    a: "For a small Pakistani private school, start by testing a clear monthly PKR price with a student limit. Size bands make the bill predictable while recognising that branches differ in size. Compare it with per-student offers and check that it covers setup and support."
   - q: "What counts as an active student for software billing?"
-    a: "There is no universal definition. The contract should state which enrolled or archived records count, when the count is taken, and how transfers, new admissions and holidays affect the invoice."
+    a: "There is no universal definition. Agree whether billing counts enrolled or archived records, when the count is taken, and how transfers, admissions and school holidays affect the invoice."
   - q: "Are setup and WhatsApp messages included in school software prices?"
     a: "That depends on the vendor and plan. Ask for the scope of data import, training and support, plus any messaging allowance, overage rate and applicable taxes in writing."
 ---
 
 <TLDR>
 
-Per-student pricing moves with enrolment. A flat price per branch is easier to budget, while a branch price based on size bands offers a middle ground. Choose the model after testing it against small and large schools, onboarding costs and the work included in support.
+For a small private school in Pakistan, I would start by testing a clear monthly price in rupees with a student limit, then quote larger or multi-branch schools separately. Published local offers include plans from PKR 1,000 per month and per-student plans from PKR 5, but features and terms differ. The right price must cover setup and support as well as fit the school’s budget.
 
 </TLDR>
 
-A school with 100 students and one with 700 may both have one office, but the same branch price lands very differently on each budget. If you charge per student instead, the invoice can change when admissions or withdrawals change. Both choices need a clear explanation before anyone signs.
+A neighbourhood school with 100 children and a multi-campus group do not buy software in the same way. Both may want fee challans and result cards, but the number of staff to train, the records to import and the budget available can be very different.
 
-This is a guide to comparing models, not a disclosure of Oxygen LMS prices or a record of customer negotiations. The worked prices below are hypothetical, chosen to make the maths visible.
+Low-fee schooling matters here. A 2022 RISE study of two urban neighbourhoods found families weighing private school fees alongside other education costs. It is a small, older study, not a measure of what every Pakistani school can pay today, but it is a reminder not to price every school like a large city chain. <Cite id="rise2022" />
 
-## Three ways to price the same service
+This is a guide to testing prices in Pakistan, not a disclosure of Oxygen LMS prices or a record of customer negotiations. Worked figures are hypothetical, not quotes.
+
+## What local vendors actually list
+
+These are examples checked on 25 November 2026. They are advertised prices, not a survey of what schools ultimately pay. Modules, branch limits, tax and billing terms differ, so confirm the current written quote before comparing.
+
+| Published offer | Price and scope | Detail to check |
+| --- | --- | --- |
+| [MjFour](https://mjfour.com/products/school-management) | PKR 1,000/month for up to 200 students, one branch | No setup fee; sales tax may apply |
+| [Schooliee](https://www.schooliee.com/) | From PKR 5 per active student/month for its base mix | 200-student minimum; modules affect the rate |
+| [PakEducate](https://pakeducate.com/) | PKR 1,500/month for up to 75 students; PKR 3,000 for up to 150 | Confirm branch scope and included features |
+| [Edflo](https://www.edflo.io/pricing) | PKR 2,999/month for 1–150 students per branch | Billed in advance on its stated cycle |
+| [EduSuite](https://www.edusuite.pk/pricing-and-plans/) | Standard PKR 30/student/month; Pro PKR 50 | Plan inclusions and yearly terms need confirmation |
+
+MjFour also advertises spreadsheet import and training included. Schooliee lists setup, import and training as free; its PKR 5 starting price is for a base mix, not the same package as every other plan. <Cite id="mjfour" /> <Cite id="schooliee" /> <Cite id="pakeducate" /> <Cite id="edflo" /> <Cite id="edusuite" />
+
+The practical point: a founder pitching PKR 6,000 per month to a 100-student school should be ready to explain why that offer is worth more than cheaper local alternatives. Do not claim all products are equivalent. Ask what the school uses today and compare the actual work each plan covers.
+
+## Per student or per branch?
 
 | Model | How the invoice works | What to watch |
 | --- | --- | --- |
-| Per active student | Agreed rate multiplied by a defined student count | Counting rules, minimum charge and changing enrolment |
-| Flat per branch | One recurring price for each branch | A small branch and a large one pay the same amount |
-| Branch size bands | A flat price for each branch based on its student-count band | Price jumps at band boundaries |
+| Per active student | Rate multiplied by a defined count | Minimum charge and count disputes |
+| Flat per branch | One recurring price for each branch | The same bill can be heavy for a small campus |
+| Branch size bands | A flat price per branch based on student-count bands | Price jumps when a branch crosses a limit |
 
-Take a fictional rate of PKR 20 per active student per month and a fictional flat branch rate of PKR 6,000 per month. These are examples, not recommended rates or quotes.
+Suppose a fictional vendor charges PKR 10 per active student per month, while another hypothetical offer is PKR 2,000 per branch per month. Neither figure is an Oxygen LMS price or a recommendation; both are only for comparing the maths.
 
-| Active students in one branch | Per student at PKR 20 | Flat branch price | Difference |
-| --- | --- | --- | --- |
-| 100 | PKR 2,000 | PKR 6,000 | Per student is PKR 4,000 less |
-| 300 | PKR 6,000 | PKR 6,000 | Equal |
-| 700 | PKR 14,000 | PKR 6,000 | Flat is PKR 8,000 less |
+| Active students in one branch | PKR 10 per student | PKR 2,000 per branch |
+| --- | --- | --- |
+| 100 | PKR 1,000/month | PKR 2,000/month |
+| 200 | PKR 2,000/month | PKR 2,000/month |
+| 500 | PKR 5,000/month | PKR 2,000/month |
 
-The break-even point in this example is 300 students: divide the PKR 6,000 branch price by PKR 20 per student. This comparison assumes the same features, support and payment terms. It says nothing about which model is profitable.
+At 200 students the prices are equal. A 200-student minimum would make the first plan PKR 2,000 even for the 100-student school. These totals assume the same service, payment period and tax treatment, and they do not show whether either offer is profitable.
 
-A minimum changes the calculation. If the hypothetical per-student plan has a PKR 3,000 monthly minimum, the 100-student branch pays PKR 3,000 rather than PKR 2,000. Put the minimum next to the rate in a proposal, not in the small print.
+For a first offer, I would test size bands rather than promise one unlimited branch price. A school can budget for a fixed amount, and the vendor can price a small campus differently from a 500-student one. Test the bands against actual offers and the cost of serving each school before publishing them. A per-student rate can also work if the invoice and counting rules are simple.
 
-## What published prices show
+For two branches, do not silently apply a per-branch minimum twice. State whether the count and price apply to each campus or to the group. For example, a group with 100 students in each of two branches pays PKR 4,000 under a hypothetical PKR 2,000 per-branch offer, not PKR 2,000 for the whole group.
 
-The models already coexist in Pakistan. On its [pricing page](https://www.edusuite.pk/pricing-and-plans/), EduSuite lists Standard at PKR 30 per student per month and Pro at PKR 50. Check the page for the applicable plan terms and inclusions before comparing a quote. <Cite id="edusuite" />
+## Sell the fee workflow, not a feature count
 
-[Edflo’s pricing page](https://www.edflo.io/pricing) lists PKR 2,999 per month for a branch with 1–150 students and PKR 6,999 for 301–700. Each branch is priced on its own size band, with a single owner dashboard. Its monthly figures are billed in advance on the stated billing cycle, not necessarily paid month by month. <Cite id="edflo" />
+In the [fee vouchers post](/blog/fee-vouchers-not-dashboards-what-schools-pay-for), I wrote about what schools asked for: a voucher that follows their fee rules and a defaulter list they can trust. A pricing conversation should show that work on the school’s own sample, with student names removed: tuition, transport, sibling concession, arrears and a partial payment. Then show how the office prints a challan and records a cash or bank payment.
 
-[Schooliee](https://www.schooliee.com/) describes per-active-student pricing with a 200-student minimum and says setup, import and training are included. A minimum is particularly relevant to a smaller school. <Cite id="schooliee" />
+A simple way to discuss value is to compare the price with time spent, without promising savings. If a clerk spends four hours a month preparing vouchers and checking receipts, and a school values that time at a hypothetical PKR 500 per hour, that work costs PKR 2,000. If the software costs PKR 2,000, it would need to save all four hours to cover its price on time alone. Actual savings need to be measured, and better records or fewer errors are separate possible benefits, not guaranteed extra revenue.
 
-These are vendor-published examples checked on 25 November 2026, not an endorsement or a like-for-like ranking. Prices and terms can change. Ask each vendor for a current written quote covering the same student count, billing period and services.
+Ask whether the school needs printed bank copies, Urdu text, result cards or a phone-friendly screen for the office. A low sticker price is not useful if the required setup, custom challan or training is charged later.
 
-## Define the count before sending the invoice
+## Make the count and bill easy to check
 
-“Per student” sounds simple until a child leaves halfway through a month. A quote should say who counts and when. For example, a contract could count enrolled students on the first day of each month, exclude archived records, and apply admissions or withdrawals at the next count. That is one possible rule, not an industry standard.
+Define an active student and agree a count date. One possible rule is to count enrolled students on the first day of each month, exclude archived records and apply admissions or withdrawals at the next count. Agree how transfers, duplicate records and holidays affect the invoice. That is a proposed rule, not a claim about all vendors.
 
-Also agree how to handle transfers between branches, duplicate records, trial accounts and school holidays. If there is a minimum, state whether it applies per branch or across the organisation. Give the school a count it can check against its own register before the invoice is due.
+For size bands, say what happens when a school moves from 150 to 151 students. Does the new price start immediately, next month or at renewal? Offer a count the office can compare with its register and put the minimum, any grace period and the branch rule on the quote.
 
-For bands, explain what happens at the boundary. If a branch grows from 150 to 151 students, does the higher price start immediately, next month or at renewal? A short grace period or a scheduled review can make the increase easier to plan, but either should be written into the offer.
+## Onboarding and support can eat the margin
 
-## Price the work around the software
+A school may have student names in registers, fees in Excel and old balances on paper. Importing a clean spreadsheet is different work from reconstructing several years of arrears. Define what is included: the file format, the number of training sessions, who checks the balances and the price for extra cleanup or custom reports.
 
-A fee ledger can be cheap to host and still expensive to deliver. Importing a messy register, checking fee heads, training a clerk and answering calls all take time. Track recurring delivery costs separately from one-off setup work so a low subscription does not hide an expensive launch.
+Suppose a school pays PKR 2,000 per month and recurring hosting and support cost PKR 500. That leaves PKR 1,500 before acquisition, development and other overheads. If setup costs PKR 6,000 and is free to the school, it takes four months to recover setup at that contribution, assuming the subscription stays active and those costs hold. It is a simplified example, not a profit forecast. Stripe’s guide explains the distinction between direct delivery costs and other expenses. <Cite id="stripe" />
 
-For a fictional branch paying PKR 6,000 a month, suppose hosting and routine support cost PKR 1,500 a month. That leaves PKR 4,500 before acquisition, development and other overheads. If setup costs PKR 9,000 and has no separate fee, recovering that cost takes two months at that contribution, assuming the recurring revenue and costs stay unchanged. This is a simplified calculation, not a profit forecast. Stripe’s explanation of SaaS gross margin is a useful starting point for separating direct delivery costs from other expenses. <Cite id="stripe" />
+A vendor promising WhatsApp reminders also needs to cost them. Twilio, for example, describes a platform fee per message and Meta template fees that vary by type and destination. State whether messages are included, the allowance and overage, and who supplies the account. WhatsApp support for school staff is not the same thing as automated messages to parents. <Cite id="twilio" />
 
-Messaging needs its own line. For example, Twilio describes a WhatsApp platform fee per message and Meta template fees that vary by message type and destination. Estimate volume, check the current rate card and specify an allowance or overage rule instead of promising unlimited messages without knowing the cost. <Cite id="twilio" />
+## Payment terms that work locally
 
-## Make payment terms and discounts visible
+Quote in PKR and show the total due, not only a monthly equivalent. Offer a monthly or quarterly option to test if it suits the school, alongside an annual prepayment option if the business can support it. Some Pakistani vendors advertise bank transfer, JazzCash or EasyPaisa for paying the subscription; check availability rather than assuming every customer has a company card. PakEducate lists those payment methods on its site. <Cite id="pakeducate" />
 
-Compare monthly and annual offers using the full amount paid. A hypothetical PKR 6,000 monthly subscription costs PKR 72,000 over twelve months. A 10% discount on that total makes an annual advance payment PKR 64,800, or PKR 5,400 per month averaged over the year. The school gives up cash upfront; the vendor gets earlier payment but accepts less revenue. Confirm cancellation, refunds, taxes and renewal prices before treating the two offers as equivalent.
+At a hypothetical PKR 2,000 monthly price, twelve monthly payments total PKR 24,000. A 10% annual prepayment discount makes the upfront bill PKR 21,600. That saves PKR 2,400 over a year but requires much more cash on day one. State tax, renewal price, cancellation and refund terms; an annual discount is not free if the school is unsure it can continue.
 
-Give discounts a reason and an end date. A temporary onboarding promotion, a multi-branch discount or an annual prepayment discount can each be described on the quote. Record the normal price, the discounted price, the duration and what happens at renewal. Avoid promising custom work or unlimited support as an informal discount: both can continue costing time long after the first invoice.
+For discounts, record the reason, duration and renewal price. A multi-branch discount should still cover training and support for each campus. Avoid bundling unlimited custom work into a low subscription without defining what it includes.
 
-## A quote a school can check
+## Send a one-page quote
 
-Before asking for a signature, send a one-page offer with these details:
+Before asking a school to commit, write down:
 
-1. The branch names, student count or band, rate and any minimum.
-2. The billing cycle, amount due, taxes, due date and renewal price.
-3. What setup, data import and staff training include, and whether they are charged separately.
-4. Support hours, messaging allowance, overage charges and any paid integrations.
-5. How counts change, what happens at a band boundary, and the cancellation and data export terms.
+1. Branches, student count or band, minimum and monthly price in PKR.
+2. Payment frequency, total due, tax if applicable, due date and renewal price.
+3. Included import, training, support hours and any one-time setup fee.
+4. Messaging allowance, overages and any payment or integration charges.
+5. Count and band-change rules, cancellation, backups and data export.
 
-Run the same quote through a small branch, a large branch and a school with several locations. Then ask whether the amount still covers the time needed to set up and support each one. The number on the price page is only useful if the service behind it can be delivered.
+Run the numbers for a 100-student school, a 500-student campus and a two-branch group. If the smaller school cannot afford the quote, test a narrower service or a smaller band. If onboarding costs more than several months of contribution, charge separately or tighten the scope. The price has to work for both sides.
 
 <PostLink slug="code-is-not-a-business-what-20-paying-customers-taught-me" />
 
@@ -125,10 +158,10 @@ Run the same quote through a small branch, a large branch and a school with seve
 
 <Takeaways>
 
-- Compare models at several school sizes, using the same features and terms.
+- Compare local PKR offers at several school sizes, checking features and terms.
 - Define active students, minimum charges and band changes in writing.
 - Account for import, training, support and messaging before setting a rate.
-- Show the full annual payment and discount, plus cancellation and renewal terms.
+- Show the full amount due, payment options, cancellation and renewal terms.
 - Ask for current vendor quotes rather than treating published prices as permanent.
 
 </Takeaways>
