@@ -91,7 +91,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 1 | Tue 1 Dec | Founder | ~~Fee vouchers, not dashboards~~ published 24 Nov (notes dated 1 May 2026). Slot open: pick a reserve topic | school management software features Pakistan |
 | 2 | Wed 2 Dec | Engineering | ~~Designing the database for a school ERP~~ published 24 Nov (dated 2 May 2026, `designing-the-database-for-a-school-erp`). Slot open: pick a reserve topic | school management system database design |
 | 3 | Thu 3 Dec | Engineering | ✅ [An attendance flow teachers finish in under a minute](/blog/an-attendance-flow-teachers-finish-in-under-a-minute), written and published | attendance app design for schools |
-| 5 | Sat 5 Dec | Founder | [School software pricing: per student or per branch?](../src/blog/posts/school-software-pricing-per-student-or-per-branch.mdx), written and scheduled | how to price SaaS for schools |
+| 5 | Sat 5 Dec | Founder | [School software pricing: per student or per branch?](/blog/school-software-pricing-per-student-or-per-branch), published 26 Nov. Slot open: pick a reserve topic | how to price SaaS for schools |
 | 6 | Sun 6 Dec | Engineering | WhatsApp fee reminders parents read (and reply to) | whatsapp business api school fee reminders |
 | 7 | Mon 7 Dec | Engineering | Building web apps for load-shedding and slow 3G | offline first web app laravel react |
 | 8 | Tue 8 Dec | AI Research | A rubric for judging AI-generated exam questions | evaluate AI generated exam questions |
@@ -118,7 +118,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 29 | Tue 29 Dec | AI Research | Logging every agent step in MySQL: observability on a budget | LLM agent observability logging |
 | 30 | Wed 30 Dec | Writing | 30 posts in 30 days: traffic, citations and what I’d change | blogging every day results |
 
-**Mix:** 11 Engineering, 9 Founder, 6 AI Research, 3 Writing. Sundays are shorter field notes (600–900 words); weekdays 1,000–1,600. The 4 December slot is removed; posts 1–3 are already published.
+**Mix:** 11 Engineering, 9 Founder, 6 AI Research, 3 Writing. Sundays are shorter field notes (600–900 words); weekdays 1,000–1,600. The 4 December slot is removed; posts 1–3 and 5 are already published.
 
 **Series:**
 - School software topics: posts 1–3 and 5–7.
@@ -150,7 +150,7 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **Published angle:** a proposed attendance flow, with defaults, offline considerations and an idempotent backend design. The one-minute goal is not presented as a measured result.
 - **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room.
 
-**5. School software pricing: per student or per branch?** · `school-software-pricing-per-student-or-per-branch` · Founder, school software · Written and scheduled for 5 December
+**5. School software pricing: per student or per branch?** · `school-software-pricing-per-student-or-per-branch` · Founder, school software · Written and published on 26 November
 - **Angle:** A practical comparison of per-student, per-branch and size-band pricing for school software.
 - **Includes:** Hypothetical PKR examples, publicly sourced vendor pricing, costs and contract terms to check. No unverified Oxygen LMS prices or customer anecdotes.
 - **Links:** code-is-not-a-business-what-20-paying-customers-taught-me, distribution-beats-features-notes-from-cold-calling-schools.
