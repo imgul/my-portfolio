@@ -9,7 +9,7 @@ cover:
   kicker: "Engineering · laravel/ai + laravel/mcp · MIT"
   hook: "Brake the loop before the next step is billed."
   file: "app/Ai/Agents/ReportWriter.php"
-  badge: "imgul/laravel-agent-guard v1.0.0"
+  badge: "imgul/laravel-agent-guard v1.1.1"
   highlight: [8]
   code: |
     GuardAgentSteps::make()
@@ -268,10 +268,10 @@ Some parts only get better with other people’s help:
 
 ## Before you rely on it
 
-This is version 1.0.0, released on 24 November 2026. It has Pest tests, including one that starts several PHP processes and has them reserve against the same Redis budget at once. It hasn’t had months of other people’s production traffic yet, and while writing this post I found rough edges of my own:
+This is version 1.1.1, released on 25 November 2026. CI is green on Laravel 12 and 13, with PHPStan at max level. The Pest suite includes a test that starts several PHP processes and has them reserve against the same Redis budget at once. Version 1.1 fixed the price unit, so dollar budgets now use prices per million tokens. It hasn’t had months of other people’s production traffic yet, and two rough edges remain:
 
-- **The kill switch and the circuit breaker live in PHP memory.** The budget ledger is in Redis and is shared, but these two are not. So `php artisan agent-guard:kill` runs in its own process and can’t reach your queue workers. And in a long-running Horizon worker, a breaker that trips for a tenant stays open for that tenant until the worker restarts. Moving both into Redis, with the 60-second cooldown the breaker class already has, is my first fix.
-- **Check the dollar prices.** `prices.json` says its numbers are per 1,000 tokens, but they match providers’ prices per million, so dollar budgets fill about 1,000 times too fast. Token budgets aren’t affected. Until the fix ships, use token caps or override the prices in the config.
+- **The kill switch and the circuit breaker are not fully wired into the agent middleware yet.** Version 1.1 stores both in Redis, but the middleware still checks a per-run key that `agent-guard:kill --tenant=` never sets, and it keys the breaker by tenant without ever running the cooldown probe. Until that’s fixed, don’t rely on either one in enforce mode.
+- **Check the dollar prices.** The catalogue lists `claude-opus-4-1` at $5/$25 and `claude-haiku-4-5` at $0.80/$4 per million tokens. Anthropic’s pricing page says $15/$75 and $1/$5. Override them in the config, or use token caps.
 
 So, on day one:
 
