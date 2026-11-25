@@ -16,49 +16,72 @@ import { useHydrated } from './hydrated'
 import { notFoundHead, postHead, setHead } from './head'
 import { AUTHOR } from './scholar.mjs'
 import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
+import { readFraction, scrollForFraction } from './reading-progress'
 
-/** 0..1 of the article read, measured so the last screen counts as "done". */
-function readFraction(el: HTMLElement) {
-  const r = el.getBoundingClientRect()
-  const total = r.height - window.innerHeight * 0.6
-  return Math.min(1, Math.max(0, -r.top / Math.max(1, total)))
+/** Document coordinates of the article start and the end of the body. */
+function readingBounds(article: HTMLElement, end: HTMLElement) {
+  return { start: article.getBoundingClientRect().top + window.scrollY, end: end.getBoundingClientRect().top + window.scrollY }
 }
-function scrollToFraction(el: HTMLElement, p: number) {
-  const top = el.getBoundingClientRect().top + window.scrollY
-  const total = el.offsetHeight - window.innerHeight * 0.6
-  window.scrollTo({ top: top + total * p, behavior: reduceMotion() ? 'auto' : 'smooth' })
+function scrollToFraction(article: HTMLElement, end: HTMLElement, p: number) {
+  const bounds = readingBounds(article, end)
+  window.scrollTo({ top: scrollForFraction(bounds.start, bounds.end, window.innerHeight, p), behavior: reduceMotion() ? 'auto' : 'smooth' })
 }
 
 /* -------------------------------------------------------------- progress */
 
-function Progress({ target, p }: { target: React.RefObject<HTMLElement | null>; p: PostMeta }) {
+function Progress({ target, end, ready, p }: { target: React.RefObject<HTMLElement | null>; end: React.RefObject<HTMLElement | null>; ready: boolean; p: PostMeta }) {
   const bar = useRef<HTMLDivElement>(null)
   const [left, setLeft] = useState(p.minutes)
   useEffect(() => {
+    if (!ready) return
     let raf = 0
     let saveT = 0
+    let completed = false
+    let pending: { p: number; y: number } | undefined
+    const save = () => {
+      clearTimeout(saveT)
+      if (pending) setProgress(p.slug, pending)
+      pending = undefined
+    }
     const on = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        const el = target.current
-        if (!el || !bar.current) return
-        const f = readFraction(el)
+        const article = target.current
+        const marker = end.current
+        if (!article || !marker || !bar.current) return
+        const bounds = readingBounds(article, marker)
+        const f = readFraction(bounds.start, bounds.end, window.innerHeight, window.scrollY)
         bar.current.style.transform = `scaleX(${f})`
         setLeft(Math.max(0, Math.ceil(p.minutes * (1 - f))))
-        // remember where the reader is (throttled), so they can resume later
+        // Save completion immediately; flush pending progress when leaving the page.
         clearTimeout(saveT)
-        saveT = window.setTimeout(() => f > 0.02 && setProgress(p.slug, { p: Math.round(f * 1000) / 1000, y: Math.round(window.scrollY) }), 400)
+        if (f === 1 && !completed) {
+          pending = { p: 1, y: Math.round(window.scrollY) }
+          completed = true
+          save()
+        } else if (f > 0.02 && f < 1 && !completed) {
+          pending = { p: Math.min(0.999, Math.round(f * 1000) / 1000), y: Math.round(window.scrollY) }
+          saveT = window.setTimeout(save, 400)
+        }
       })
+    }
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') save()
     }
     on()
     window.addEventListener('scroll', on, { passive: true })
     window.addEventListener('resize', on)
+    window.addEventListener('pagehide', save)
+    document.addEventListener('visibilitychange', onHidden)
     return () => {
-      clearTimeout(saveT)
+      cancelAnimationFrame(raf)
+      save()
       window.removeEventListener('scroll', on)
       window.removeEventListener('resize', on)
+      window.removeEventListener('pagehide', save)
+      document.removeEventListener('visibilitychange', onHidden)
     }
-  }, [target, p])
+  }, [target, end, ready, p])
   return (
     <div className="b-progress" aria-hidden="true">
       <div ref={bar} />
@@ -274,6 +297,7 @@ export default function PostPage({ slug }: { slug: string }) {
   const [Content, setContent] = useState<Body | undefined>(() => getBody(slug))
   const [failed, setFailed] = useState(false)
   const article = useRef<HTMLElement>(null)
+  const readingEnd = useRef<HTMLDivElement>(null)
   const prose = useRef<HTMLDivElement>(null)
   const heads = p?.headings ?? []
   const ids = useRef(heads.map((h) => h.id)).current
@@ -309,7 +333,7 @@ export default function PostPage({ slug }: { slug: string }) {
     const t = setTimeout(
       () =>
         toast(`You read ${Math.round(saved!.p * 100)}% of this post.`, {
-          action: { label: 'Resume', run: () => article.current && scrollToFraction(article.current, saved!.p) },
+          action: { label: 'Resume', run: () => article.current && readingEnd.current && scrollToFraction(article.current, readingEnd.current, saved!.p) },
         }),
       700,
     )
@@ -355,7 +379,7 @@ export default function PostPage({ slug }: { slug: string }) {
 
   return (
     <PostContext.Provider value={p}>
-      <Progress target={article} p={p} />
+      <Progress target={article} end={readingEnd} ready={!!Content} p={p} />
       <main id="main" className="b-post" style={{ ['--cat' as string]: color }} tabIndex={-1}>
         <article ref={article} className="b-article" aria-labelledby="post-title">
           <header className="b-post__head">
@@ -428,6 +452,7 @@ export default function PostPage({ slug }: { slug: string }) {
               )}
               <div className="b-prose" ref={prose}>
                 {Content ? <Content components={mdxComponents} /> : <div className="b-skeleton" role="status" aria-label="Loading post" />}
+                {Content && <div ref={readingEnd} className="b-reading-end" aria-hidden="true" />}
                 {Content && <Faq items={p.faq} />}
                 {Content && <References />}
               </div>

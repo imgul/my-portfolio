@@ -1434,6 +1434,9 @@ h3:focus-visible {
   margin-top: 0;
   margin-bottom: 1.35em;
 }
+.b-prose > .b-reading-end {
+  margin: 0;
+}
 .b-prose p,
 .b-prose li {
   text-wrap: pretty;

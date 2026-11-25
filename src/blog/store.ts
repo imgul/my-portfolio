@@ -77,7 +77,10 @@ export function toggleSaved(slug: string) {
 export function setProgress(slug: string, p: Partial<Progress>) {
   const prev = data.progress[slug] ?? { p: 0, y: 0, t: 0 }
   const next = { ...prev, ...p, t: Date.now() }
-  if (next.p > 0.92) next.done = true
+  if (next.done || next.p >= 1) {
+    next.p = 1
+    next.done = true
+  }
   // keep the store small: only the 50 most recent posts
   const entries = Object.entries({ ...data.progress, [slug]: next }).sort((a, b) => b[1].t - a[1].t).slice(0, 50)
   commit({ ...data, progress: Object.fromEntries(entries) })

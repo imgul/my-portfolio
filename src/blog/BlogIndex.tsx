@@ -129,14 +129,15 @@ function ContinueReading() {
         {list.map(([slug, pr]) => {
           const p = getPost(slug)!
           const left = Math.max(1, Math.ceil(p.minutes * (1 - pr.p)))
+          const percent = Math.min(99, Math.round(pr.p * 100))
           return (
             <li key={slug} style={{ ['--cat' as string]: CATEGORY_COLOR[p.category] }}>
               <Link href={postUrl(p)} className="b-continue__link">
                 <span className="b-continue__title">{p.title}</span>
                 <span className="b-continue__meta">
-                  {Math.round(pr.p * 100)}% read · {left} min left
+                  {percent}% read · {left} min left
                 </span>
-                <span className="b-continue__bar" role="progressbar" aria-label={`${p.title}: progress`} aria-valuenow={Math.round(pr.p * 100)} aria-valuemin={0} aria-valuemax={100}>
+                <span className="b-continue__bar" role="progressbar" aria-label={`${p.title}: progress`} aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
                   <span style={{ width: `${pr.p * 100}%` }} />
                 </span>
               </Link>
