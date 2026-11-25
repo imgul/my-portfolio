@@ -73,7 +73,7 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
           <span className="b-cat">{p.category}</span>
           <time dateTime={p.date}>{formatDate(p.date, 'short')}</time>
           <span>{p.minutes} min read</span>
-          {p.draft && <span className="b-draft">Draft</span>}
+          {p.draft ? <span className="b-draft">Draft</span> : p.scheduled && <span className="b-draft">Scheduled</span>}
         </p>
         <H className="b-card__title">
           <Link href={postUrl(p)} className="b-card__link">

@@ -28,6 +28,8 @@ export interface PostMeta {
   seriesPart?: number
   featured: boolean
   draft: boolean
+  /** dated in the future: visible in dev only, published on its date */
+  scheduled?: boolean
   art: Art
   level?: 'Beginner' | 'Intermediate' | 'Advanced'
   references: Reference[]

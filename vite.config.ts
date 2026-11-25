@@ -19,6 +19,44 @@ const RESOLVED = '\0' + VIRTUAL
  *  (static HTML, feeds, sitemap, llms.txt, Markdown copies and OG images are
  *   generated after the build by scripts/prerender.mjs)
  */
+/**
+ * Production builds leave out the bodies of drafts and scheduled posts. Their pages are never
+ * generated, and this keeps their text out of the JS chunks too, so nothing leaks before the date.
+ */
+function unpublishedPosts(): Plugin {
+  let live: Set<string> | null = null
+  return {
+    name: 'gul-unpublished-posts',
+    enforce: 'pre',
+    apply: 'build',
+    buildStart() {
+      live = new Set(loadPosts(POSTS_DIR).map((p) => String(p.slug)))
+    },
+    load(id) {
+      const m = id.match(/[\\/]src[\\/]blog[\\/]posts[\\/]([a-z0-9-]+)\.mdx$/)
+      if (m && live && !live.has(m[1])) return '{/* not published yet */}'
+    },
+  }
+}
+
+/** Removes unpublished posts from the lazy `import.meta.glob` map in src/blog/content.ts, so not even their slug ships. */
+function unpublishedGlobEntries(): Plugin {
+  return {
+    name: 'gul-unpublished-glob',
+    enforce: 'post',
+    apply: 'build',
+    transform(code, id) {
+      if (!/[\\/]src[\\/]blog[\\/]content\.ts$/.test(id)) return
+      const live = new Set(loadPosts(POSTS_DIR).map((p) => String(p.slug)))
+      let removed = 0
+      const out = code.replace(/\s*["']\.\/posts\/([a-z0-9-]+)\.mdx["']\s*:\s*\(\)\s*=>\s*import\(\s*["'][^"']+["']\s*\)\s*,?/g, (entry, slug: string) =>
+        live.has(slug) ? entry : (removed++, ''),
+      )
+      if (removed && !out.includes('import.meta.glob')) return { code: out, map: null }
+    },
+  }
+}
+
 function blog(): Plugin {
   let isBuild = false
   return {
@@ -100,6 +138,8 @@ function linkPreviews(): Plugin {
 
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
+    unpublishedPosts(),
+    unpublishedGlobEntries(),
     {
       enforce: 'pre',
       ...mdx({

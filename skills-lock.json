@@ -15,6 +15,13 @@
       "skillPath": "skills/ai-seo/SKILL.md",
       "computedHash": "bb68811a6f0f5e2f734ae2683132d5932bdf4a1a9e109fd719fe9cf2a727a0ff"
     },
+    "answer-first": {
+      "source": "charlie947/answer-first",
+      "commit": "b1631b37e4215469effa90bba8336de59cd9e3ac",
+      "sourceType": "github",
+      "skillPath": "skills/answer-first/SKILL.md",
+      "computedHash": "457ef070018c4fb61e93af30cf3c3282bf85961fd2d6b893bac0c137d534932d"
+    },
     "audit-website": {
       "source": "squirrelscan/skills",
       "commit": "d1b7e4f5d37cb1c88b35727568627b2892a264b7",
@@ -106,6 +113,20 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "83485963700bcf11d5bf78118facb301676b69d918fee2e45a95e7f1a2840f6c"
     },
+    "humanizer": {
+      "source": "blader/humanizer",
+      "commit": "a32f24407364c74c812b43c15926d638bee1e072",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "6da5d71e32eb66770b4c1ebe38b7e5c271bfca6290c9248aeb8449a84dbfe914"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "commit": "b49177d32788f2dc585c42831d845dacf1ebed2c",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "08bd5bf141cb507f46bd8347890cd985865606f15adf88295ed3a73bc9ad5d96"
+    },
     "launch": {
       "source": "coreyhaines31/marketingskills",
       "commit": "8fd2fcade2fd6629026e9dfe6d133b55b36968b9",
@@ -183,6 +204,13 @@
       "skillPath": "skills/social/SKILL.md",
       "computedHash": "a8a42ff595b0fa8e2b3be3a96a88fe0a0fffc7c95076c7d295a0d09f794406ee"
     },
+    "stop-slop": {
+      "source": "hardikpandya/stop-slop",
+      "commit": "8da1f030185bdfe8471220585162991eaeb970e9",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "02a5b429945020ed8a5ed4024d57384258c2596f09ab42c3e7498a8a43ec1c36"
+    },
     "supply-chain-risk-auditor": {
       "source": "trailofbits/skills",
       "commit": "149d7b21f4067765b82e67029730b42d228ef4b4",
@@ -224,6 +252,13 @@
       "sourceType": "github",
       "skillPath": "skills/react-best-practices/SKILL.md",
       "computedHash": "7991ed4fbecdac23f47c1a40c243e00a212a9e7f3604db93959b3ae11dffe299"
+    },
+    "voiceprint": {
+      "source": "charlie947/voiceprint",
+      "commit": "b8064ccfb358f0ccd212fc7fb9bb5ebf1709bb9f",
+      "sourceType": "github",
+      "skillPath": "skill/SKILL.md",
+      "computedHash": "6e3d7586cf39d14d47d88ed370c7beeff2a9939111afffb31c29ec394451c5c9"
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",

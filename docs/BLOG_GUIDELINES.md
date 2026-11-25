@@ -7,6 +7,7 @@ How to write a post for Gul’s Notebook that is pleasant to read for a long tim
 - **One post, one idea.** Write the idea as one sentence first. If it takes two, you have two posts.
 - **Pick the reader.** Each category is one audience: Founder (founders), Engineering (engineers), AI Research (researchers), Writing (technical writers). Write for that person's next decision.
 - **Bring something first-hand.** Your numbers, your mistakes, your code and screenshots. First-hand experience is what readers, Google (E-E-A-T) and AI answer engines value most, because it can't be found anywhere else.
+- **Talk it before you type it.** Record yourself explaining the post, then build it from the transcript (see [VOICE.md](VOICE.md)). Your own sentences are what keep a post from sounding machine-written.
 
 ## 2. Frontmatter
 
@@ -14,7 +15,7 @@ How to write a post for Gul’s Notebook that is pleasant to read for a long tim
 | --- | --- |
 | `title` ✅ | 30–65 characters. Specific and plain: say what the reader gets. Put the main keyword near the start. No clickbait. |
 | `description` ✅ | 70–160 characters, unique per post. It is the search snippet and the social preview text, so write it as a promise the post keeps. |
-| `date` / `updated` ✅ | ISO dates. When you materially change a post, set `updated`: it shows on the page and becomes `dateModified`, a freshness signal. |
+| `date` / `updated` ✅ | ISO dates. `date` is the day the post goes public (Islamabad time); a future date schedules it and the site publishes it that morning. Never backdate. When you materially change a post, set `updated`: it shows on the page and becomes `dateModified`. Don't touch it for typo fixes. |
 | `category` / `art` ✅ | One of the allowed values. |
 | `tags` ✅ | 1–8 lowercase tags. Reuse existing tags before inventing new ones. |
 | `faq` | Optional. 2–4 real questions readers ask, each answered in 1–3 self-contained sentences. Rendered at the end and emitted as `FAQPage` structured data. |
@@ -65,9 +66,10 @@ The build already handles the technical side: pre-rendered HTML, JSON-LD (`BlogP
 ## 7. Before you publish
 
 - [ ] `npm run lint:blog` passes with no errors (fix warnings or have a reason not to)
+- [ ] `npm run lint:slop -- src/blog/posts/<slug>.mdx` scores 95 or more (no AI-writing tells)
 - [ ] TL;DR answers the title's question
 - [ ] Every claim you didn't experience yourself has a source
 - [ ] Read it aloud once (the **Listen** button helps)
 - [ ] Check the post in Light and Night themes, and at the largest text size
-- [ ] Remove `draft: true`, then `npm run build` and check `dist/og/<slug>.png` and `dist/blog/<slug>.pdf`
+- [ ] Remove `draft: true` and set `date:` to the publish day, then `npm run build` and check `dist/og/<slug>.png` and `dist/blog/<slug>.pdf`
 - [ ] After deploying: `npm run blog:indexnow`; about 15 minutes later `npm run blog:dois` (open posts), then commit and push

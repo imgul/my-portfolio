@@ -20,14 +20,15 @@ npm run dev                     # http://localhost:5173 (binds 0.0.0.0)
 npm run build                   # tsc → vite build → SSR build → prerender → link previews
 LINK_PREVIEWS=off npm run build # same, but skip fetching external link metadata (offline / sandbox)
 npm run preview                 # serve dist/ on :4173
-npm run lint:blog               # check posts against docs/BLOG_GUIDELINES.md
+npm run lint:blog               # check posts against docs/BLOG_GUIDELINES.md (includes AI-tell warnings)
+npm run lint:slop               # score posts, site copy and README for AI-writing tells (add files to check others)
 npm run seo:check               # audit dist/ (also runs at the end of every build)
 ```
 
 There is no ESLint/Prettier config and no test suite; **`npm run build` is the check**. It must finish with `seo: … 0 errors` and should finish with `0 warnings`. Before you call a change done:
 
 1. `LINK_PREVIEWS=off npm run build` passes (type-check included).
-2. `npm run lint:blog` shows no new warnings if you touched posts.
+2. `npm run lint:blog` shows no new warnings and `npm run lint:slop` stays ≥ 95 if you touched posts or copy.
 3. For UI changes: open the preview and look at both the portfolio and a blog post, in light and dark themes, at mobile width.
 
 ## Where things live
@@ -48,6 +49,11 @@ There is no ESLint/Prettier config and no test suite; **`npm run build` is the c
 | `scripts/link-previews.mjs` | Link preview snapshot (`public/link-previews.json`, `public/link-icons/`). |
 | `scripts/portrait.mjs` | Regenerates avatar / icons / favicons from the source photo. |
 | `docs/BLOG_GUIDELINES.md` | How posts should read, rank and get cited. |
+| `docs/VOICE.md` | How Gul writes. Read before drafting or editing anything under his name. |
+| `docs/CONTENT_PLAN_DEC_2026.md` | The 30-day posting calendar, briefs and per-post workflow. |
+| `scripts/slop.mjs` | AI-tell checker built from the `humanizer` and `stop-slop` rules. |
+| `scripts/due-posts.mjs` | Lists scheduled posts that are due but not live yet. |
+| `.github/workflows/publish-scheduled.yml` | Daily 09:07 PKT: redeploys when a scheduled post is due, then pings IndexNow. |
 | `.github/workflows/link-previews.yml` | Refreshes the link preview snapshot and **commits to `main` as a bot**. |
 
 ## Rules
@@ -73,6 +79,25 @@ Fix SEO problems **in the generators** (`scripts/blog.mjs`, `scripts/og.mjs`), n
 - `category` is one of `Founder | Engineering | AI Research | Writing`. 1–8 lowercase tags.
 - Descriptive link text (never "click here"), alt text on images, no skipped heading levels, cite sources with `<Cite id="…" />` + `references:`.
 - OG image, feeds, sitemap, Markdown/PDF copies and structured data are generated automatically. Don't hand-write them.
+
+### Dates and scheduling
+
+- `date:` is the day the post **goes public**, in Asia/Karachi time. A future date schedules the post: production builds leave it out of every page, feed, sitemap and JS chunk until that day (`isPublished` in `scripts/blog.mjs`, `unpublishedPosts` in `vite.config.ts`). Dev shows it with a “Scheduled” badge.
+- **Never backdate.** Don't set a past date on a post that goes live today. The only exception is a piece genuinely published earlier elsewhere, and the post must say so near the top.
+- `updated:` only for substantial edits (new section, corrected facts, new data). Not for typos, and never to look fresh.
+- Test a schedule locally with `PUBLISH_DATE=YYYY-MM-DD LINK_PREVIEWS=off npm run build`.
+
+### Making posts read like Gul (not like a model)
+
+Follow `docs/VOICE.md`. Short version:
+
+1. **Start from Gul’s words.** Ask for a voice note or transcript and build the post with `voiceprint` (cut and order; don’t compose). If you have no source material from him, ask for it. Don’t invent experiences, numbers, quotes or clients.
+2. Put the answer first (`answer-first`), then structure with `seo`, `ai-seo`, `schema`.
+3. Clean-up pass with `humanizer` and `stop-slop`: fix flagged patterns using his wording.
+4. `npm run lint:slop -- src/blog/posts/<slug>.mdx` ≥ 95 and `npm run lint:blog` clean.
+5. No em dashes in prose, no “not X but Y”, no rhetorical triples, no one-line dramatic closers. Typographic quotes are house style.
+
+Same rules for portfolio copy in `src/data/content.ts` and the README.
 
 ### Accessibility (WCAG 2.2 AA)
 
@@ -115,6 +140,10 @@ Read a skill's `SKILL.md` before doing the kind of work it covers.
 | Generating many similar pages (tags, series, topics) | `programmatic-seo` |
 | Full-site crawl audit (needs the squirrel CLI) | `audit-website` |
 | Writing or editing site copy, CTAs, headlines | `copywriting`, `copy-editing`, `writing-guidelines` |
+| Turning Gul’s voice notes / transcripts into a post | `voiceprint` |
+| Removing AI-writing tells from any text (posts, copy, docs, PRs) | `humanizer`, `stop-slop` (then `npm run lint:slop`) |
+| Making a post answer the question in its first lines | `answer-first` |
+| Final design polish / critique of a UI change | `impeccable` (its `scripts/impeccable` launcher downloads a binary from GitHub releases on first run; read the guidance, run the CLI only when needed) |
 | Planning posts, topics, series | `content-strategy`, `customer-research`, `competitor-profiling` |
 | Positioning, persuasion, launch, social posts | `product-marketing`, `marketing-psychology`, `launch`, `social` |
 | Testing a running page in a browser (Playwright) | `webapp-testing` |
