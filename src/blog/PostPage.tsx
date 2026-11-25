@@ -18,6 +18,7 @@ import { AUTHOR } from './scholar.mjs'
 import { ArticleInfo, CiteThis, clearScholarMeta, LicenseBadge, OrcidLink, syncScholarMeta } from './components/scholar'
 import { readFraction, scrollForFraction } from './reading-progress'
 import { recordActivity } from './recommendation-history'
+import { useReadingEngagement } from './use-reading-engagement'
 
 /** Document coordinates of the article start and the end of the body. */
 function readingBounds(article: HTMLElement, end: HTMLElement) {
@@ -308,6 +309,7 @@ export default function PostPage({ slug }: { slug: string }) {
   const ids = useRef(heads.map((h) => h.id)).current
   const active = useActiveHeading(ids, !!Content)
   useHashScroll(Content)
+  useReadingEngagement(p?.slug, p?.minutes, article, readingEnd, !!Content && !failed)
 
   // bibliographic tags belong to this post only (Zotero reads the live <head>)
   useEffect(() => clearScholarMeta, [])

@@ -76,7 +76,7 @@ function Privacy() {
               <td>While the conversation is useful. Ask and I’ll delete it.</td>
             </tr>
             <tr>
-              <td>Post activity used for suggestions: read milestones, saves, search matches, votes and share attempts</td>
+              <td>Post activity used for suggestions: active reading estimates, saves, search matches, votes and share attempts</td>
               <td>After you accept optional storage and use those features</td>
               <td>Your browser only; not sent to me for recommendations</td>
               <td>Up to 100 entries; ignored after 90 days and removed on the next update or when you clear them</td>
@@ -105,13 +105,18 @@ function Privacy() {
 
       <h2 id="recommendations">Personalised suggestions</h2>
       <p>
-        If you choose <em>Accept</em>, this browser keeps a separate suggestion history of post IDs, activity type, time and a small strength value. It records reading milestones, saves, search result matches,
+        If you choose <em>Accept</em>, this browser keeps a separate suggestion history of post IDs, activity type, time and a small strength value. It records estimated reading engagement, saves, search result matches,
         votes and attempts to share or copy a link. A share attempt does not mean you completed a share. The suggestion history does not contain the words you searched for or a share destination.
       </p>
       <p>
-        The site ranks available posts on this device using topic overlap, category, series, the kind and recency of activity, and variety among results. It avoids recommending posts marked read, saved or
-        disliked in that history. A reason may appear beside a suggestion. Without optional storage, you get non-personalised suggestions. No recommendation profile is sent to my server, linked to your
-        visitor ID, used for ads or used to make decisions about you beyond ordering these posts. This history starts after consent and does not import earlier activity.
+        To estimate active reading, the page uses scroll position and signals from pointer movement, touch, the mouse wheel and navigation keys. Time counts only while the article is visible, the tab is focused
+        and there has been recent input; it stops after 30 seconds without input and is capped per visit. This is an estimate, not proof that you read. Raw movements, coordinates, keys and time measurements are not stored or sent;
+        only a derived reading or brief-visit strength may enter the suggestion history. A brief visit is weak evidence, not a dislike, and short or inactive visits do not count against you.
+      </p>
+      <p>
+        The site ranks available posts on this device using topic overlap, category, series, the kind and recency of activity, and variety among results. It avoids recommending posts marked fully read, saved or
+        disliked in that history; dislikes also lower related topics, while brief visits have a much smaller effect. A reason may appear beside a suggestion. Without optional storage, you get non-personalised suggestions.
+        No recommendation profile is sent to my server, linked to your visitor ID, used for ads or used to make decisions about you beyond ordering these posts. This history starts after consent and does not import earlier activity.
       </p>
       <p>
         The history holds at most 100 entries. Entries older than 90 days are ignored and removed on the next history update. Use <em>Clear suggestion history</em> on the blog or below to delete it without
@@ -309,8 +314,8 @@ const STORAGE: { key: string; what: string; when: string; needed: boolean }[] = 
     needed: false,
   },
   {
-    key: 'gul:recommendations:v1',
-    what: 'Up to 100 post IDs, activity types, times and strengths for suggestions; entries are ignored after 90 days',
+    key: 'gul:recommendations:v2',
+    what: 'Up to 100 post IDs, activity types, times and derived strengths for suggestions; entries are ignored after 90 days',
     when: 'After you accept and interact with posts or search',
     needed: false,
   },

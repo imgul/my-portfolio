@@ -1,4 +1,4 @@
-export type ActivityKind = 'read' | 'save' | 'search' | 'share' | 'like' | 'dislike'
+export type ActivityKind = 'read' | 'skim' | 'save' | 'search' | 'share' | 'like' | 'dislike'
 export interface Activity {
   kind: ActivityKind
   slug: string
@@ -6,10 +6,10 @@ export interface Activity {
   strength: number
 }
 
-export const RECOMMENDATION_KEY = 'gul:recommendations:v1'
+export const RECOMMENDATION_KEY = 'gul:recommendations:v2'
 export const RECOMMENDATION_MAX_AGE = 90 * 24 * 60 * 60 * 1000
 export const RECOMMENDATION_MAX_EVENTS = 100
-const kinds = new Set<ActivityKind>(['read', 'save', 'search', 'share', 'like', 'dislike'])
+const kinds = new Set<ActivityKind>(['read', 'skim', 'save', 'search', 'share', 'like', 'dislike'])
 
 /** Local data is untrusted: validate, deduplicate, expire and bound it before using it. */
 export function parseActivities(raw: string | null, now = Date.now()): Activity[] {

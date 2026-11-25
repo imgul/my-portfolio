@@ -4,7 +4,15 @@ import { parseActivities, RECOMMENDATION_KEY, RECOMMENDATION_MAX_EVENTS, type Ac
 
 export type { Activity, ActivityKind } from './recommendation-data'
 const CHANGE = 'gul:recommendations-change'
-const kinds = new Set<ActivityKind>(['read', 'save', 'search', 'share', 'like', 'dislike'])
+const kinds = new Set<ActivityKind>(['read', 'skim', 'save', 'search', 'share', 'like', 'dislike'])
+export const RECOMMENDATION_RESET = 'gul:recommendations-reset'
+export function openResetChannel() {
+  try {
+    return typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(RECOMMENDATION_RESET)
+  } catch {
+    return null
+  }
+}
 const EMPTY: Activity[] = []
 let cachedRaw: string | null | undefined
 let cachedEvents: Activity[] = EMPTY
@@ -81,11 +89,52 @@ export function recordSearchMatches(slugs: string[]) {
   for (const [i, slug] of [...new Set(slugs)].slice(0, 3).entries()) recordActivity('search', slug, 1 - i * 0.25)
 }
 
+/** A brief visit is weak evidence, and never overrides a previous positive reading signal. */
+export function recordReadingOutcome(slug: string, outcome: { kind: 'read' | 'skim'; strength: number }) {
+  if (!optionalAllowed()) return
+  const events = parseActivities(rawHistory())
+  if (outcome.kind === 'skim' && events.some((e) => e.slug === slug && (e.kind === 'read' || e.kind === 'like'))) return
+  if (outcome.kind === 'read') removeActivity(slug, 'skim')
+  recordActivity(outcome.kind, slug, outcome.strength)
+}
+
+/** Prevent an in-flight vote from restoring a profile after clear or consent withdrawal. */
+export function watchRecommendationChoice() {
+  let valid = optionalAllowed()
+  const invalidate = () => { valid = false }
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === null || e.key === 'gul:consent' || (e.key === RECOMMENDATION_KEY && e.newValue === null)) invalidate()
+  }
+  window.addEventListener(RECOMMENDATION_RESET, invalidate)
+  window.addEventListener('gul:consent-change', invalidate)
+  window.addEventListener('storage', onStorage)
+  const channel = openResetChannel()
+  if (channel) channel.onmessage = (event) => { if (event.data === 'reset') invalidate() }
+  return {
+    allowed: () => valid && optionalAllowed(),
+    close: () => {
+      window.removeEventListener(RECOMMENDATION_RESET, invalidate)
+      window.removeEventListener('gul:consent-change', invalidate)
+      window.removeEventListener('storage', onStorage)
+      channel?.close()
+    },
+  }
+}
+
 export function clearRecommendationHistory() {
   try {
     localStorage.removeItem(RECOMMENDATION_KEY)
+    localStorage.removeItem('gul:recommendations:v1')
   } catch {
     // Storage may be blocked.
   }
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHANGE))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(RECOMMENDATION_RESET))
+    window.dispatchEvent(new Event(CHANGE))
+    const channel = openResetChannel()
+    if (channel) {
+      channel.postMessage('reset')
+      channel.close()
+    }
+  }
 }

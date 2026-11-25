@@ -82,8 +82,8 @@ export default function CookieConsent({ variant, delay = 900, onHover, onPress }
         No tracking cookies here
       </p>
       <p className="cc__text" id={`${id}-d`}>
-        I don’t run ads or analytics. Your browser keeps settings and saved posts. If you accept, it also remembers recent searches, caches link previews and uses your reading, saves, search matches,
-        votes and share attempts on this device to suggest posts. You can clear suggestions or change this choice at any time.
+        I don’t run ads or analytics. Your browser keeps settings and saved posts. If you accept, it also remembers recent searches, caches link previews and uses your reading activity and estimated active time,
+        saves, search matches, votes and share attempts on this device to suggest posts. Scroll, pointer, touch and navigation keys help estimate active time. You can clear suggestions or change this choice anytime.
       </p>
       {reopened && consent && (
         <p className="cc__now">

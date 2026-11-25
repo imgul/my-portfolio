@@ -9,7 +9,7 @@ export interface Recommendation {
 
 const DAY = 24 * 60 * 60 * 1000
 const MAX_AGE = 90 * DAY
-const SIGNAL: Record<ActivityKind, number> = { read: 1.2, save: 2.8, search: 0.85, share: 2, like: 2, dislike: -2.5 }
+const SIGNAL: Record<ActivityKind, number> = { read: 1.2, skim: -0.45, save: 2.8, search: 0.85, share: 2, like: 2, dislike: -3 }
 const STOP = new Set(['a', 'an', 'and', 'as', 'at', 'be', 'by', 'for', 'from', 'how', 'i', 'in', 'is', 'of', 'on', 'or', 'the', 'to', 'what', 'with', 'your'])
 const tokens = (s: string) => new Set(s.toLowerCase().match(/[a-z0-9]+/g)?.filter((w) => w.length > 2 && !STOP.has(w)) ?? [])
 
@@ -45,24 +45,37 @@ export function recommendPosts(catalogue: PostMeta[], activities: Activity[], op
   for (const p of live) for (const t of new Set(p.tags)) idf.set(t, (idf.get(t) ?? 0) + 1)
   for (const [t, count] of idf) idf.set(t, 1 + Math.log((live.length + 1) / (count + 1)))
   const titles = new Map(live.map((p) => [p.slug, tokens(p.title)]))
+  const seen = new Set<string>()
   const signals = activities.filter(
     (e) => e && bySlug.has(e.slug) && Object.hasOwn(SIGNAL, e.kind) && Number.isFinite(e.at) && e.at <= now && e.at >= now - MAX_AGE && Number.isFinite(e.strength) && e.strength > 0 && e.strength <= 1,
-  )
+  ).sort((a, b) => b.at - a.at).filter((e) => {
+    const key = `${e.kind}:${e.slug}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  }).slice(0, 100)
   const excluded = new Set(signals.filter((e) => e.kind === 'save' || e.kind === 'dislike' || (e.kind === 'read' && e.strength >= 1)).map((e) => e.slug))
   if (options.context) excluded.add(options.context.slug)
-  const totalWeight = signals.reduce((sum, e) => sum + Math.abs(SIGNAL[e.kind]) * e.strength * Math.pow(0.5, (now - e.at) / (30 * DAY)), 0)
+  // Bound the combined influence of one post even when it has many signal types.
+  const weights = new Map(signals.map((e) => [e, SIGNAL[e.kind] * e.strength * Math.pow(0.5, (now - e.at) / (30 * DAY))]))
+  const perPost = new Map<string, number>()
+  for (const e of signals) perPost.set(e.slug, (perPost.get(e.slug) ?? 0) + Math.abs(weights.get(e)!))
+  for (const e of signals) weights.set(e, weights.get(e)! * Math.min(1, 4 / perPost.get(e.slug)!))
+  const totalWeight = [...weights.values()].reduce((sum, weight) => sum + Math.abs(weight), 0)
   const context = options.context && bySlug.get(options.context.slug)
 
   const candidates = live.filter((p) => !excluded.has(p.slug)).map((post) => {
     let affinity = 0
     let strongest = 0
+    let negative = false
     let why: Activity | undefined
     for (const e of signals) {
       const source = bySlug.get(e.slug)!
-      if (source.slug === post.slug && e.kind !== 'search') continue
+      if (source.slug === post.slug && e.kind !== 'search' && e.kind !== 'skim') continue
       const match = source.slug === post.slug ? 1 : similarity(source, post, idf, titles)
-      const contribution = match * SIGNAL[e.kind] * e.strength * Math.pow(0.5, (now - e.at) / (30 * DAY))
+      const contribution = match * weights.get(e)!
       affinity += contribution
+      if (contribution < -0.001) negative = true
       if (contribution > strongest) {
         strongest = contribution
         why = e
@@ -78,6 +91,7 @@ export function recommendPosts(catalogue: PostMeta[], activities: Activity[], op
       const source = bySlug.get(why.slug)!
       const reasons: Record<ActivityKind, string> = {
         read: `Related to “${source.title}”`,
+        skim: 'Adjusted for your reading activity',
         save: `Because you saved “${source.title}”`,
         search: 'Related to a recent search',
         share: 'Related to a post you tried to share',
@@ -86,7 +100,8 @@ export function recommendPosts(catalogue: PostMeta[], activities: Activity[], op
       }
       reason = reasons[why.kind]
     }
-    return { post, score, reason, personalized: !!why && strongest > 0 }
+    if (!why && negative) reason = 'Adjusted for your reading activity or feedback'
+    return { post, score, reason, personalized: !!why || negative }
   })
   const selected: typeof candidates = []
   while (candidates.length && selected.length < limit) {

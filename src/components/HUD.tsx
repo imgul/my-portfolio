@@ -116,8 +116,12 @@ export default function HUD() {
               <span className="chip__text">{hapticsOn ? 'Haptics' : 'No haptics'}</span>
             </button>
           )}
-          <a className="hud__item chip hud__blog" href="/blog" onMouseEnter={fx.hover} data-cursor="Read" title="Read the blog">
-            <span aria-hidden="true">✎</span> Blog
+          <a className="hud__item hud__blog" href="/blog" onMouseEnter={fx.hover} data-cursor="Read">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 6.5c-2.2-1.8-5.1-2-8-1v13c2.9-1 5.8-.8 8 1 2.2-1.8 5.1-2 8-1v-13c-2.9-1-5.8-.8-8 1Z" />
+              <path d="M12 6.5v13" />
+            </svg>
+            Blog <span className="hud__blog-arrow" aria-hidden="true">↗</span>
           </a>
           <button className="hud__item btn btn--small btn--primary hud__talk" ref={talk} onClick={() => go(SECTIONS.length - 1)} onMouseEnter={fx.hover} data-cursor="Hi!">
             Let’s talk

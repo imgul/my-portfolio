@@ -87,8 +87,6 @@ export function setProgress(slug: string, p: Partial<Progress>) {
   // keep the store small: only the 50 most recent posts
   const entries = Object.entries({ ...data.progress, [slug]: next }).sort((a, b) => b[1].t - a[1].t).slice(0, 50)
   commit({ ...data, progress: Object.fromEntries(entries) })
-  const fraction = p.p ?? 0
-  if (fraction >= 0.2) recordActivity('read', slug, fraction >= 1 ? 1 : fraction >= 0.75 ? 0.75 : 0.25)
 }
 
 export function setVote(slug: string, v: 1 | -1 | 0) {
@@ -96,6 +94,4 @@ export function setVote(slug: string, v: 1 | -1 | 0) {
   if (v === 0) delete votes[slug]
   else votes[slug] = v
   commit({ ...data, votes })
-  removeActivity(slug, 'like', 'dislike')
-  if (v) recordActivity(v === 1 ? 'like' : 'dislike', slug)
 }

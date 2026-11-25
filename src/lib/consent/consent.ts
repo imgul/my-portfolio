@@ -21,9 +21,9 @@ export interface Consent {
 }
 
 export const CONSENT_KEY = 'gul:consent'
-export const CONSENT_VERSION = 2
+export const CONSENT_VERSION = 3
 /** Convenience storage that is written only after "Accept" (and wiped on "Essential only"). */
-export const OPTIONAL_KEYS = ['gul:recent-searches', 'gul:lp:v2', 'gul:recommendations:v1'] as const
+export const OPTIONAL_KEYS = ['gul:recent-searches', 'gul:lp:v2', 'gul:recommendations:v1', 'gul:recommendations:v2'] as const
 
 const CHANGE = 'gul:consent-change'
 const OPEN = 'gul:consent-open'
@@ -63,6 +63,8 @@ export function saveConsent(choice: ConsentChoice) {
   }
   try {
     localStorage.setItem(CONSENT_KEY, JSON.stringify(c))
+    // Old scroll-only profiles cannot be compared with active-reading signals.
+    localStorage.removeItem('gul:recommendations:v1')
     if (choice === 'essential') for (const k of OPTIONAL_KEYS) localStorage.removeItem(k)
   } catch {
     /* storage blocked: the banner will simply ask again next visit */

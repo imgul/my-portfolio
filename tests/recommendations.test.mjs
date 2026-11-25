@@ -75,3 +75,23 @@ test('diversity reduces near-duplicate recommendations when relevance is similar
   assert.equal(results[0].post.slug, 'similar-one')
   assert.equal(results[1].post.slug, 'zz-different')
 })
+
+test('dislikes demote related topics and exclude the disliked post; brief visits are weaker and do not exclude', () => {
+  const list = [
+    post('anchor', 'Engineering', ['laravel', 'queue']),
+    post('similar', 'Engineering', ['laravel', 'queue']),
+    post('different', 'Founder', ['schools']),
+  ]
+  const disliked = recommendPosts(list, [event('dislike', 'anchor')], { now, limit: 3 })
+  assert.deepEqual(disliked.map((r) => r.post.slug), ['different', 'similar'])
+  assert.ok(disliked[1].personalized)
+  assert.match(disliked[1].reason, /Adjusted/)
+  const brief = recommendPosts(list, [event('skim', 'anchor', 0, 0.25)], { now, limit: 3 })
+  assert.ok(brief.some((r) => r.post.slug === 'anchor'))
+  assert.ok(brief.findIndex((r) => r.post.slug === 'different') < brief.findIndex((r) => r.post.slug === 'similar'))
+})
+
+test('duplicate events cannot amplify a signal', () => {
+  const single = event('dislike', 'school-sales')
+  assert.deepEqual(recommend(Array(500).fill(single)), recommend([single]))
+})
