@@ -87,10 +87,15 @@ CREATE TABLE students (
   tenant_id    BIGINT UNSIGNED NOT NULL,
   family_id    BIGINT UNSIGNED NOT NULL,
   admission_no VARCHAR(20)  NOT NULL,
-  name         VARCHAR(120) NOT NULL,
+  name         VARCHAR(120) NOT NULL,                 -- spelled exactly as on the B-Form
+  father_name  VARCHAR(120) NOT NULL,
+  date_of_birth DATE NOT NULL,
+  b_form_no    CHAR(13) NULL,                         -- NADRA Child Registration Certificate, digits only
   admitted_on  DATE NOT NULL,
   UNIQUE KEY students_tenant_id (tenant_id, id),
   UNIQUE KEY students_admission_no (tenant_id, admission_no),
+  UNIQUE KEY students_b_form (tenant_id, b_form_no),
+  CONSTRAINT students_b_form_digits CHECK (REGEXP_LIKE(b_form_no, '^[0-9]{13}$')),
   CONSTRAINT students_family FOREIGN KEY (tenant_id, family_id) REFERENCES families (tenant_id, id)
 );
 

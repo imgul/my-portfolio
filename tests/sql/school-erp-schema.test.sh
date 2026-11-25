@@ -56,10 +56,10 @@ INSERT INTO sections (id, tenant_id, academic_year_id, grade_level_id, name) VAL
   (4, 2, 3, 4, 'A');   -- School B
 INSERT INTO families (id, tenant_id, guardian_name, phone) VALUES
   (1, 1, 'Imran Khan', '+923001234567'), (2, 2, 'Other Family', '+923331112223');
-INSERT INTO students (id, tenant_id, family_id, admission_no, name, admitted_on) VALUES
-  (1, 1, 1, 'A-1021', 'Ali', '2022-04-01'),
-  (2, 1, 1, 'A-1388', 'Sara', '2025-04-01'),
-  (3, 2, 2, 'B-0001', 'Other Student', '2026-08-01');
+INSERT INTO students (id, tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES
+  (1, 1, 1, 'A-1021', 'Ali', 'Imran Khan', '2016-05-14', '6110112345671', '2022-04-01'),
+  (2, 1, 1, 'A-1388', 'Sara', 'Imran Khan', '2019-09-02', NULL, '2025-04-01'),
+  (3, 2, 2, 'B-0001', 'Other Student', 'Someone', '2016-01-01', '6110112345671', '2026-08-01');
 -- Ali was in 4-A last year; promoted at year end.
 INSERT INTO enrollments (tenant_id, student_id, section_id, starts_on, ends_on, end_reason) VALUES
   (1, 1, 1, '2025-04-01', '2026-03-31', 'promoted');
@@ -145,6 +145,11 @@ expect_error "a voucher period is the first of a month" "ERROR 3819" \
   "INSERT INTO vouchers (tenant_id, family_id, academic_year_id, period, voucher_no, due_on) VALUES (1, 1, 2, '2026-06-15', 'V-BAD', '2026-06-25')"
 expect_error "a fee rate is set once per class, head and year" "ERROR 1062" \
   "INSERT INTO fee_rates (tenant_id, academic_year_id, grade_level_id, fee_head_id, amount_paisa) VALUES (1, 2, 3, 1, 480000)"
+
+expect_error "a B-Form number is 13 digits" "ERROR 3819" \
+  "INSERT INTO students (tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES (1, 1, 'A-2000', 'X', 'Y', '2018-01-01', '61101-1234567-1', '2026-04-01')"
+expect_error "one student per B-Form in a school" "ERROR 1062" \
+  "INSERT INTO students (tenant_id, family_id, admission_no, name, father_name, date_of_birth, b_form_no, admitted_on) VALUES (1, 1, 'A-2001', 'X', 'Y', '2018-01-01', '6110112345671', '2026-04-01')"
 
 echo "corrections"
 q "UPDATE vouchers SET status = 'cancelled' WHERE id = 2;
