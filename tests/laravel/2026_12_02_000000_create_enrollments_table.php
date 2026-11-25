@@ -52,12 +52,11 @@ return new class extends Migration
             $table->foreign(['tenant_id', 'section_id'])->references(['tenant_id', 'id'])->on('sections');
         });
 
-        // The schema builder has no CHECK constraints, so add them with a statement.
-        DB::statement(<<<'SQL'
-            ALTER TABLE enrollments
-              ADD CONSTRAINT enrollments_dates CHECK (ends_on IS NULL OR ends_on >= starts_on),
-              ADD CONSTRAINT enrollments_reason CHECK ((ends_on IS NULL) = (end_reason IS NULL))
-        SQL);
+        // after Schema::create, since the builder has no CHECK constraints:
+        DB::statement('ALTER TABLE enrollments ADD CONSTRAINT enrollments_reason
+            CHECK ((ends_on IS NULL) = (end_reason IS NULL))');
+        DB::statement('ALTER TABLE enrollments ADD CONSTRAINT enrollments_dates
+            CHECK (ends_on IS NULL OR ends_on >= starts_on)');
     }
 
     public function down(): void
