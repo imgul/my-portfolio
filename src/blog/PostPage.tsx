@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, navigate, useHashScroll } from './router'
 import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, neighbours, postUrl, posts, related, seriesOf, SITE_URL, type PostMeta } from './data'
 import { getBody, loadBody, type Body } from './content'
-import { CoverArt } from './components/CoverArt'
+import { PostCover } from './components/PostCover'
 import { Faq, mdxComponents, PostContext, References } from './components/mdx'
 import { AuthorCard, isTypingEvent, Newsletter } from './components/layout'
 import { Reactions } from './components/reactions'
@@ -203,6 +203,7 @@ function PrevNext({ p }: { p: PostMeta }) {
     <nav className="b-prevnext" aria-label="Older and newer posts" data-preview="hover">
       {older ? (
         <Link href={postUrl(older)} className="is-prev" rel="prev">
+          {older.cover && <PostCover p={older} sizes="200px" />}
           <span className="b-kicker">← Older</span>
           <span>{older.title}</span>
         </Link>
@@ -211,6 +212,7 @@ function PrevNext({ p }: { p: PostMeta }) {
       )}
       {newer && (
         <Link href={postUrl(newer)} className="is-next" rel="next">
+          {newer.cover && <PostCover p={newer} sizes="200px" />}
           <span className="b-kicker">Newer →</span>
           <span>{newer.title}</span>
         </Link>
@@ -406,7 +408,7 @@ export default function PostPage({ slug }: { slug: string }) {
           </header>
 
           <div className="b-post__cover">
-            <CoverArt art={p.art} seed={p.slug} color={color} />
+            <PostCover p={p} color={color} eager alt={p.cover?.alt ?? ''} sizes="(max-width: 1100px) 100vw, 1100px" />
           </div>
 
           <div className="b-post__grid">

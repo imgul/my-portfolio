@@ -7,6 +7,20 @@ description: "A tested MySQL schema for a school ERP: dated enrolments for promo
 date: 2026-05-02
 updated: 2026-11-24
 category: Engineering
+cover:
+  style: terminal
+  kicker: "Engineering · MySQL 8.0 + 8.4 · Laravel 13"
+  hook: "A school ERP schema, tested on real MySQL"
+  title: "tests/sql"
+  command: "bash tests/sql/school-erp-schema.test.sh"
+  lines:
+    - "✓ only one open enrolment per student (ERROR 1062)"
+    - "✓ no reference to another school's section (ERROR 1452)"
+    - "✓ ledger rows cannot be edited (ERROR 1644)"
+    - "✓ May voucher: total due (Rs) = 13550"
+    - "✓ Ali's class after promotion = 2027-28 Class 6 B"
+  result: "29 passed, 0 failed"
+  alt: "Terminal output of the schema tests: checks for enrolments, tenant keys, the fee ledger and promotion, ending in 29 passed, 0 failed."
 tags: [mysql, laravel, database, saas, edtech]
 art: network
 level: Intermediate

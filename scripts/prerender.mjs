@@ -26,6 +26,8 @@ import { createHash } from 'node:crypto'
 import { AUTHOR, CATEGORIES, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, homeHeadTags, homeHtml, homeNoscript, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, setOgVersions, sitemap } from './blog.mjs'
 import { LICENSES, ORCID, doiUrl } from '../src/blog/scholar.mjs'
 import { createOg } from './og.mjs'
+import { coverPng } from './covers.mjs'
+import { loadPosts as loadSources, POSTS_DIR } from './blog.mjs'
 import { checkSeo, report } from './seo-check.mjs'
 import { postPdf } from './pdf.mjs'
 
@@ -103,6 +105,12 @@ const images = {
   research: og.research(posts, { orcid: ORCID }),
   404: og.notFound(),
   ...Object.fromEntries(posts.map((p) => [p.slug, og.post(p)])),
+}
+// a post with a `cover:` block shares its featured image (plus a small brand pill) instead of the notebook card
+const sources = new Map(loadSources(POSTS_DIR, { includeDrafts: true }).map((p) => [p.slug, p]))
+for (const p of posts) {
+  const src = sources.get(p.slug)
+  if (src?.cover) images[p.slug] = (await coverPng(src)) ?? images[p.slug]
 }
 const versions = {}
 for (const [key, buf] of Object.entries(images)) {

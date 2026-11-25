@@ -45,6 +45,7 @@ There is no ESLint/Prettier config and no test suite; **`npm run build` is the c
 | `scripts/blog.mjs` | Frontmatter loader, post lint, feeds, sitemap, robots, llms.txt, all `<head>` tags and JSON-LD. |
 | `scripts/prerender.mjs` | Static pages, Markdown copies, PDFs, OG images, feeds. |
 | `scripts/og.mjs` | OG image renderers (`/og/*.png?v=<hash>`). |
+| `scripts/covers.mjs` | Featured images from each post's `cover:` block → `public/covers/` (committed). Also the post's OG image. See `docs/COVERS.md`. |
 | `scripts/seo-check.mjs` | Post-build SEO gate. |
 | `scripts/link-previews.mjs` | Link preview snapshot (`public/link-previews.json`, `public/link-icons/`). |
 | `scripts/portrait.mjs` | Regenerates avatar / icons / favicons from the source photo. |
@@ -78,6 +79,7 @@ Fix SEO problems **in the generators** (`scripts/blog.mjs`, `scripts/og.mjs`), n
 - Start with `<TLDR>` (or `<Abstract>` for research). Answer first, then explain.
 - `category` is one of `Founder | Engineering | AI Research | Writing`. 1–8 lowercase tags.
 - Descriptive link text (never "click here"), alt text on images, no skipped heading levels, cite sources with `<Cite id="…" />` + `references:`.
+- Every post needs a `cover:` block (featured image). Pick the style from `docs/COVERS.md` that matches what the post has (a number, a quote, code, proof…), run `npm run covers`, and look at the result at full size before committing. Everything on a cover must be true and appear in the post.
 - OG image, feeds, sitemap, Markdown/PDF copies and structured data are generated automatically. Don't hand-write them.
 
 ### Dates and scheduling

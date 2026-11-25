@@ -3,6 +3,26 @@ title: "Shipping AI features in Laravel without blocking your app"
 description: "LLM calls are slow, flaky and expensive. How I wrap them in Laravel with queues, streaming, retries, caching and cost tracking so users never wait on a spinner."
 date: 2026-06-22
 category: Engineering
+cover:
+  style: code
+  kicker: "Engineering · Laravel + LLMs"
+  hook: "Stream it or queue it. Never block."
+  file: "app/Http/Controllers/AssistantController.php"
+  badge: "200 · text/event-stream"
+  highlight: [5]
+  code: |
+    public function stream(Request $request, LlmClient $llm)
+    {
+        $prompt = $request->validate(['q' => 'required|string|max:2000'])['q'];
+
+        return response()->stream(function () use ($llm, $prompt) {
+            foreach ($llm->stream($prompt) as $chunk) {
+                echo 'data: ' . json_encode(['t' => $chunk]) . "\n\n";
+                flush();
+            }
+        }, 200, ['Content-Type' => 'text/event-stream']);
+    }
+  alt: "A Laravel controller that streams an LLM response with server-sent events, under the headline: Stream it or queue it. Never block."
 tags: [laravel, ai, queues, openai, performance]
 art: network
 level: Intermediate

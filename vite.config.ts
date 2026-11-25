@@ -7,7 +7,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import rehypeKatex from 'rehype-katex'
 import rehypeSlug from 'rehype-slug'
 import rehypePrettyCode from 'rehype-pretty-code'
-import { loadPosts, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
+import { loadPosts, coverVersions, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
 
 const VIRTUAL = 'virtual:blog'
 const RESOLVED = '\0' + VIRTUAL
@@ -69,7 +69,9 @@ function blog(): Plugin {
     },
     load(id) {
       if (id !== RESOLVED) return
-      const posts = loadPosts(POSTS_DIR, { includeDrafts: !isBuild })
+      // the client only needs to know a cover exists (and its alt text); the rest is for scripts/covers.mjs
+      const v = coverVersions()
+      const posts = loadPosts(POSTS_DIR, { includeDrafts: !isBuild }).map((p) => ({ ...p, cover: p.cover ? { style: p.cover.style, alt: String(p.cover.alt ?? ''), v: v[p.slug] ?? '' } : undefined }))
       const seo = { BLOG_TITLE, BLOG_INDEX_TITLE, BLOG_DESCRIPTION, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION }
       return `export const posts = ${JSON.stringify(posts)}\nexport const SITE_URL = ${JSON.stringify(SITE_URL)}\nexport const SEO = ${JSON.stringify(seo)}`
     },

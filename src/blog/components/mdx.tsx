@@ -22,8 +22,8 @@ import {
 } from 'react'
 import { Link } from '../router'
 import { copy, Icon } from './ui'
-import { CATEGORY_COLOR, getPost, postUrl, type PostMeta } from '../data'
-import { CoverArt } from './CoverArt'
+import { getPost, postUrl, type PostMeta } from '../data'
+import { PostCover } from './PostCover'
 
 export const PostContext = createContext<PostMeta | null>(null)
 /** true when rendering for feeds / Markdown copies: no interactive chrome, every tab visible. */
@@ -512,7 +512,7 @@ export function PostLink({ slug }: { slug: string }) {
   if (!p) return null
   return (
     <Link href={postUrl(p)} className="b-postlink" data-preview="hover">
-      <CoverArt art={p.art} seed={p.slug} color={CATEGORY_COLOR[p.category]} />
+      <PostCover p={p} sizes="160px" />
       <span>
         <span className="b-kicker">
           {p.category} · {p.minutes} min read
