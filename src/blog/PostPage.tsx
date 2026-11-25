@@ -397,7 +397,7 @@ export default function PostPage({ slug }: { slug: string }) {
                   </span>
                   {p.level && <span>{p.level}</span>}
                   {audience && <span>For {audienceLower(audience)}</span>}
-                  {p.draft && <span className="b-draft">Draft</span>}
+                  {p.draft ? <span className="b-draft">Draft</span> : p.scheduled && <span className="b-draft">Scheduled</span>}
                   <LicenseBadge p={p} />
                 </p>
               </div>

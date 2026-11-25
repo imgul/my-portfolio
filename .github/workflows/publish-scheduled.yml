@@ -1,0 +1,65 @@
+# Publishes scheduled blog posts on their date.
+#
+# A post whose frontmatter `date` is in the future is left out of production builds
+# (see isPublished in scripts/blog.mjs). Every morning this checks whether a post is
+# due and not live yet; if so it pushes an empty commit, which makes Vercel rebuild
+# and publish it with its real date, then pings IndexNow (Bing, which feeds ChatGPT
+# search and Copilot) once the page is live. Days with nothing due do nothing.
+name: Publish scheduled posts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 4 * * *' # 09:07 in Islamabad (PUBLISH_TZ = Asia/Karachi)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-scheduled
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Find posts that are due
+        id: due
+        run: node scripts/due-posts.mjs
+
+      - name: Trigger a production deploy
+        if: steps.due.outputs.count != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "Publish scheduled post: ${{ steps.due.outputs.slugs }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Wait until the post is live
+        if: steps.due.outputs.count != '0'
+        run: |
+          first=$(echo "${{ steps.due.outputs.urls }}" | cut -d' ' -f1)
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$first")
+            echo "attempt $i: $first → $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "Post did not go live within 10 minutes; check the Vercel deployment." && exit 1
+
+      - name: Tell search engines (IndexNow)
+        if: steps.due.outputs.count != '0'
+        run: node scripts/indexnow.mjs ${{ steps.due.outputs.urls }} https://gulzaib.vercel.app/blog

@@ -40,13 +40,15 @@ The keyboard sounds (the playable stack synth, the hold-to-copy charge) follow t
 
 A reading-first blog for founders, engineers, technical writers and AI researchers, kept separate from the portfolio. It has its own small bundle and calm styles, with no 3D, custom cursor or smooth-scroll hijacking. Every page is **pre-rendered to static HTML** at build time, so readers, search engines and AI assistants get the full text without running JavaScript. React then hydrates it.
 
-**Write a post:** add `src/blog/posts/my-slug.mdx`. The file name is the URL (`/blog/my-slug`). Then run `npm run lint:blog`, which checks the post against [`docs/BLOG_GUIDELINES.md`](docs/BLOG_GUIDELINES.md): title and description length, heading order, alt text, broken links, citations and more.
+**Write a post:** add `src/blog/posts/my-slug.mdx`. The file name is the URL (`/blog/my-slug`). Then run `npm run lint:blog`, which checks the post against [`docs/BLOG_GUIDELINES.md`](docs/BLOG_GUIDELINES.md): title and description length, heading order, alt text, broken links, citations and more. `npm run lint:slop` scores it for AI-writing tells (rules from the `humanizer` and `stop-slop` skills; aim for 95+). How posts are drafted from voice notes: [`docs/VOICE.md`](docs/VOICE.md). Current calendar: [`docs/CONTENT_PLAN_DEC_2026.md`](docs/CONTENT_PLAN_DEC_2026.md).
+
+**Schedule a post:** give it a future `date:`. Production builds leave it out entirely (page, feeds, sitemap, JS) until that day in Islamabad time, and the *Publish scheduled posts* workflow redeploys that morning. Preview a date with `PUBLISH_DATE=2026-12-05 npm run build`.
 
 ```mdx
 ---
 title: "Post title"              # 30–65 characters
 description: "One or two sentences, 70–160 characters. Cards, feeds, search results."
-date: 2026-11-24
+date: 2026-11-24                 # publish day (Asia/Karachi); a future date schedules the post
 updated: 2026-12-01              # optional; shown as "Updated" and used as dateModified
 category: Founder                # Founder | Engineering | AI Research | Writing
 tags: [saas, validation]

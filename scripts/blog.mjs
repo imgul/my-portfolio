@@ -11,7 +11,9 @@
  *
  *   Every post gets its <head> (title, description, canonical, Open Graph, Twitter, JSON-LD),
  *   a 1200×630 share image at /og/<slug>.png, a sitemap entry and feed items automatically.
- *   date:         required, YYYY-MM-DD
+ *   date:         required, YYYY-MM-DD. A future date schedules the post: it stays out of production builds
+ *                 (page, feeds, sitemap, JS) until that day in PUBLISH_TZ; .github/workflows/publish-scheduled.yml
+ *                 redeploys each morning a post is due. Never set a past date for a post published today.
  *   updated:      optional, YYYY-MM-DD (shown as "Updated", used as dateModified)
  *   category:     Founder | Engineering | AI Research | Writing
  *   tags:         [list, of, tags] (1–8)
@@ -36,6 +38,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import matter from 'gray-matter'
 import GithubSlugger from 'github-slugger'
+import { analyse, prose as slopProse } from './slop.mjs'
 import { AUTHOR as PERSON_INFO, BLOG_NAME, DOI_RE, LICENSES, PROFILES, activeProfiles, citationMeta, doiUrl, licenseFor, sameAs } from '../src/blog/scholar.mjs'
 
 export const SITE_URL = (process.env.VITE_SITE_URL || 'https://gulzaib.vercel.app').replace(/\/$/, '')
@@ -88,6 +91,14 @@ function extractHeadings(content) {
   return out
 }
 
+/** Scheduled posts go live on their date in the author's timezone. */
+export const PUBLISH_TZ = 'Asia/Karachi'
+/** Today's date (YYYY-MM-DD) in PUBLISH_TZ. PUBLISH_DATE=YYYY-MM-DD overrides it (previews, tests). */
+export const todayISO = () => process.env.PUBLISH_DATE || new Intl.DateTimeFormat('en-CA', { timeZone: PUBLISH_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+
+/** Hidden from production: drafts, and posts whose date has not arrived yet. */
+export const isPublished = (p, today = todayISO()) => !p.draft && p.date <= today
+
 export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
   if (!fs.existsSync(dir)) return []
   const posts = fs
@@ -112,6 +123,7 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
         seriesPart: data.seriesPart ? Number(data.seriesPart) : undefined,
         featured: !!data.featured,
         draft: !!data.draft,
+        scheduled: (toISO(data.date) ?? '1970-01-01') > todayISO(),
         art: data.art ?? 'galaxy',
         level: data.level,
         references: Array.isArray(data.references)
@@ -134,7 +146,7 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
         minutes: Math.max(1, Math.round(words / WPM + codeBlocks * 0.4)),
       }
     })
-    .filter((p) => includeDrafts || !p.draft)
+    .filter((p) => includeDrafts || isPublished(p))
   return posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.title.localeCompare(b.title)))
 }
 
@@ -210,6 +222,11 @@ export function lintPosts(dir = POSTS_DIR) {
 
     if (p.series && p.seriesPart && posts.some((q) => q !== p && q.series === p.series && q.seriesPart === p.seriesPart)) err(`duplicate seriesPart ${p.seriesPart} in "${p.series}"`)
     if (p.words < 300 && !p.draft) warn(`only ${p.words} words; thin pages rank and get cited less`)
+
+    // AI tells (rules from .agents/skills/humanizer + stop-slop); run `npm run lint:slop` for the full report
+    const slop = analyse(slopProse(content) + '\n\n' + p.title + '. ' + p.description)
+    for (const f of slop.flags.filter((x) => x.weight >= 4)) warn(`AI tell (${f.label}): “${f.text}”. Say the specific thing instead`)
+    if (slop.score < 90) warn(`slop score ${slop.score}/100; rewrite flagged passages in your own words (npm run lint:slop -- src/blog/posts/${p.slug}.mdx)`)
   }
   return { errors, warnings, count: posts.length }
 }

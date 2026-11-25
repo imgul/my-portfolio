@@ -7,3 +7,6 @@ export const BLOG_INDEX_TITLE: string
 export const RESEARCH_DESCRIPTION: string
 export const NOT_FOUND_DESCRIPTION: string
 export function loadPosts(dir?: string, opts?: { includeDrafts?: boolean }): Record<string, unknown>[]
+export const PUBLISH_TZ: string
+export function todayISO(): string
+export function isPublished(post: Record<string, unknown>, today?: string): boolean
