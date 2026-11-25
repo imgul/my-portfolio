@@ -2,7 +2,10 @@
 title: "Designing the database for a school ERP"
 seoTitle: "School management system database design (MySQL)"
 description: "A tested MySQL schema for a school ERP: dated enrolments for promotions, composite tenant keys and an append-only fee ledger in paisa. With Laravel migration."
-date: 2026-12-02
+# Schema first sketched in May 2026 while building Oxygen LMS; written up, tested and published on
+# the `updated` date. Same documented exception to "never backdate" as fee-vouchers-not-dashboards.
+date: 2026-05-02
+updated: 2026-11-24
 category: Engineering
 tags: [mysql, laravel, database, saas, edtech]
 art: network
@@ -58,9 +61,11 @@ A school ERP database rests on three decisions. A student’s class is a dated *
 
 </TLDR>
 
+I first sketched this schema in May 2026, a few months into building Oxygen LMS. In November I wrote it up, tested every rule on MySQL 8.0 and 8.4, and added the sources.
+
 Most ER diagrams for a “school management system” put `class_id` on the students table. That works until the school promotes everyone at the end of the year. You update the column, and last year’s class lists, attendance registers and result sheets now point at the wrong class.
 
-This is the schema I’d start a school ERP with on Laravel and MySQL, for private schools in Pakistan. It builds on two earlier posts: the [multi-tenant Laravel setup](/blog/multi-tenant-laravel-saas) covers the application side of keeping schools apart, and [what schools pay for](/blog/fee-vouchers-not-dashboards) explains why the fee tables get the most care. It’s a cut-down, tested design for this post, not a dump of a production database.
+This is the schema I’d start a school ERP with on Laravel and MySQL, for private schools in Pakistan. It goes with two other posts: the [multi-tenant Laravel setup](/blog/multi-tenant-laravel-saas) covers the application side of keeping schools apart, and [what schools pay for](/blog/fee-vouchers-not-dashboards) explains why the fee tables get the most care. It’s a cut-down, tested design for this post, not a dump of a production database.
 
 ## What tables does a school ERP need?
 
