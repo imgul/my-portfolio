@@ -83,7 +83,7 @@ Fix SEO problems **in the generators** (`scripts/blog.mjs`, `scripts/og.mjs`), n
 ### Dates and scheduling
 
 - `date:` is the day the post **goes public**, in Asia/Karachi time. A future date schedules the post: production builds leave it out of every page, feed, sitemap and JS chunk until that day (`isPublished` in `scripts/blog.mjs`, `unpublishedPosts` in `vite.config.ts`). Dev shows it with a “Scheduled” badge.
-- **Never backdate.** Don't set a past date on a post that goes live today. The only exception is a piece genuinely published earlier elsewhere, and the post must say so near the top.
+- **Never backdate.** Don't set a past date on a post that goes live today. Two exceptions, both stated near the top of the post: a piece genuinely published earlier elsewhere, or notes Gul genuinely wrote on an earlier date. For notes, keep the earlier `date:`, set `updated:` to the day it goes live (so the sitemap `lastmod` stays true), and say “I first wrote these notes in …”. Example: `fee-vouchers-not-dashboards`.
 - `updated:` only for substantial edits (new section, corrected facts, new data). Not for typos, and never to look fresh.
 - Test a schedule locally with `PUBLISH_DATE=YYYY-MM-DD LINK_PREVIEWS=off npm run build`.
 

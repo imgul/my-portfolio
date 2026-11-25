@@ -88,7 +88,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 
 | # | Date | Category | Title | Primary search intent |
 |---|---|---|---|---|
-| 1 | Tue 1 Dec | Founder | Fee vouchers, not dashboards: what schools pay for | school management software features Pakistan |
+| 1 | Tue 1 Dec | Founder | ~~Fee vouchers, not dashboards~~ published 24 Nov (notes dated 1 May 2026). Slot open: pick a reserve topic | school management software features Pakistan |
 | 2 | Wed 2 Dec | Engineering | Designing the database for a school ERP | school management system database design |
 | 3 | Thu 3 Dec | Engineering | An attendance flow teachers finish in under a minute | attendance app design for schools |
 | 4 | Fri 4 Dec | Engineering | Roles and permissions in a multi-tenant Laravel app | laravel multi tenant roles permissions |
