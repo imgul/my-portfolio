@@ -1,6 +1,6 @@
 # Research brief: attendance flow for teachers
 
-Researched 25 November 2026 for the 3 December Engineering post. The post is a design proposal, not a description of Oxygen LMS’s production implementation. No teacher timing, interview, screenshot or measured claim was supplied. The title’s one-minute threshold is a target to test, not a demonstrated outcome.
+Researched and written 25 November 2026 for the Engineering post originally scheduled for 3 December. At the user's request, its displayed publication date is 5 May 2026 and its updated date is 25 November 2026. It was not published in May. The post is a design proposal, not a description of Oxygen LMS’s production implementation. No teacher timing, interview, screenshot or measured claim was supplied. The title’s one-minute threshold is a target to test, not a demonstrated outcome.
 
 ## Sources and decisions
 
