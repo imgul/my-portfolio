@@ -91,7 +91,7 @@ export default function CookieConsent({ variant, delay = 900, onHover, onPress }
         </p>
       )}
       <div className="cc__row">
-        <button type="button" className="cc__btn" onClick={() => choose('all')} onMouseEnter={onHover} data-cursor="Accept">
+        <button type="button" className="cc__btn cc__btn--accept" onClick={() => choose('all')} onMouseEnter={onHover} data-cursor="Accept">
           Accept optional
         </button>
         <button type="button" className="cc__btn" onClick={() => choose('essential')} onMouseEnter={onHover} data-cursor="Reject">
