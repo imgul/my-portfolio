@@ -86,7 +86,9 @@ Fourteen tables cover the daily work. Each one has a clear answer to “what is 
 
 If you can’t say what one row of a table means in a few words, the table is usually two tables.
 
-<Figure src="/img/blog/school-erp-erd.svg" alt="Entity relationship diagram of the school ERP schema. Calendar: sections point to academic_years and grade_levels. People: students point to families, enrollments point to students and sections, attendance_marks point to enrollments. Fees: fee_rates and concessions point to fee_heads, concessions also point to students, payments point to vouchers, ledger_entries point to payments and fee_heads, and vouchers, payments and ledger_entries all point to families." caption="The core tables and their main foreign keys. Enrolments and the ledger, outlined in blue, carry most of the design." wide />
+<Figure caption="The core tables and their main foreign keys. Enrolments and the ledger, outlined in blue, carry most of the design. Select it to open the full-size diagram.">
+<a href="/img/blog/school-erp-erd.svg"><img src="/img/blog/school-erp-erd.svg" alt="Entity relationship diagram of the school ERP schema. Calendar: sections point to academic_years and grade_levels. People: students point to families, enrollments point to students and sections, attendance_marks point to enrollments. Fees: fee_rates and concessions point to fee_heads, concessions also point to students, payments point to vouchers, ledger_entries point to payments and fee_heads, and vouchers, payments and ledger_entries all point to families." width="980" height="620" loading="lazy" decoding="async" /></a>
+</Figure>
 
 ## Why shouldn’t students have a class_id column?
 
