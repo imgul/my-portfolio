@@ -1,6 +1,6 @@
-# 30 posts in 30 days: December 2026 plan
+# December 2026 posting plan
 
-One post a day on Gul’s Notebook, 1 to 30 December 2026, published on its real date at 09:07 Islamabad time. Each post is built from something only Gul can say: a call, a number, a mistake, a schema, a client conversation. That is what makes it rank, get cited by AI search, and read like a person wrote it.
+The calendar plans posts for Gul’s Notebook across December 2026. Scheduled posts become eligible at midnight Islamabad time; the daily publishing workflow runs at 09:07, although another production build can publish them earlier. Original experience and useful evidence make each post stronger.
 
 - **Voice guide:** [`docs/VOICE.md`](VOICE.md)
 - **Post rules:** [`docs/BLOG_GUIDELINES.md`](BLOG_GUIDELINES.md)
@@ -90,9 +90,8 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 |---|---|---|---|---|
 | 1 | Tue 1 Dec | Founder | ~~Fee vouchers, not dashboards~~ published 24 Nov (notes dated 1 May 2026). Slot open: pick a reserve topic | school management software features Pakistan |
 | 2 | Wed 2 Dec | Engineering | ~~Designing the database for a school ERP~~ published 24 Nov (dated 2 May 2026, `designing-the-database-for-a-school-erp`). Slot open: pick a reserve topic | school management system database design |
-| 3 | Thu 3 Dec | Engineering | An attendance flow teachers finish in under a minute | attendance app design for schools |
-| 4 | Fri 4 Dec | Engineering | Roles and permissions in a multi-tenant Laravel app | laravel multi tenant roles permissions |
-| 5 | Sat 5 Dec | Founder | How I priced school software: per student or per branch? | how to price SaaS for schools |
+| 3 | Thu 3 Dec | Engineering | ✅ [An attendance flow teachers finish in under a minute](/blog/an-attendance-flow-teachers-finish-in-under-a-minute), written and published | attendance app design for schools |
+| 5 | Sat 5 Dec | Founder | [School software pricing: per student or per branch?](/blog/school-software-pricing-per-student-or-per-branch), published 26 Nov. Slot open: pick a reserve topic | how to price SaaS for schools |
 | 6 | Sun 6 Dec | Engineering | WhatsApp fee reminders parents read (and reply to) | whatsapp business api school fee reminders |
 | 7 | Mon 7 Dec | Engineering | Building web apps for load-shedding and slow 3G | offline first web app laravel react |
 | 8 | Tue 8 Dec | AI Research | A rubric for judging AI-generated exam questions | evaluate AI generated exam questions |
@@ -119,10 +118,10 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 29 | Tue 29 Dec | AI Research | Logging every agent step in MySQL: observability on a budget | LLM agent observability logging |
 | 30 | Wed 30 Dec | Writing | 30 posts in 30 days: traffic, citations and what I’d change | blogging every day results |
 
-**Mix:** 12 Engineering, 9 Founder, 6 AI Research, 3 Writing. Sundays are shorter field notes (600–900 words); weekdays 1,000–1,600.
+**Mix:** 11 Engineering, 9 Founder, 6 AI Research, 3 Writing. Sundays are shorter field notes (600–900 words); weekdays 1,000–1,600. The 4 December slot is removed; posts 1–3 and 5 are already published.
 
 **Series:**
-- “Building Oxygen LMS”: posts 1–7.
+- School software topics: posts 1–3 and 5–7.
 - “AI in production”: posts 8–14 and 29.
 - “Founder lessons”: parts 4–9 are posts 15, 16, 17, 19, 20 and 21.
 
@@ -147,23 +146,13 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **Asset:** ER diagram (Mermaid or image) and two real migrations.
 - **Links:** multi-tenant-laravel-saas-the-architecture-i-actually-use.
 
-**3. An attendance flow teachers finish in under a minute** · `attendance-flow-for-teachers` · Engineering, Building Oxygen LMS 3
-- **TL;DR answers:** the screen design and backend shape that let a teacher mark a full class fast on a cheap phone.
-- **Talk through:** watching a teacher use the first version. Defaults (“everyone present, tap the absentees”). Bulk inserts and idempotency. Time per class before and after.
-- **Asset:** before/after screenshots and your measured times.
+**3. An attendance flow teachers finish in under a minute** · `an-attendance-flow-teachers-finish-in-under-a-minute` · Engineering, school software · Written and published
+- **Published angle:** a proposed attendance flow, with defaults, offline considerations and an idempotent backend design. The one-minute goal is not presented as a measured result.
 - **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room.
 
-**4. Roles and permissions in a multi-tenant Laravel app** · `laravel-multi-tenant-permissions` · Engineering, Building Oxygen LMS 4
-- **TL;DR answers:** how to scope roles per tenant (school/branch) without leaking data, with the package and code you use.
-- **Talk through:** owner, principal, clerk, teacher and parent roles. A permissions bug you shipped. Policies vs middleware. Testing tenant isolation.
-- **Asset:** the policy and test code; a role-to-permission table.
-- **Links:** multi-tenant-laravel-saas-the-architecture-i-actually-use.
-- **References:** Laravel authorization docs, the permissions package docs.
-
-**5. How I priced school software: per student or per branch?** · `pricing-school-software` · Founder, Building Oxygen LMS 5
-- **TL;DR answers:** the pricing model you chose, the numbers, and what schools pushed back on.
-- **Talk through:** the models you tried or quoted. Annual vs monthly in a cash-heavy market. Setup fees. Discounts you regret.
-- **Asset:** your price table (or ranges if exact prices are private) and objections from real calls.
+**5. School software pricing: per student or per branch?** · `school-software-pricing-per-student-or-per-branch` · Founder, school software · Written and published on 26 November
+- **Angle:** A practical comparison of per-student, per-branch and size-band pricing for school software.
+- **Includes:** Hypothetical PKR examples, publicly sourced vendor pricing, costs and contract terms to check. No unverified Oxygen LMS prices or customer anecdotes.
 - **Links:** code-is-not-a-business-what-20-paying-customers-taught-me, distribution-beats-features-notes-from-cold-calling-schools.
 
 **6. WhatsApp fee reminders parents read (and reply to)** · `whatsapp-fee-reminders` · Engineering, Building Oxygen LMS 6 (field note)
