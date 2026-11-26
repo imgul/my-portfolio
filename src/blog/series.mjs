@@ -49,6 +49,8 @@ export const SERIES = [
       { position: 1, title: 'Why Technical Founders Struggle With Distribution', stage: 'Reframing Distribution', scheduledDate: '2026-11-30' },
       { position: 2, title: 'Distribution Before Product-Market Fit Is a Learning System', stage: 'Reframing Distribution', scheduledDate: '2026-12-07' },
       { position: 3, title: 'How to Choose a Beachhead Market for Your Product', stage: 'Choosing a Market Worth Reaching', scheduledDate: '2026-12-14' },
+      { position: 4, title: 'How to Build an Ideal Customer Profile Before You Have Customers', stage: 'Choosing a Market Worth Reaching', scheduledDate: '2026-12-21' },
+      { position: 5, title: 'Customer Discovery That Produces Evidence, Not Compliments', stage: 'Creating Customer Conversations' },
     ],
   },
   {
