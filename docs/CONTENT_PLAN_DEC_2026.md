@@ -110,7 +110,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 21 | Mon 21 Dec | Founder | [Projects I turned down and what each one taught me](/blog/projects-i-turned-down-and-what-each-one-taught-me), published with requested 10 November display date. Slot open: pick a reserve topic | when to turn down a software client |
 | 22 | Tue 22 Dec | Engineering | Laravel queues in production: failures I’ve hit | laravel queue failed jobs production |
 | 23 | Wed 23 Dec | Writing | Writing a software proposal clients sign | software development proposal template |
-| 24 | Thu 24 Dec | Engineering | My code review checklist for junior Laravel developers | laravel code review checklist |
+| 24 | Thu 24 Dec | Engineering | [My code review checklist for junior Laravel developers](/blog/my-code-review-checklist-for-junior-laravel-developers), published with requested 18 May display date. Slot open: pick a reserve topic | laravel code review checklist |
 | 25 | Fri 25 Dec | Founder | Remote roles in the UAE and KSA from Pakistan: my notes | remote developer jobs UAE from Pakistan |
 | 26 | Sat 26 Dec | Writing | Release notes customers read: how I write changelogs | how to write release notes SaaS |
 | 27 | Sun 27 Dec | Engineering | My 2026 stack, and what I’d drop in 2027 | laravel react stack 2026 |
