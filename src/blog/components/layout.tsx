@@ -451,12 +451,14 @@ export function Header() {
           </Link>
           <nav className="b-header__nav" aria-label="Blog">
             <Link href="/blog#series">Series</Link>
+            <Link href="/blog/lessons" aria-current={path === '/blog/lessons' ? 'page' : undefined}>Lessons</Link>
             <Link href="/blog#topics">Topics</Link>
             <Link href="/blog?saved=1" className="b-header__saved">
               Saved{nSaved > 0 && <span className="b-count">{nSaved}</span>}
             </Link>
             <a href="/">Portfolio</a>
           </nav>
+          <Link href="/blog/lessons" className="b-header__lessons-mobile" aria-current={path === '/blog/lessons' ? 'page' : undefined}>Lessons</Link>
           <div className="b-header__tools">
             <button
               ref={searchBtn}

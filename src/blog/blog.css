@@ -5081,3 +5081,33 @@ a.b-card__hitlink:hover {
   .cost-card__aside { grid-column: 2; margin-top: .5rem; }
   .cost-end { align-items: start; flex-direction: column; }
 }
+
+/* Keep the collection reachable in the compact header as well as the desktop nav. */
+.b-header__lessons-mobile {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 .35rem;
+  color: var(--text-2);
+  font: 500 .85rem/1 var(--sans);
+  text-decoration: none;
+}
+.b-header__lessons-mobile:hover, .b-header__nav a[aria-current='page'], .b-header__lessons-mobile[aria-current='page'] { color: var(--accent); }
+.b-header__lessons-mobile + .b-header__tools { margin-left: 0; }
+@media (min-width: 760px) {
+  .b-header__lessons-mobile { display: none; }
+  .b-header__lessons-mobile + .b-header__tools { margin-left: .5rem; }
+}
+/* The numeral must fit inside the square without pushing its bottom caption out. */
+.cost-art__mark { min-height: 0; }
+.cost-art__mark span { font-size: clamp(8rem, 17vw, 16rem); line-height: .8; }
+@media (max-width: 720px) {
+  .cost-art__mark span { font-size: clamp(8rem, 42vw, 13rem); }
+}
+@media (max-width: 420px) {
+  .b-header__in { gap: .4rem; }
+  .b-logo { gap: .3rem; font-size: .9rem; }
+  .b-header__title { padding-left: .45rem; font-size: .9rem; }
+  .b-header__lessons-mobile { font-size: .8rem; padding: 0 .2rem; }
+}
