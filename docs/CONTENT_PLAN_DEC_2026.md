@@ -102,7 +102,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 13 | Sun 13 Dec | AI Research | The evals I run before shipping a prompt change | LLM prompt regression testing |
 | 14 | Mon 14 Dec | AI Research | RAG over textbooks with tables, formulas and Urdu text | chunking PDF textbooks for RAG |
 | 15 | Tue 15 Dec | Founder | Freelancer to studio: what changed when I stopped selling hours | freelancer to agency developer |
-| 16 | Wed 16 Dec | Founder | How I scope an MVP in one call: my question list | how to scope an MVP |
+| 16 | Wed 16 Dec | Founder | [How I scope an MVP in one call: my question list](../src/blog/posts/how-i-scope-an-mvp-in-one-call-my-question-list.mdx), written for review with requested 20 Aug date | how to scope an MVP |
 | 17 | Thu 17 Dec | Founder | Building AnySub in public: the first month in numbers | building in public SaaS numbers |
 | 18 | Fri 18 Dec | Engineering | The data model behind a subscription tracker | subscription tracking database schema |
 | 19 | Sat 19 Dec | Founder | Fixed price or retainer for AI projects? What I charge | how to price AI development projects |
@@ -220,11 +220,11 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **Asset:** a before/after table of how you sell and deliver.
 - **Links:** code-is-not-a-business-what-20-paying-customers-taught-me.
 
-**16. How I scope an MVP in one call: my question list** · `scope-an-mvp-in-one-call` · Founder lessons 5
-- **TL;DR answers:** the questions you ask on a first call and how answers turn into a scope and a price.
-- **Talk through:** a call that went well and one that didn’t. Questions that save the most rework. Red flags.
-- **Asset:** your actual question list as a downloadable checklist.
-- **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room.
+**16. How I scope an MVP in one call: my question list** · `how-i-scope-an-mvp-in-one-call-my-question-list` · Founder · Written for review
+- **Angle:** A proposed first-call question list, followed by validation and a conditional estimate.
+- **Date:** 20 August 2026 requested; the guide was prepared in November 2026, as noted in the post. It has not yet been published.
+- **Asset:** Downloadable proposed scoping checklist; fictional examples are labelled.
+- **Links:** simple-wins-designing-for-the-least-technical-user-in-the-room, code-is-not-a-business-what-20-paying-customers-taught-me.
 
 **17. Building AnySub in public: the first month in numbers** · `anysub-month-one` · Founder lessons 6
 - **TL;DR answers:** visitors, signups and what moved them in AnySub’s first month, with real numbers.
