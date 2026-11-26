@@ -1,0 +1,29 @@
+{
+  "k": 3,
+  "cases": [
+    {
+      "id": "table",
+      "slice": "table",
+      "question": "What is the unit for speed?",
+      "required_evidence": ["table-header", "speed-row"],
+      "baseline": [["speed-row"], [], []],
+      "candidate": [["table-header", "speed-row"], [], []]
+    },
+    {
+      "id": "formula",
+      "slice": "formula",
+      "question": "How is speed calculated?",
+      "required_evidence": ["speed-formula"],
+      "baseline": [[], [], []],
+      "candidate": [["speed-formula"], [], []]
+    },
+    {
+      "id": "urdu",
+      "slice": "urdu",
+      "question": "رفتار کیا ہے؟",
+      "required_evidence": ["urdu-definition"],
+      "baseline": [[], ["urdu-definition"], []],
+      "candidate": [[], ["urdu-definition"], []]
+    }
+  ]
+}

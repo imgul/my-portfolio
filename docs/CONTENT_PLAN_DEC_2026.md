@@ -100,14 +100,14 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 11 | Fri 11 Dec | Engineering | Reliable JSON from LLMs in PHP with structured outputs | openai structured outputs php laravel |
 | 12 | Sat 12 Dec | AI Research | [Grading written answers with AI: what worked, what didn’t](/blog/grading-written-answers-with-ai-what-worked-what-didnt), published 26 Nov (dated 12 July by request). Slot open: pick a reserve topic | AI answer evaluation subjective exams |
 | 13 | Sun 13 Dec | AI Research | [The evals I run before shipping a prompt change](/blog/the-evals-i-run-before-shipping-a-prompt-change), published with requested 15 July display date. Slot open: pick a reserve topic | LLM prompt regression testing |
-| 14 | Mon 14 Dec | AI Research | RAG over textbooks with tables, formulas and Urdu text | chunking PDF textbooks for RAG |
+| 14 | Mon 14 Dec | AI Research | [RAG over textbooks with tables, formulas and Urdu text](/blog/rag-over-textbooks-with-tables-formulas-and-urdu-text), published with requested 16 July display date. Slot open: pick a reserve topic | chunking PDF textbooks for RAG |
 | 15 | Tue 15 Dec | Founder | Freelancer to studio: what changed when I stopped selling hours | freelancer to agency developer |
 | 16 | Wed 16 Dec | Founder | [How I scope an MVP in one call: my question list](/blog/how-i-scope-an-mvp-in-one-call-my-question-list), published 26 Nov (dated 20 Aug by request). Slot open: pick a reserve topic | how to scope an MVP |
 | 17 | Thu 17 Dec | Founder | Building AnySub in public: the first month in numbers | building in public SaaS numbers |
 | 18 | Fri 18 Dec | Engineering | The data model behind a subscription tracker | subscription tracking database schema |
 | 19 | Sat 19 Dec | Founder | Fixed price or retainer for AI projects? What I charge | how to price AI development projects |
 | 20 | Sun 20 Dec | Founder | Applying to National Incubation Center Lahore: our notes | NIC Lahore application process |
-| 21 | Mon 21 Dec | Founder | Projects I turned down and what each one taught me | when to turn down a software client |
+| 21 | Mon 21 Dec | Founder | [Projects I turned down and what each one taught me](/blog/projects-i-turned-down-and-what-each-one-taught-me), published with requested 10 November display date. Slot open: pick a reserve topic | when to turn down a software client |
 | 22 | Tue 22 Dec | Engineering | Laravel queues in production: failures I’ve hit | laravel queue failed jobs production |
 | 23 | Wed 23 Dec | Writing | Writing a software proposal clients sign | software development proposal template |
 | 24 | Thu 24 Dec | Engineering | My code review checklist for junior Laravel developers | laravel code review checklist |
