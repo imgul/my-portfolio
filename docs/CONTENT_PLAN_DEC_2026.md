@@ -99,7 +99,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 10 | Thu 10 Dec | AI Research | Voice agents in Urdu, Punjabi and Pashto: where they break | urdu speech recognition voice agent |
 | 11 | Fri 11 Dec | Engineering | Reliable JSON from LLMs in PHP with structured outputs | openai structured outputs php laravel |
 | 12 | Sat 12 Dec | AI Research | [Grading written answers with AI: what worked, what didn’t](/blog/grading-written-answers-with-ai-what-worked-what-didnt), published 26 Nov (dated 12 July by request). Slot open: pick a reserve topic | AI answer evaluation subjective exams |
-| 13 | Sun 13 Dec | AI Research | [The evals I run before shipping a prompt change](../src/blog/posts/the-evals-i-run-before-shipping-a-prompt-change.mdx), written for review with requested 15 July date | LLM prompt regression testing |
+| 13 | Sun 13 Dec | AI Research | [The evals I run before shipping a prompt change](/blog/the-evals-i-run-before-shipping-a-prompt-change), published with requested 15 July display date. Slot open: pick a reserve topic | LLM prompt regression testing |
 | 14 | Mon 14 Dec | AI Research | RAG over textbooks with tables, formulas and Urdu text | chunking PDF textbooks for RAG |
 | 15 | Tue 15 Dec | Founder | Freelancer to studio: what changed when I stopped selling hours | freelancer to agency developer |
 | 16 | Wed 16 Dec | Founder | [How I scope an MVP in one call: my question list](/blog/how-i-scope-an-mvp-in-one-call-my-question-list), published 26 Nov (dated 20 Aug by request). Slot open: pick a reserve topic | how to scope an MVP |
