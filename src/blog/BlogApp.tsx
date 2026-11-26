@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useLocation } from './router'
 import BlogIndex from './BlogIndex'
 import PostPage, { NotFound } from './PostPage'
+import SeriesPage from './SeriesPage'
 import { BackToTop, Footer, Header } from './components/layout'
 import { Toaster } from './components/ui'
 import { ResearchPage } from './components/scholar'
@@ -25,6 +26,9 @@ const previewFeedback = {
 export default function BlogApp({ notFound }: { notFound?: boolean }) {
   const { path } = useLocation()
   const slug = path.startsWith('/blog/') ? decodeURIComponent(path.slice('/blog/'.length)) : ''
+  // /blog/series/<slug> is a blog collection page; "series" is a static segment,
+  // so it takes precedence over the /blog/<post-slug> route below
+  const seriesSlug = path.startsWith('/blog/series/') ? decodeURIComponent(path.slice('/blog/series/'.length)) : ''
   const legal = legalByPath(path)
   const first = useRef(true)
   const hydrated = useHydrated()
@@ -50,6 +54,8 @@ export default function BlogApp({ notFound }: { notFound?: boolean }) {
         <BlogIndex />
       ) : path === '/blog/research' ? (
         <ResearchPage />
+      ) : seriesSlug && !seriesSlug.includes('/') ? (
+        <SeriesPage key={seriesSlug} slug={seriesSlug} />
       ) : slug && !slug.includes('/') ? (
         <PostPage key={slug} slug={slug} />
       ) : (

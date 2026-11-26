@@ -7,7 +7,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import rehypeKatex from 'rehype-katex'
 import rehypeSlug from 'rehype-slug'
 import rehypePrettyCode from 'rehype-pretty-code'
-import { loadPosts, coverVersions, searchIndex, SITE_URL, POSTS_DIR, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
+import { loadPosts, coverVersions, searchIndex, SITE_URL, POSTS_DIR, SERIES_FILE, BLOG_TITLE, BLOG_DESCRIPTION, BLOG_INDEX_TITLE, RESEARCH_DESCRIPTION, NOT_FOUND_DESCRIPTION } from './scripts/blog.mjs'
 
 const VIRTUAL = 'virtual:blog'
 const RESOLVED = '\0' + VIRTUAL
@@ -82,8 +82,10 @@ function blog(): Plugin {
     },
     configureServer(server) {
       server.watcher.add(POSTS_DIR)
+      server.watcher.add(SERIES_FILE)
       const reload = (file: string) => {
-        if (!file.replace(/\\/g, '/').startsWith(POSTS_DIR)) return
+        const f = file.replace(/\\/g, '/')
+        if (!f.startsWith(POSTS_DIR) && f !== SERIES_FILE) return
         for (const m of [RESOLVED, SEARCH_RESOLVED]) {
           const mod = server.moduleGraph.getModuleById(m)
           if (mod) server.moduleGraph.invalidateModule(mod)
@@ -92,7 +94,7 @@ function blog(): Plugin {
       }
       server.watcher.on('add', reload)
       server.watcher.on('unlink', reload)
-      server.watcher.on('change', (f) => f.endsWith('.mdx') && reload(f))
+      server.watcher.on('change', (f) => (f.endsWith('.mdx') || f.replace(/\\/g, '/') === SERIES_FILE) && reload(f))
     },
   }
 }

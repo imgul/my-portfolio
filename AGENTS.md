@@ -39,6 +39,7 @@ There is no ESLint/Prettier config and no test suite; **`npm run build` is the c
 | `src/components/` | Portfolio sections, HUD, loader. **`Hero.tsx` holds the only runtime `<h1>`** on `/`. |
 | `src/three/` | Particle scene (`ParticleField.ts`) and shape builders. Loaded lazily, on idle, after `load` (see `src/App.tsx`). |
 | `src/blog/posts/*.mdx` | Blog posts. File name = URL slug. |
+| `src/blog/series.mjs` | Series registry (the series "database"): title, description, stages, planned parts, SEO. A post joins with `seriesSlug` + `seriesPart` (+ optional `seriesStage`); the landing page is `/blog/series/<slug>`. |
 | `src/blog/components/mdx.tsx` | Every component usable inside posts. |
 | `src/blog/search.tsx`, `components/SearchDialog.tsx` | Blog search: the dialog (header button, `/`, Ctrl/⌘ K) on every page and the `/blog` filter. Full text by section comes from `virtual:blog-search` (`searchIndex` in `scripts/blog.mjs`), loaded only when someone searches. |
 | `src/blog/blog.css` | Blog themes/typography. Colours must pass WCAG AA in every theme (the footer promises this). |
@@ -81,6 +82,7 @@ Fix SEO problems **in the generators** (`scripts/blog.mjs`, `scripts/og.mjs`), n
 - Add `src/blog/posts/<slug>.mdx` (lowercase-with-hyphens). Frontmatter reference: README → "Blog".
 - Start with `<TLDR>` (or `<Abstract>` for research). Answer first, then explain.
 - `category` is one of `Founder | Engineering | AI Research | Writing`. 1–8 lowercase tags.
+- Series: `seriesSlug` (must match `src/blog/series.mjs`) + `seriesPart` (unique per series) + optional `seriesStage` (must match a stage title). The legacy `series: <name>` still resolves. Series posts keep `/blog/<slug>` URLs; the landing page is `/blog/series/<slug>`.
 - Descriptive link text (never "click here"), alt text on images, no skipped heading levels, cite sources with `<Cite id="…" />` + `references:`.
 - Every post needs a `cover:` block (featured image). Pick the style from `docs/COVERS.md` that matches what the post has (a number, a quote, code, proof…), run `npm run covers`, and look at the result at full size before committing. Everything on a cover must be true and appear in the post.
 - OG image, feeds, sitemap, Markdown/PDF copies and structured data are generated automatically. Don't hand-write them.

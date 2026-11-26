@@ -205,6 +205,23 @@ export function createOg({ site, colorOf, coverOf, licenses }) {
     )
   }
 
+  /** A blog series: title, subtitle, published/planned counts and the first part's cover. */
+  function series(s, seriesPosts) {
+    const first = seriesPosts[0]
+    const total = s.plannedPostCount ?? seriesPosts.length
+    return png(
+      notebook({
+        kicker: `Blog series · ${seriesPosts.length} of ${total} published`,
+        color: first ? colorOf(first) : '#d4834f',
+        title: s.title,
+        sub: s.subtitle ?? s.description,
+        art: first ? coverOf(first) : coverOf({ slug: `series-${s.slug}`, art: 'road', category: 'Founder' }, 'series'),
+        foot,
+        right: [s.stages?.length ? `${s.stages.length} stages` : '', s.cadence ?? ''],
+      }),
+    )
+  }
+
   function notFound() {
     return png(notebook({ kicker: '404 · Page not found', color: '#d4834f', title: 'This page wandered off', sub: 'The notebook and the portfolio are still here.', foot, right: [site.host] }))
   }
@@ -260,5 +277,5 @@ export function createOg({ site, colorOf, coverOf, licenses }) {
 </svg>`)
   }
 
-  return { home, blog, post, research, notFound, page }
+  return { home, blog, post, research, series, notFound, page }
 }

@@ -450,6 +450,7 @@ export function Header() {
             Notebook
           </Link>
           <nav className="b-header__nav" aria-label="Blog">
+            <Link href="/blog#series">Series</Link>
             <Link href="/blog#topics">Topics</Link>
             <Link href="/blog?saved=1" className="b-header__saved">
               Saved{nSaved > 0 && <span className="b-count">{nSaved}</span>}
@@ -631,6 +632,7 @@ export function Footer() {
         </div>
         <nav aria-label="Footer">
           <Link href="/blog">All posts</Link>
+          <Link href="/blog#series">Series</Link>
           <Link href="/blog/research">Research &amp; citation</Link>
           <a href="/rss.xml">RSS</a>
           <a href="/feed.json">JSON feed</a>

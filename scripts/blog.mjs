@@ -17,8 +17,10 @@
  *   updated:      optional, YYYY-MM-DD (shown as "Updated", used as dateModified)
  *   category:     Founder | Engineering | AI Research | Writing
  *   tags:         [list, of, tags] (1–8)
- *   series:       optional series name
- *   seriesPart:   optional number (1, 2, 3…)
+ *   seriesSlug:   optional series key (must match a `slug` in src/blog/series.mjs)
+ *   seriesPart:   optional number (1, 2, 3…), unique within the series; required with seriesSlug
+ *   seriesStage:  optional stage title within the series (must match a stage in the registry)
+ *   series:       legacy series name; resolved to a seriesSlug + registry title (prefer seriesSlug)
  *   featured:     optional, true pins it as the featured post
  *   draft:        optional, true hides it in production builds
  *   art:          cover art: galaxy | dna | road | city | book | stack | network | tree | mountains | globe
@@ -42,6 +44,7 @@ import GithubSlugger from 'github-slugger'
 import { analyse, prose as slopProse } from './slop.mjs'
 import { LEGAL, LEGAL_UPDATED } from '../src/blog/legal.mjs'
 import { AUTHOR as PERSON_INFO, BLOG_NAME, DOI_RE, LICENSES, PROFILES, activeProfiles, citationMeta, doiUrl, licenseFor, sameAs } from '../src/blog/scholar.mjs'
+import { SERIES, SERIES_STATUSES, seriesBySlug } from '../src/blog/series.mjs'
 
 export const SITE_URL = (process.env.VITE_SITE_URL || 'https://gulzaib.vercel.app').replace(/\/$/, '')
 /** Author identity lives in src/blog/scholar.mjs (shared with the browser). */
@@ -54,7 +57,9 @@ export const CATEGORIES = ['Founder', 'Engineering', 'AI Research', 'Writing']
 /** IndexNow (Bing, Yandex, Seznam, Naver): the key file is published at /<key>.txt. */
 export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'f3b9c27e6a5d4e81b0c4d2a97e15b6c8'
 /** URLs under /blog/ that are pages, not posts. */
-export const RESERVED_SLUGS = ['research']
+export const RESERVED_SLUGS = ['research', 'series']
+/** The series registry file (watched in dev so edits reload the blog index). */
+export const SERIES_FILE = fileURLToPath(new URL('../src/blog/series.mjs', import.meta.url)).replace(/\\\\/g, '/')
 export const ARTS = ['galaxy', 'dna', 'road', 'city', 'book', 'stack', 'network', 'tree', 'mountains', 'globe']
 /** Keep in sync with STYLES in scripts/covers.mjs (not imported here, so blog.mjs stays free of sharp/resvg). */
 export const COVER_STYLES = ['number', 'versus', 'code', 'image', 'headline', 'quote', 'face', 'list', 'mockup', 'terminal']
@@ -128,8 +133,15 @@ export function loadPosts(dir = POSTS_DIR, { includeDrafts = false } = {}) {
         updated: toISO(data.updated),
         category: data.category ?? 'Engineering',
         tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-        series: data.series ? String(data.series) : undefined,
+        // the registry is the source of truth for series names: a legacy `series: <name>`
+        // resolves to its slug, and the display name comes from the registry entry
+        seriesSlug: data.seriesSlug ? String(data.seriesSlug) : data.series ? slug(String(data.series)) : undefined,
+        series: (() => {
+          const s = data.seriesSlug ? seriesBySlug(String(data.seriesSlug)) : data.series ? seriesBySlug(slug(String(data.series))) : undefined
+          return s ? s.title : data.series ? String(data.series) : undefined
+        })(),
         seriesPart: data.seriesPart ? Number(data.seriesPart) : undefined,
+        seriesStage: data.seriesStage ? String(data.seriesStage) : undefined,
         featured: !!data.featured,
         draft: !!data.draft,
         scheduled: (toISO(data.date) ?? '1970-01-01') > todayISO(),
@@ -222,6 +234,31 @@ export function searchIndex(dir = POSTS_DIR, { includeDrafts = false } = {}) {
 export function lintPosts(dir = POSTS_DIR) {
   const errors = []
   const warnings = []
+  // the series registry is the series "database": validate it like frontmatter
+  const seenSlugs = new Set()
+  for (const s of SERIES) {
+    const err = (m) => errors.push(`series "${s.slug}": ${m}`)
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(s.slug)) err('slug must be lowercase-with-hyphens (it becomes the URL)')
+    if (seenSlugs.has(s.slug)) err('duplicate series slug')
+    seenSlugs.add(s.slug)
+    if (!s.title) err('missing title')
+    if (!s.description) err('missing description')
+    if (!SERIES_STATUSES.includes(s.status)) err(`status must be one of ${SERIES_STATUSES.join(', ')}`)
+    const stagePos = new Set()
+    for (const st of s.stages) {
+      if (stagePos.has(st.position)) err(`duplicate stage position ${st.position}`)
+      stagePos.add(st.position)
+      if (!st.title) err('stage without a title')
+    }
+    const partPos = new Set()
+    for (const pp of s.plannedPosts) {
+      if (partPos.has(pp.position)) err(`duplicate planned part ${pp.position}`)
+      partPos.add(pp.position)
+      if (!pp.title) err(`planned part ${pp.position} without a title`)
+      if (pp.stage && s.stages.length && !s.stages.some((st) => st.title === pp.stage)) err(`planned part ${pp.position} names unknown stage "${pp.stage}"`)
+      if (pp.scheduledDate && Number.isNaN(Date.parse(pp.scheduledDate))) err(`planned part ${pp.position} has an invalid scheduledDate`)
+    }
+  }
   const posts = loadPosts(dir, { includeDrafts: true })
   const slugs = new Set(posts.map((p) => p.slug))
   const descs = new Map()
@@ -291,7 +328,15 @@ export function lintPosts(dir = POSTS_DIR) {
     for (const id of cited) if (!refIds.has(id)) err(`<Cite id="${id}"> has no matching reference`)
     for (const id of refIds) if (!cited.has(id)) warn(`reference "${id}" is never cited`)
 
-    if (p.series && p.seriesPart && posts.some((q) => q !== p && q.series === p.series && q.seriesPart === p.seriesPart)) err(`duplicate seriesPart ${p.seriesPart} in "${p.series}"`)
+    if (p.seriesSlug) {
+      const def = seriesBySlug(p.seriesSlug)
+      if (!def) err(`seriesSlug "${p.seriesSlug}" is not in src/blog/series.mjs`)
+      else {
+        if (!p.seriesPart) err('series posts need seriesPart (the part number)')
+        if (p.seriesStage && def.stages.length && !def.stages.some((st) => st.title === p.seriesStage)) err(`seriesStage "${p.seriesStage}" is not a stage of "${def.title}"`)
+      }
+    }
+    if (p.seriesSlug && p.seriesPart && posts.some((q) => q !== p && q.seriesSlug === p.seriesSlug && q.seriesPart === p.seriesPart)) err(`duplicate seriesPart ${p.seriesPart} in series "${p.seriesSlug}"`)
     if (p.words < 300 && !p.draft) warn(`only ${p.words} words; thin pages rank and get cited less`)
 
     // AI tells (rules from .agents/skills/humanizer + stop-slop); run `npm run lint:slop` for the full report
@@ -459,6 +504,11 @@ export function sitemap(posts) {
     { loc: `${SITE_URL}/`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('home') },
     { loc: `${SITE_URL}/blog`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogImage() },
     { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('research') },
+    ...SERIES.filter((s) => s.status === 'published').map((s) => ({
+      loc: `${SITE_URL}/blog/series/${s.slug}`,
+      lastmod: posts.filter((p) => p.seriesSlug === s.slug).map((p) => p.updated ?? p.date).sort().at(-1),
+      image: ogUrl(`series-${s.slug}`),
+    })),
     ...posts.map((p) => ({ loc: postUrl(p), lastmod: p.updated ?? p.date, image: ogImage(p) })),
     ...LEGAL.map((l) => ({ loc: `${SITE_URL}${l.path}`, lastmod: LEGAL_UPDATED })),
   ]
@@ -509,6 +559,7 @@ Sitemap: ${SITE_URL}/sitemap.xml
 /** https://llmstxt.org: a Markdown map of the site for language models. */
 export function llmsTxt(posts) {
   const byCat = CATEGORIES.map((c) => [c, posts.filter((p) => p.category === c)]).filter(([, ps]) => ps.length)
+  const series = SERIES.filter((s) => s.status === 'published').map((s) => [s, posts.filter((p) => p.seriesSlug === s.slug).sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0))])
   return `# ${BLOG_TITLE}: Muhammad Gulzaib
 
 > ${BLOG_DESCRIPTION}
@@ -522,6 +573,15 @@ ${byCat
     ([c, ps]) => `## ${c}
 
 ${ps.map((p) => `- [${p.title}](${postUrl(p)}.md): ${p.description}`).join('\n')}`,
+  )
+  .join('\n\n')}
+
+## Series
+
+${series
+  .map(
+    ([s, ps]) =>
+      `### [${s.title}](${SITE_URL}/blog/series/${s.slug}): ${s.description} (${ps.length} of ${s.plannedPostCount ?? ps.length} published)\n\n${ps.map((p) => `- Part ${p.seriesPart}: [${p.title}](${postUrl(p)}.md): ${p.description}`).join('\n')}`,
   )
   .join('\n\n')}
 
@@ -569,9 +629,12 @@ const BLOG = {
 
 function postGraph(p) {
   const url = postUrl(p)
+  const sdef = p.seriesSlug ? seriesBySlug(p.seriesSlug) : undefined
   const crumbs = [
     { name: 'Home', item: `${SITE_URL}/` },
     { name: BLOG_TITLE, item: `${SITE_URL}/blog` },
+    // a series post's breadcrumb goes through its series landing page
+    ...(sdef ? [{ name: sdef.title, item: `${SITE_URL}/blog/series/${sdef.slug}` }] : []),
     { name: p.category, item: `${SITE_URL}/blog?category=${encodeURIComponent(p.category)}` },
     { name: p.title, item: url },
   ]
@@ -605,7 +668,11 @@ function postGraph(p) {
         : { copyrightNotice: `© ${year} ${AUTHOR.name}. All rights reserved.` }),
       ...(p.doi ? { identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: p.doi, url: doiUrl(p.doi) }, sameAs: doiUrl(p.doi) } : {}),
       ...(p.level ? { educationalLevel: p.level } : {}),
-      ...(p.series ? { isPartOf: [{ '@id': BLOG['@id'] }, { '@type': 'CreativeWorkSeries', name: p.series }], position: p.seriesPart } : {}),
+      ...(sdef
+        ? { isPartOf: [{ '@id': BLOG['@id'] }, { '@type': 'CreativeWorkSeries', name: sdef.title, url: `${SITE_URL}/blog/series/${sdef.slug}` }], position: p.seriesPart }
+        : p.series
+          ? { isPartOf: [{ '@id': BLOG['@id'] }, { '@type': 'CreativeWorkSeries', name: p.series }], position: p.seriesPart }
+          : {}),
       ...(p.references.length
         ? { citation: p.references.map((r) => ({ '@type': 'CreativeWork', name: r.title, ...(r.authors ? { author: r.authors } : {}), ...(r.doi ? { url: doiUrl(r.doi), identifier: r.doi } : r.url ? { url: r.url } : {}), ...(r.year ? { datePublished: r.year } : {}), ...(r.venue ? { isPartOf: r.venue } : {}) })) }
         : {}),
@@ -650,6 +717,38 @@ function indexGraph(posts) {
   }
 }
 
+/** A series landing page: a CollectionPage of its parts, under the blog's breadcrumb. */
+function seriesGraph(s, posts) {
+  const url = `${SITE_URL}/blog/series/${s.slug}`
+  const items = posts.filter((p) => p.seriesSlug === s.slug).sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0))
+  const crumbs = [
+    { name: 'Home', item: `${SITE_URL}/` },
+    { name: BLOG_TITLE, item: `${SITE_URL}/blog` },
+    { name: s.title, item: url },
+  ]
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#page`,
+        url,
+        name: s.title,
+        description: s.description,
+        isPartOf: { '@id': BLOG['@id'] },
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: items.length,
+          itemListElement: items.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: postUrl(p), name: p.title })),
+        },
+      },
+      { '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.item })) },
+      PERSON,
+      BLOG,
+    ],
+  }
+}
+
 function researchGraph(posts) {
   const open = posts.filter((p) => LICENSES[p.license].open)
   return {
@@ -683,26 +782,30 @@ const TWITTER = PERSON_INFO.x ? [`<meta name="twitter:site" content="@${PERSON_I
 export const postTitle = (p) => p.seoTitle ?? (`${p.title} · ${BLOG_TITLE}`.length <= 65 ? `${p.title} · ${BLOG_TITLE}` : p.title)
 
 /** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
-export function headTags({ post, posts, notFound, research, legal }) {
+export function headTags({ post, posts, notFound, research, legal, series }) {
   if (legal) return legalHeadTags(legal)
   const title = notFound
     ? `Page not found · ${BLOG_TITLE}`
     : post
       ? postTitle(post)
-      : research
-        ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
-        : BLOG_INDEX_TITLE
-  const description = notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
-  const url = post ? postUrl(post) : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
+      : series
+        ? (series.seoTitle ?? `${series.title} · ${BLOG_TITLE}`)
+        : research
+          ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
+          : BLOG_INDEX_TITLE
+  const description = notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : series ? (series.seoDescription ?? series.description) : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
+  const url = post ? postUrl(post) : series ? `${SITE_URL}/blog/series/${series.slug}` : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
   const lic = post ? LICENSES[post.license] : null
-  const img = post ? ogImage(post) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
+  const img = post ? ogImage(post) : series ? ogUrl(`series-${series.slug}`) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
   const imgAlt = post
     ? `${post.title}: ${post.category} post by Muhammad Gulzaib`
-    : research
-      ? 'Research and writing by Muhammad Gulzaib: ORCID iD, open-access posts and citation formats'
-      : notFound
-        ? 'Page not found'
-        : `${BLOG_TITLE} by Muhammad Gulzaib: ${posts?.length ?? ''} posts on founding, engineering, AI and writing`
+    : series
+      ? `${series.title}: blog series by Muhammad Gulzaib`
+      : research
+        ? 'Research and writing by Muhammad Gulzaib: ORCID iD, open-access posts and citation formats'
+        : notFound
+          ? 'Page not found'
+          : `${BLOG_TITLE} by Muhammad Gulzaib: ${posts?.length ?? ''} posts on founding, engineering, AI and writing`
   const t = [
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
@@ -722,7 +825,7 @@ export function headTags({ post, posts, notFound, research, legal }) {
     `<meta property="og:site_name" content="${esc(BLOG_TITLE)}" />`,
     `<meta property="og:locale" content="en_US" />`,
     `<meta property="og:type" content="${post ? 'article' : 'website'}" />`,
-    `<meta property="og:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
+    `<meta property="og:title" content="${esc(post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${img}" />`,
@@ -741,7 +844,7 @@ export function headTags({ post, posts, notFound, research, legal }) {
       : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     ...TWITTER,
-    `<meta name="twitter:title" content="${esc(post ? post.title : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
+    `<meta name="twitter:title" content="${esc(post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta name="twitter:description" content="${esc(description)}" />`,
     `<meta name="twitter:image" content="${img}" />`,
     `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
@@ -754,7 +857,7 @@ export function headTags({ post, posts, notFound, research, legal }) {
           `<meta name="twitter:data2" content="${esc(post.category)}" />`,
         ]
       : []),
-    notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
+    notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : series ? seriesGraph(series, posts) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
   ]
   return t.filter(Boolean).join('\n    ')
 }

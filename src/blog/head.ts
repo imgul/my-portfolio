@@ -5,14 +5,14 @@
  * "share" sheets, the canonical URL and JavaScript-rendering crawlers all see
  * the page they are actually on.
  */
-import { SEO, SITE_URL, type PostMeta } from './data'
+import { SEO, SITE_URL, type PostMeta, type SeriesInfo } from './data'
 
 export interface Head {
   title: string
   description: string
   /** path for canonical / og:url, e.g. /blog/my-post */
   path: string
-  /** og image key: a post slug, or blog | research | 404 */
+  /** og image key: a post slug, blog | research | 404, or series-<series-slug> */
   image: string
   imageAlt: string
   type?: 'website' | 'article'
@@ -87,6 +87,16 @@ export function indexHead({ q, tag, cat, saved, count }: { q?: string; tag?: str
     noindex: !!(q || saved),
   }
 }
+
+/** A series landing page (/blog/series/<slug>); mirrors scripts/blog.mjs → headTags({ series }). */
+export const seriesHead = (s: SeriesInfo): Head => ({
+  title: s.seoTitle ?? `${s.title} · ${SEO.BLOG_TITLE}`,
+  ogTitle: s.seoTitle ?? s.title,
+  description: s.seoDescription ?? s.description,
+  path: `/blog/series/${s.slug}`,
+  image: `series-${s.slug}`,
+  imageAlt: `${s.title}: blog series by Muhammad Gulzaib`,
+})
 
 export const researchHead = (): Head => ({
   title: `Research & citation: Muhammad Gulzaib · ${SEO.BLOG_TITLE}`,
