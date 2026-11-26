@@ -4,12 +4,13 @@
  * Writes into dist/:
  *   index.html                                           the landing page's <head> (meta, OG, JSON-LD) + a no-JS summary
  *   blog.html, blog/<slug>.html, 404.html               pre-rendered pages (full text, JSON-LD, OG tags)
+ *   blog/series/<slug>.html                              series landing pages (CollectionPage + ItemList JSON-LD)
  *   blog/research.html                                   research & citation page (ORCID, profiles, open-access posts)
  *   privacy.html, terms.html, cookies.html               legal pages (src/blog/LegalPage.tsx), served at /privacy etc.
  *   blog/<slug>.md                                       clean Markdown copy of each post (for AI tools / notes)
  *   blog/<slug>.pdf                                      PDF version (Google Scholar citation_pdf_url, Zenodo uploads)
  *   og/home.png, og/blog.png, og/research.png,
- *   og/404.png, og/<slug>.png                            1200×630 Open Graph images, one per page (scripts/og.mjs)
+ *   og/404.png, og/<slug>.png, og/series-<slug>.png       1200×630 Open Graph images, one per page (scripts/og.mjs)
  *   rss.xml, feed.json                                   feeds with full post content
  *   feeds/open-access.xml, feeds/open-access.json        CC BY posts only (register with Rogue Scholar for DOIs)
  *   <INDEXNOW_KEY>.txt                                   IndexNow key (npm run blog:indexnow pings Bing & co.)
@@ -27,6 +28,7 @@ import { createHash } from 'node:crypto'
 import { AUTHOR, CATEGORIES, BLOG_TITLE, BLOG_DESCRIPTION, INDEXNOW_KEY, SITE_URL, headTags, homeHeadTags, homeHtml, homeNoscript, jsonFeed, llmsTxt, openAccessAtom, pageHtml, postUrl, robots, rss, setOgVersions, sitemap } from './blog.mjs'
 import { LICENSES, ORCID, doiUrl } from '../src/blog/scholar.mjs'
 import { LEGAL } from '../src/blog/legal.mjs'
+import { SERIES } from '../src/blog/series.mjs'
 import { createOg } from './og.mjs'
 import { coverPng } from './covers.mjs'
 import { loadPosts as loadSources, POSTS_DIR } from './blog.mjs'
@@ -108,6 +110,7 @@ const images = {
   404: og.notFound(),
   legal: og.page({ kicker: 'Privacy · Terms · Cookies', title: 'No ads, no analytics, no tracking cookies', sub: 'How gulzaib.vercel.app handles the little data it sees.', color: '#4f7fd8', right: [SITE_URL.replace(/^https?:\/\//, '')] }),
   ...Object.fromEntries(posts.map((p) => [p.slug, og.post(p)])),
+  ...Object.fromEntries(SERIES.filter((s) => s.status === 'published').map((s) => [`series-${s.slug}`, og.series(s, posts.filter((p) => p.seriesSlug === s.slug))])),
 }
 // a post with a `cover:` block shares its featured image (plus a small brand pill) instead of the notebook card
 const sources = new Map(loadSources(POSTS_DIR, { includeDrafts: true }).map((p) => [p.slug, p]))
@@ -133,6 +136,8 @@ const page = (url, opts, kind) =>
 // blog.html + blog/<slug>.html are served at /blog and /blog/<slug> (vercel.json cleanUrls)
 write('blog.html', page('/blog', { posts }, 'index'))
 for (const p of posts) write(`blog/${p.slug}.html`, page(`/blog/${p.slug}`, { post: p, posts }, 'post'))
+// series landing pages: /blog/series/<slug> (the static "series" segment wins over /blog/<post-slug>)
+for (const s of SERIES.filter((s) => s.status === 'published')) write(`blog/series/${s.slug}.html`, page(`/blog/series/${s.slug}`, { posts, series: s }, 'series'))
 write('blog/research.html', page('/blog/research', { posts, research: true }, 'research'))
 // privacy.html, terms.html, cookies.html: the legal pages, served at /privacy, /terms, /cookies
 for (const l of LEGAL) write(`${l.path.slice(1)}.html`, page(l.path, { legal: l, posts }, 'legal'))

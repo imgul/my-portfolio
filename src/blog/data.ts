@@ -1,5 +1,8 @@
 import { posts as ALL, SITE_URL, SEO } from 'virtual:blog'
 import type { LicenseId } from './scholar.mjs'
+import { SERIES, seriesBySlug, slugify, type SeriesInfo } from './series.mjs'
+
+export type { PlannedPost, SeriesInfo, SeriesStage } from './series.mjs'
 
 export type Category = 'Founder' | 'Engineering' | 'AI Research' | 'Writing'
 export type Art = 'galaxy' | 'dna' | 'road' | 'city' | 'book' | 'stack' | 'network' | 'tree' | 'mountains' | 'globe'
@@ -24,8 +27,13 @@ export interface PostMeta {
   updated?: string
   category: Category
   tags: string[]
+  /** display name, resolved from the series registry (src/blog/series.mjs) */
   series?: string
+  /** the series key: seriesSlug frontmatter, or the slug of the legacy `series` name */
+  seriesSlug?: string
   seriesPart?: number
+  /** stage title within the series (must match a stage in the registry) */
+  seriesStage?: string
   featured: boolean
   draft: boolean
   /** dated in the future: visible in dev only, published on its date */
@@ -67,15 +75,46 @@ export const getPost = (slug: string) => posts.find((p) => p.slug === slug)
 
 export const featuredPost = () => posts.find((p) => p.featured) ?? posts[0]
 
-export function seriesOf(p: PostMeta) {
-  if (!p.series) return []
-  return posts.filter((q) => q.series === p.series).sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0))
+/** The series a post belongs to, by slug (a post belongs to zero or one series). */
+export const postSeriesSlug = (p: PostMeta) => p.seriesSlug ?? (p.series ? slugify(p.series) : undefined)
+
+export const getSeries = (slug: string) => seriesBySlug(slug)
+
+export const seriesUrl = (s: { slug: string }) => `/blog/series/${s.slug}`
+
+/** Published parts of a series, in reading order. */
+export function seriesPosts(slug: string) {
+  return posts.filter((q) => postSeriesSlug(q) === slug).sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0))
 }
 
-export function allSeries() {
-  const map = new Map<string, PostMeta[]>()
-  for (const p of posts) if (p.series) map.set(p.series, [...(map.get(p.series) ?? []), p])
-  return [...map.entries()].map(([name, list]) => ({ name, posts: list.sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0)) }))
+export function seriesOf(p: PostMeta) {
+  const slug = postSeriesSlug(p)
+  return slug ? seriesPosts(slug) : []
+}
+
+/** The stage a post sits in, resolved against the registry (undefined when the series has no stages). */
+export function stageOf(p: PostMeta) {
+  const s = p.seriesSlug ? seriesBySlug(p.seriesSlug) : undefined
+  if (!s || !p.seriesStage) return undefined
+  return s.stages.find((st) => st.title === p.seriesStage)
+}
+
+/** A planned (not yet published) part, by position. */
+export const plannedPart = (s: SeriesInfo, position: number) => s.plannedPosts.find((x) => x.position === position)
+
+/** Total parts: the planned count, or the furthest known position when none is set. */
+export function seriesTotal(s: SeriesInfo, published: number) {
+  const furthest = Math.max(published, ...s.plannedPosts.map((x) => x.position), 0)
+  return s.plannedPostCount ?? furthest
+}
+
+export interface SeriesWithPosts extends SeriesInfo {
+  posts: PostMeta[]
+}
+
+/** Public series with their published parts (draft / scheduled / archived stay hidden). */
+export function allSeries(): SeriesWithPosts[] {
+  return SERIES.filter((s) => s.status === 'published').map((s) => ({ ...s, posts: seriesPosts(s.slug) }))
 }
 
 export function allTags() {

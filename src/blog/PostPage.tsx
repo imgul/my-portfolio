@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useHashScroll } from './router'
-import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, neighbours, postUrl, posts, seriesOf, SITE_URL, type PostMeta } from './data'
+import { audienceLower, CATEGORIES, CATEGORY_COLOR, formatDate, getPost, getSeries, neighbours, plannedPart, postUrl, posts, seriesOf, seriesTotal, seriesUrl, SITE_URL, stageOf, type PostMeta } from './data'
 import { getBody, loadBody, type Body } from './content'
 import { PostCover } from './components/PostCover'
 import { openSearch } from './components/SearchDialog'
@@ -142,47 +142,110 @@ function Toc({ heads, active, id }: { heads: PostMeta['headings']; active: strin
 
 /* ----------------------------------------------------------------- pieces */
 
-function SeriesBox({ p }: { p: PostMeta }) {
+/** Compact series indicator: the full curriculum lives on the series page, not beside the article. */
+function SeriesProgress({ p }: { p: PostMeta }) {
+  const s = p.seriesSlug ? getSeries(p.seriesSlug) : undefined
   const list = seriesOf(p)
-  const { progress } = useReader()
-  const hydrated = useHydrated()
-  if (list.length < 2) return null
-  const i = list.findIndex((q) => q.slug === p.slug)
+  if (!s) return null
   return (
-    <nav className="b-series" aria-labelledby="series-name" data-preview="hover">
-      <p className="b-kicker">
-        Series · part {p.seriesPart ?? i + 1} of {list.length}
-      </p>
-      <p className="b-series__name" id="series-name">
-        {p.series}
-      </p>
-      <ol>
-        {list.map((q) => (
-          <li key={q.slug} className={`${q.slug === p.slug ? 'is-current' : ''} ${hydrated && progress[q.slug]?.done ? 'is-done' : ''}`}>
-            {q.slug === p.slug ? <span aria-current="page">{q.title}</span> : <Link href={postUrl(q)}>{q.title}</Link>}
-            {hydrated && progress[q.slug]?.done && <span className="sr-only"> (read)</span>}
-          </li>
-        ))}
-      </ol>
+    <nav className="b-series-progress" aria-label="Series progress">
+      <span>
+        Series progress: Part {p.seriesPart} of {seriesTotal(s, list.length)}
+      </span>
+      <Link href={seriesUrl(s)}>
+        View all parts <Icon name="arrow" size={14} />
+      </Link>
     </nav>
   )
 }
 
-function NextInSeries({ p }: { p: PostMeta }) {
+/** Previous part, then the strongest call to action: the next part (or the planned one, with its date). */
+function SeriesNav({ p }: { p: PostMeta }) {
+  const s = p.seriesSlug ? getSeries(p.seriesSlug) : undefined
   const list = seriesOf(p)
-  const next = list[list.findIndex((q) => q.slug === p.slug) + 1]
-  if (!next) return null
+  if (!s) return null
+  const i = list.findIndex((q) => q.slug === p.slug)
+  const prev = i > 0 ? list[i - 1] : undefined
+  const next = list[i + 1]
+  const planned = !next ? plannedPart(s, (p.seriesPart ?? i + 1) + 1) : undefined
+  const total = seriesTotal(s, list.length)
+  const complete = !next && !planned && total > 0 && list.length >= total
+  if (!prev && !next && !planned && !complete) return null
   return (
-    <Link href={postUrl(next)} className="b-nextpart" style={{ ['--cat' as string]: CATEGORY_COLOR[next.category] }}>
-      <span className="b-kicker">
-        Next in “{p.series}” · part {next.seriesPart ?? list.indexOf(next) + 1}
-      </span>
-      <span className="b-nextpart__title">{next.title}</span>
-      <span className="b-nextpart__desc">{next.description}</span>
-      <span className="b-nextpart__go">
-        Continue the series · {next.minutes} min <Icon name="arrow" size={15} />
-      </span>
-    </Link>
+    <div className="b-series-nav">
+      {prev && (
+        <Link href={postUrl(prev)} className="b-series-nav__prev" rel="prev">
+          <span aria-hidden="true">←</span> Part {prev.seriesPart}: {prev.title}
+        </Link>
+      )}
+      {next ? (
+        <Link href={postUrl(next)} className="b-nextpart" style={{ ['--cat' as string]: CATEGORY_COLOR[next.category] }}>
+          <span className="b-kicker">Up next · Part {next.seriesPart}</span>
+          <span className="b-nextpart__title">{next.title}</span>
+          <span className="b-nextpart__desc">{next.description}</span>
+          <span className="b-nextpart__go">
+            Continue to Part {next.seriesPart} <Icon name="arrow" size={15} />
+          </span>
+        </Link>
+      ) : planned ? (
+        <div className="b-nextpart is-planned">
+          <span className="b-kicker">Up next · Part {planned.position}</span>
+          <span className="b-nextpart__title">{planned.title}</span>
+          <span className="b-nextpart__desc">Part {planned.position} publishes {planned.scheduledDate ? formatDate(planned.scheduledDate) : 'soon'}.</span>
+          <span className="b-nextpart__go">
+            <Link href="/blog#subscribe">Notify me when it is published</Link>
+          </span>
+        </div>
+      ) : complete ? (
+        <div className="b-nextpart is-done">
+          <span className="b-kicker">Series complete</span>
+          <span className="b-nextpart__title">{s.title}</span>
+          <span className="b-nextpart__desc">You have reached the last part of this series.</span>
+          <span className="b-nextpart__go">
+            <Link href={seriesUrl(s)}>
+              View all articles <Icon name="arrow" size={15} />
+            </Link>
+          </span>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/** The full series, collapsed: published parts link to their canonical /blog/<slug> URLs. */
+function SeriesOverview({ p }: { p: PostMeta }) {
+  const s = p.seriesSlug ? getSeries(p.seriesSlug) : undefined
+  const list = seriesOf(p)
+  if (!s) return null
+  const upcoming = s.plannedPosts.filter((x) => !list.some((q) => q.seriesPart === x.position))
+  return (
+    <details className="b-series-overview">
+      <summary>
+        <span className="b-series-overview__title">{s.title}</span>
+        <span className="b-series-overview__meta">
+          {list.length} of {seriesTotal(s, list.length)} published
+        </span>
+      </summary>
+      <ol>
+        {list.map((q) => (
+          <li key={q.slug} className={q.slug === p.slug ? 'is-current' : ''}>
+            {q.slug === p.slug ? <span aria-current="page">{q.title}</span> : <Link href={postUrl(q)}>{q.title}</Link>}
+            <span>{q.minutes} min</span>
+          </li>
+        ))}
+        {upcoming.map((x) => (
+          <li key={x.position} className="is-planned">
+            <span>{x.title}</span>
+            <span>{x.scheduledDate ? `Publishing ${formatDate(x.scheduledDate)}` : 'Planned'}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="b-series-overview__foot">
+        <Link href={seriesUrl(s)}>
+          View all articles <Icon name="arrow" size={14} />
+        </Link>
+      </p>
+    </details>
   )
 }
 
@@ -382,6 +445,9 @@ export default function PostPage({ slug }: { slug: string }) {
   if (!p || failed) return <NotFound />
   const color = CATEGORY_COLOR[p.category]
   const audience = CATEGORIES.find((c) => c.id === p.category)?.audience
+  const series = p.seriesSlug ? getSeries(p.seriesSlug) : undefined
+  const stage = stageOf(p)
+  const seriesTotalCount = series ? seriesTotal(series, seriesOf(p).length) : 0
 
   return (
     <PostContext.Provider value={p}>
@@ -394,6 +460,11 @@ export default function PostPage({ slug }: { slug: string }) {
                 <li>
                   <Link href="/blog">Notebook</Link>
                 </li>
+                {series && (
+                  <li>
+                    <Link href={seriesUrl(series)}>{series.title}</Link>
+                  </li>
+                )}
                 <li>
                   <Link href={`/blog?category=${encodeURIComponent(p.category)}`}>{p.category}</Link>
                 </li>
@@ -402,6 +473,19 @@ export default function PostPage({ slug }: { slug: string }) {
                 </li>
               </ol>
             </nav>
+            {series && (
+              <Link href={seriesUrl(series)} className="b-series-banner">
+                <span className="b-kicker">
+                  Part {p.seriesPart} of {seriesTotalCount}
+                </span>
+                <span className="b-series-banner__title">{series.title}</span>
+                {stage && (
+                  <span className="b-series-banner__stage">
+                    Stage {stage.position}: {stage.title}
+                  </span>
+                )}
+              </Link>
+            )}
             <h1 id="post-title">{p.title}</h1>
             <p className="b-post__dek">{p.description}</p>
             <div className="b-byline">
@@ -447,7 +531,7 @@ export default function PostPage({ slug }: { slug: string }) {
               <Toc heads={heads} active={active} id="toc-desk" />
             </aside>
             <div className="b-post__main">
-              <SeriesBox p={p} />
+              <SeriesProgress p={p} />
               {heads.length >= 2 && (
                 <details className="b-toc-mobile">
                   <summary>
@@ -472,7 +556,8 @@ export default function PostPage({ slug }: { slug: string }) {
                     ))}
                   </ul>
                   <Reactions slug={p.slug} title={p.title} />
-                  <NextInSeries p={p} />
+                  <SeriesNav p={p} />
+                  <SeriesOverview p={p} />
                   <Share p={p} />
                   <ArticleInfo p={p} />
                   <CiteThis p={p} />

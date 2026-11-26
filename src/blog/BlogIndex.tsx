@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, navigate, useHashScroll, useLocation } from './router'
-import { allSeries, allTags, audienceLower, CATEGORIES, CATEGORY_COLOR, featuredPost, formatDate, getPost, postUrl, posts, totalMinutes, type Category, type PostMeta } from './data'
+import { allSeries, allTags, audienceLower, CATEGORIES, CATEGORY_COLOR, featuredPost, formatDate, getPost, getSeries, postSeriesSlug, postUrl, posts, seriesOf, seriesTotal, seriesUrl, totalMinutes, type Category, type PostMeta, type SeriesWithPosts } from './data'
 import { PostCover } from './components/PostCover'
 import { Newsletter, isTypingEvent } from './components/layout'
 import { LikeCount } from './components/reactions'
@@ -32,6 +32,10 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
   const isSaved = hydrated && saved.includes(p.slug)
   const prog = hydrated ? progress[p.slug] : undefined
   const H = `h${headingLevel}` as 'h2' | 'h3'
+  // series posts are blog posts first: the badge links to the series landing page
+  const sSlug = postSeriesSlug(p)
+  const sDef = sSlug ? getSeries(sSlug) : undefined
+  const sTotal = sDef ? seriesTotal(sDef, seriesOf(p).length) : 0
   return (
     <article
       data-no-preview=""
@@ -51,6 +55,13 @@ export function PostCard({ p, big, q = '', likes, view = 'grid', headingLevel = 
         ) : null}
       </span>
       <div className="b-card__body">
+        {sDef && p.seriesPart ? (
+          <p className="b-card__series-badge">
+            <Link href={seriesUrl(sDef)}>
+              Series · Part {p.seriesPart} of {sTotal}
+            </Link>
+          </p>
+        ) : null}
         <p className="b-meta">
           <span className="b-cat">{p.category}</span>
           <time dateTime={p.date}>{formatDate(p.date, 'short')}</time>
@@ -190,6 +201,36 @@ function ContinueReading() {
   )
 }
 
+/** Series landing-page cards: title, subtitle, publication progress and a link to the series page. */
+export function SeriesCards({ items }: { items: SeriesWithPosts[] }) {
+  if (!items.length) return null
+  return (
+    <div className="b-series-list">
+      {items.map((s) => {
+        const total = seriesTotal(s, s.posts.length)
+        const minutes = s.posts.reduce((n, p) => n + p.minutes, 0)
+        return (
+          <article className="b-series-card" key={s.slug}>
+            <p className="b-kicker">Blog series</p>
+            <h3 className="b-series-card__name">
+              <Link href={seriesUrl(s)}>{s.title}</Link>
+            </h3>
+            <p className="b-series-card__sub">{s.subtitle ?? s.description}</p>
+            <p className="b-series-card__meta">
+              {s.posts.length} of {total} published{s.cadence ? ` · ${s.cadence}` : ''}{minutes ? ` · ${minutes} min total` : ''}
+            </p>
+            <p className="b-series-card__cta">
+              <Link className="b-btn is-sm" href={seriesUrl(s)}>
+                Explore series <Icon name="arrow" size={14} />
+              </Link>
+            </p>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
 /* -------------------------------------------------------------------- page */
 
 type Sort = 'new' | 'old' | 'short' | 'liked'
@@ -206,6 +247,7 @@ export default function BlogIndex() {
   const tag = search.get('tag') ?? ''
   const cat = (search.get('category') ?? '') as Category | ''
   const savedOnly = search.get('saved') === '1'
+  const seriesOnly = search.get('series') === '1'
   const sort = (search.get('sort') ?? 'new') as Sort
   const input = useRef<HTMLInputElement>(null)
   const { saved } = useReader()
@@ -278,7 +320,7 @@ export default function BlogIndex() {
   const filtered = useMemo(() => {
     const list = posts
       .map((p) => ({ p, s: hits.get(p.slug)?.score ?? 0 }))
-      .filter(({ p, s }) => s > 0 && (!tag || p.tags.includes(tag)) && (!cat || p.category === cat) && (!savedOnly || (hydrated && saved.includes(p.slug))))
+      .filter(({ p, s }) => s > 0 && (!tag || p.tags.includes(tag)) && (!cat || p.category === cat) && (!seriesOnly || p.seriesSlug) && (!savedOnly || (hydrated && saved.includes(p.slug))))
     const by: Record<Sort, (a: (typeof list)[0], b: (typeof list)[0]) => number> = {
       new: (a, b) => (q ? b.s - a.s : 0) || (a.p.date < b.p.date ? 1 : -1),
       old: (a, b) => (a.p.date < b.p.date ? -1 : 1),
@@ -287,10 +329,10 @@ export default function BlogIndex() {
     }
     return list.sort(by[sort] ?? by.new).map((x) => x.p)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, hits, tag, cat, savedOnly, saved, hydrated, sort, counts])
+  }, [q, hits, tag, cat, seriesOnly, savedOnly, saved, hydrated, sort, counts])
 
   const suggestion = useMemo(() => (q && !filtered.length ? didYouMean(q, sections) : null), [q, filtered.length, sections])
-  const filtering = !!(q || tag || cat || savedOnly || sort !== 'new')
+  const filtering = !!(q || tag || cat || seriesOnly || savedOnly || sort !== 'new')
   // the tab title, description and share tags follow the active filter
   useEffect(() => {
     setHead(indexHead({ q, tag, cat, saved: savedOnly, count: filtered.length }))
@@ -302,7 +344,7 @@ export default function BlogIndex() {
   const tags = allTags()
   const hours = totalMinutes()
   const lastUpdate = posts.map((p) => p.updated ?? p.date).sort().at(-1)
-  const resultLabel = `${filtered.length} ${filtered.length === 1 ? 'post' : 'posts'}${q ? ` for “${q}”` : ''}${tag ? ` tagged #${tag}` : ''}${cat ? ` in ${cat}` : ''}${savedOnly ? ' saved' : ''}`
+  const resultLabel = `${filtered.length} ${filtered.length === 1 ? 'post' : 'posts'}${q ? ` for “${q}”` : ''}${tag ? ` tagged #${tag}` : ''}${cat ? ` in ${cat}` : ''}${seriesOnly ? ' in series' : ''}${savedOnly ? ' saved' : ''}`
 
   return (
     <main id="main" className="b-index" tabIndex={-1}>
@@ -417,6 +459,9 @@ export default function BlogIndex() {
                 </button>
               )
             })}
+            <button type="button" className={seriesOnly ? 'is-on' : ''} aria-pressed={seriesOnly} onClick={() => setParam('series', seriesOnly ? '' : '1')}>
+              <Icon name="list" size={13} /> Series <span>{posts.filter((p) => p.seriesSlug).length}</span>
+            </button>
             <button type="button" className={savedOnly ? 'is-on' : ''} aria-pressed={savedOnly} onClick={() => setParam('saved', savedOnly ? '' : '1')}>
               <Icon name="bookmark" size={13} filled={savedOnly} /> Saved <span>{hydrated ? saved.length : 0}</span>
             </button>
@@ -464,6 +509,12 @@ export default function BlogIndex() {
         </section>
       )}
 
+      {!filtering && series.length > 0 && (
+        <Section id="series" title="Explore blog series" kicker="Read in order">
+          <SeriesCards items={series} />
+        </Section>
+      )}
+
       <section className="b-list" aria-labelledby="list-title">
         <h2 className={filtering ? 'sr-only' : 'b-section-title'} id="list-title">
           {filtering ? 'Results' : 'All writing'}
@@ -489,6 +540,7 @@ export default function BlogIndex() {
             </button>
           </div>
         )}
+        {seriesOnly && !q && <SeriesCards items={series} />}
         {filtering ? (
           <div className={`b-grid ${view === 'list' ? 'is-list' : ''}`}>
             {filtered.map((p) => (
@@ -512,29 +564,6 @@ export default function BlogIndex() {
             ))
         )}
       </section>
-
-      {!filtering && series.length > 0 && (
-        <Section id="series" title="Series" kicker="Read in order">
-          <div className="b-series-list">
-            {series.map((s) => (
-              <div className="b-series-card" key={s.name}>
-                <h3 className="b-series-card__name">{s.name}</h3>
-                <p className="b-series-card__meta">
-                  {s.posts.length} parts · {s.posts.reduce((n, p) => n + p.minutes, 0)} min total
-                </p>
-                <ol>
-                  {s.posts.map((p) => (
-                    <li key={p.slug}>
-                      <Link href={postUrl(p)}>{p.title}</Link>
-                      <span>{p.minutes} min</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
 
       <Section id="topics" title="Topics" kicker="Browse by tag">
         <ul className="b-tags">
