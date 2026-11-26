@@ -54,6 +54,8 @@ export const SERIES = [
       { position: 6, title: 'Founder-Led Sales Before You Are Ready to Hire Salespeople', stage: 'Turning Interest Into Commercial Evidence', scheduledDate: '2027-01-04' },
       { position: 7, title: 'Outbound Outreach for Technical Founders Who Hate Cold Selling', stage: 'Creating Customer Conversations', scheduledDate: '2027-01-11' },
       { position: 8, title: 'Using Content as a Founder-Led Distribution Channel', stage: 'Creating Customer Conversations', scheduledDate: '2027-01-18' },
+      { position: 9, title: 'Communities as Research, Trust, and Distribution Channels', stage: 'Creating Customer Conversations', scheduledDate: '2027-01-25' },
+      { position: 10, title: 'Partnerships That Create Real Distribution', stage: 'Creating Customer Conversations', scheduledDate: '2027-02-01' },
     ],
   },
   {
