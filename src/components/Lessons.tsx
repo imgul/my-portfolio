@@ -55,8 +55,8 @@ export default function Lessons() {
           </article>
         ))}
       </div>
-      <a className="lessons__blog btn btn--small btn--ghost" href="/blog" onMouseEnter={fx.hover} data-cursor="Read">
-        More notes on the blog ↗
+      <a className="lessons__blog btn btn--small btn--ghost" href="/blog/lessons" onMouseEnter={fx.hover} data-cursor="Read">
+        Explore all founder notes ↗
       </a>
     </section>
   )

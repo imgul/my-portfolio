@@ -107,6 +107,7 @@ const images = {
   home: og.home({ profile: content.profile, ventures: content.ventures, posts }),
   blog: og.blog(posts, { title: BLOG_TITLE, description: 'Notes on building companies, shipping software and thinking with AI.' }),
   research: og.research(posts, { orcid: ORCID }),
+  lessons: og.page({ kicker: 'Founder notes', title: 'Lessons that cost me something', sub: 'Notes on validation, distribution and simple software.', color: '#4f7fd8', right: [SITE_URL.replace(/^https?:\/\//, '')] }),
   404: og.notFound(),
   legal: og.page({ kicker: 'Privacy · Terms · Cookies', title: 'No ads, no analytics, no tracking cookies', sub: 'How gulzaib.vercel.app handles the little data it sees.', color: '#4f7fd8', right: [SITE_URL.replace(/^https?:\/\//, '')] }),
   ...Object.fromEntries(posts.map((p) => [p.slug, og.post(p)])),
@@ -138,6 +139,7 @@ write('blog.html', page('/blog', { posts }, 'index'))
 for (const p of posts) write(`blog/${p.slug}.html`, page(`/blog/${p.slug}`, { post: p, posts }, 'post'))
 // series landing pages: /blog/series/<slug> (the static "series" segment wins over /blog/<post-slug>)
 for (const s of SERIES.filter((s) => s.status === 'published')) write(`blog/series/${s.slug}.html`, page(`/blog/series/${s.slug}`, { posts, series: s }, 'series'))
+write('blog/lessons.html', page('/blog/lessons', { posts, lessons: true }, 'lessons'))
 write('blog/research.html', page('/blog/research', { posts, research: true }, 'research'))
 // privacy.html, terms.html, cookies.html: the legal pages, served at /privacy, /terms, /cookies
 for (const l of LEGAL) write(`${l.path.slice(1)}.html`, page(l.path, { legal: l, posts }, 'legal'))
