@@ -794,7 +794,7 @@ export function headTags({ post, posts, notFound, research, legal, series, lesso
         : research
           ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
           : BLOG_INDEX_TITLE
-  const description = lessons ? 'Three founder lessons on validation, distribution and simple software, learned while building products for shops and schools.' : notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : series ? (series.seoDescription ?? series.description) : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
+  const description = lessons ? 'Founder lessons on validation, sales and building reliable, simple software for shops and schools.' : notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : series ? (series.seoDescription ?? series.description) : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
   const url = lessons ? `${SITE_URL}/blog/lessons` : post ? postUrl(post) : series ? `${SITE_URL}/blog/series/${series.slug}` : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
   const lic = post ? LICENSES[post.license] : null
   const img = lessons ? ogUrl('lessons') : post ? ogImage(post) : series ? ogUrl(`series-${series.slug}`) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
