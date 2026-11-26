@@ -107,7 +107,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 18 | Fri 18 Dec | Engineering | The data model behind a subscription tracker | subscription tracking database schema |
 | 19 | Sat 19 Dec | Founder | Fixed price or retainer for AI projects? What I charge | how to price AI development projects |
 | 20 | Sun 20 Dec | Founder | Applying to National Incubation Center Lahore: our notes | NIC Lahore application process |
-| 21 | Mon 21 Dec | Founder | Projects I turned down and what each one taught me | when to turn down a software client |
+| 21 | Mon 21 Dec | Founder | [Projects I turned down and what each one taught me](../src/blog/posts/projects-i-turned-down-and-what-each-one-taught-me.mdx), written for review with requested 10 November date | when to turn down a software client |
 | 22 | Tue 22 Dec | Engineering | Laravel queues in production: failures I’ve hit | laravel queue failed jobs production |
 | 23 | Wed 23 Dec | Writing | Writing a software proposal clients sign | software development proposal template |
 | 24 | Thu 24 Dec | Engineering | My code review checklist for junior Laravel developers | laravel code review checklist |
