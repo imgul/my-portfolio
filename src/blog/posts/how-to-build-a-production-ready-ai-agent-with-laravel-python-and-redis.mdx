@@ -1,0 +1,176 @@
+---
+title: "How to Build a Production-Ready AI Agent with Laravel, Python, and Redis"
+seoTitle: "Production-ready AI agents with Laravel, Python and Redis"
+description: "Design a Laravel, Python and Redis AI agent with durable queues, safe tool execution, retries, audit logs and evaluation before release."
+date: 2026-11-26
+category: Engineering
+cover:
+  style: list
+  big: "5"
+  hook: "Build an agent you can operate"
+  items:
+    - "Durable run and queue"
+    - "Controlled tool execution"
+    - "Retries and recovery"
+    - "Audit trail and limits"
+    - "Evaluation before release"
+  alt: "Five parts of an operable agent: durable run and queue, controlled tool execution, retries and recovery, audit trail and limits, and evaluation before release."
+tags: [laravel, python, redis, ai, agents, queues]
+art: network
+level: Advanced
+references:
+  - id: redis
+    authors: Redis
+    title: "Redis Streams"
+    url: https://redis.io/docs/latest/develop/data-types/streams/
+  - id: laravel-queues
+    authors: Laravel
+    title: "Queues"
+    url: https://laravel.com/docs/12.x/queues
+  - id: owasp
+    authors: OWASP
+    title: "LLM01:2025 Prompt Injection"
+    year: 2025
+    url: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - id: evals
+    authors: OpenAI
+    title: "Evaluation best practices"
+    url: https://developers.openai.com/api/docs/guides/evaluation-best-practices
+faq:
+  - q: "How do Laravel and Python communicate for an AI agent?"
+    a: "One design stores runs and an outbox in a database, publishes versioned messages to a Redis Stream and has Python workers report results through an authenticated Laravel service API. Keep Laravel's native queue payloads separate from the cross-language stream."
+  - q: "How do you prevent duplicate AI agent actions?"
+    a: "Treat delivery as potentially repeated, claim work with a fenced lease and give each logical action a stable idempotency key. For external actions, use provider-supported idempotency or reconcile uncertain outcomes before retrying."
+  - q: "What should an AI agent audit log contain?"
+    a: "Record the run and tenant, actor, versioned configuration, state transitions, tool decisions, attempts, timing and error codes. Restrict access and retention, and avoid logging secrets or unnecessary personal data."
+---
+
+<TLDR>
+
+Use Laravel as the authenticated application and source of truth, Redis as a delivery layer, and Python as a bounded agent worker. Persist each run before publishing work, treat tool calls as untrusted proposals, and plan for duplicate delivery, timeouts and recovery. Ship only after testing permissions, failure paths and task quality on representative cases.
+
+</TLDR>
+
+This is a reference design for an invoice-support assistant, not a claim that the complete system has been deployed or tested in production. The runnable example below tests a small offline tool gate; the architecture still needs implementation, integration tests and an operational review for your application.
+
+## 1. Divide responsibility before choosing a library
+
+The example assistant answers an authorised staff member’s question about an invoice. It may read an invoice status; it cannot send messages or change payment records. A model proposes a tool call, but application code decides whether that call is allowed.
+
+| Component | Responsibility |
+| --- | --- |
+| Laravel API | Authenticate, authorise, create and read runs, own tenant data and enforce access to tools |
+| SQL database | Persist run state, outbox entries, tool-action records and audit events |
+| Redis Stream | Deliver versioned work messages to a Python consumer group |
+| Python worker | Claim a run, call the model, validate proposals and request permitted tool execution |
+| Model provider | Return a response or tool proposal; it has no direct database credentials |
+
+The database is authoritative. Redis is a transport, not the only copy of the job or its result. This design deliberately uses a Redis Stream for the cross-language contract. Laravel’s native Redis queue has its own job payload and worker protocol; do not assume a Python consumer can process it as this JSON contract. Laravel workers can still use a separate native queue for Laravel-only tasks. <Cite id="laravel-queues" />
+
+A typical request follows this path:
+
+1. Laravel authenticates the caller, verifies their tenant and permission, and validates the request.
+2. In one database transaction, it creates a run and an outbox row. Return `202 Accepted` with a run ID after commit.
+3. An outbox publisher sends a versioned message to the Redis Stream. Python consumes it, then obtains an atomic, time-limited run lease from the Laravel service.
+4. The worker calls the model and sends tool proposals to an authenticated Laravel tool endpoint. Laravel rechecks permissions and applies tenant filters using trusted server-side context.
+5. Laravel stores the final state and audit event durably; only then does the consumer acknowledge the stream entry. The client reads status from an authorised Laravel endpoint.
+
+A status response must enforce tenant and user access just like the original request. A run ID is an identifier, not a bearer credential.
+
+## 2. Make the message and state machine explicit
+
+Keep the stream message small and versioned. This example is a contract, not a runnable queue producer:
+
+```json title="stream-message.json"
+{
+  "version": 1,
+  "event_id": "7d1b7c66-2a1e-49d9-86f8-6fe8b345c621",
+  "run_id": "88c70b16-a46e-470c-b675-37b70c5a94ea"
+}
+```
+
+The worker fetches the authorised run context through the internal service instead of trusting a tenant ID or permissions supplied by a model. Use mutually authenticated service identities or equivalent narrowly scoped service credentials. Authenticate the worker, authorise its operation, encrypt traffic, and keep Redis private with appropriate credentials and access controls. Limit message and response sizes.
+
+A practical state model is `queued → running → succeeded`, with terminal `failed` and `cancelled` states and a `waiting_approval` state where needed. Persist attempt number, lease expiry and a monotonically increasing lease version. Claim or renew with an atomic database operation. Each result and tool request must include the current lease version; Laravel rejects a stale worker after its lease has been replaced. Check cancellation and current permissions again before an action.
+
+Time limits should have a clear hierarchy: individual network calls and their retries fit within a run deadline; the worker renews its lease during legitimate long work; the stream reclaim idle threshold must account for that renewal and normal processing time. A stale entry can be reclaimed, but a second worker must still obtain the database lease before acting.
+
+## 3. Deliver work without assuming exactly once
+
+The outbox row is written in the same SQL transaction as the run. A separate publisher reads unsent rows, adds them to the stream and marks them published after Redis accepts them. If the publisher crashes between those steps it may publish twice. Use a stable event ID and make processing safe to repeat. `afterCommit` prevents an early dispatch from observing uncommitted data, but it does not by itself close the crash window between a database commit and a separate queue publish. <Cite id="laravel-queues" />
+
+Redis consumer groups track pending entries; workers acknowledge them with `XACK` after durable completion. A recovery process inspects pending work and uses `XAUTOCLAIM` or an equivalent claim strategy for abandoned entries. <Cite id="redis" /> For retries with backoff, persist the next eligible attempt and use a scheduler or retry queue; repeatedly reading a pending entry is not a backoff mechanism.
+
+Configure Redis persistence and recovery to match your loss tolerance. Even a successful publish can later be lost under some failure configurations, so reconcile old non-terminal runs against the database and republish or alert when necessary. Deduplicate via the stable run and event identities. Monitor the publisher and reconciliation process as well as the worker.
+
+| Failure | Response |
+| --- | --- |
+| Model timeout or transient provider error | Retry within the run deadline with bounded exponential backoff and jitter; honour applicable rate limits |
+| Invalid input, denied tool or unsupported schema | Record the reason and stop or request correction; do not retry indefinitely |
+| Worker dies after storing a result but before `XACK` | Reclaimed delivery sees the terminal run and acknowledges without repeating the action |
+| Stream or publisher unavailable | Keep the durable outbox and retry; alert on age and reconcile stuck runs |
+| External action times out after it may have succeeded | Mark the outcome uncertain and reconcile before retrying; do not assume failure |
+
+Set an attempt limit, a terminal failure state and an operator procedure for replay. A retry is not a new user request. Retain the logical action ID across attempts and recheck authorisation before replaying.
+
+## 4. Treat tools as an authority boundary
+
+The model can suggest `invoice_status` with an invoice ID. It cannot select the tenant, grant itself a permission, provide database credentials or call an arbitrary URL. Laravel should look up the run and current actor, verify the action and query the invoice with the tenant scope. Return only the fields needed for the answer. Decide whether a deleted user or revoked permission stops an in-flight run, and enforce that policy at execution time.
+
+For actions that change external state, create a durable action record with a unique key for the **logical action**, not an attempt-specific key. Where the provider supports idempotency, send that same key on retries and store its response. If the provider has no reliable idempotency or status lookup, an ambiguous timeout cannot be made exactly once by a local lock. Hold the action for reconciliation or human review rather than blindly repeating it. For high-risk changes, bind approval to the exact action and arguments; revalidate both the approval and permissions at execution.
+
+Treat retrieved documents and tool results as untrusted data. Prompt injection can arrive through a document as well as a user message; instructions in that data must not change the application’s permissions. OWASP recommends least privilege, output validation and human approval for high-risk operations. <Cite id="owasp" /> An allowlist reduces the blast radius, but it does not prove that a model’s answer is correct.
+
+### Run an offline tool-gate example
+
+[Download the Python tool-gate demo](/downloads/agent-tool-gate-demo.py) and run it with Python 3:
+
+```bash title="terminal"
+python3 agent-tool-gate-demo.py -v
+```
+
+The standard-library tests check a permitted read, cross-tenant and missing records, an unknown tool, revoked permission and malformed arguments. The fixture uses in-memory invoices and a trusted context. It makes no model, Laravel, database or Redis calls and provides no production authentication, leases or audit logging.
+
+The central boundary is deliberately small:
+
+```python title="agent-tool-gate-demo.py"
+if proposal['name'] != 'invoice_status' or not context.can_read_invoices:
+    raise Denied('tool not permitted')
+# Validate the exact argument shape before looking up the invoice.
+if invoice is None or invoice['tenant_id'] != context.tenant_id:
+    raise Denied('invoice unavailable')
+```
+
+In a real service, permission and tenant checks belong at the trusted data-owning boundary too. Keep the same checks for direct API calls, retries and jobs, not only the agent path.
+
+## 5. Record what happened without creating a data leak
+
+Store append-only events for run creation, claims, tool proposals and decisions, retries, approvals and terminal outcomes. Include run ID, tenant and actor IDs, event time, attempt and lease version, tool name, status, duration, error category, and model, prompt and tool-schema versions. Record usage or estimated cost when the provider supplies enough information. Separate audit records from diagnostic logs and define who may read each.
+
+Avoid logging credentials, raw payment details or entire prompts by default. Decide what evidence is needed for investigation, how it is redacted and encrypted, and when it expires. Restrict access, test deletion and retention policies, and use protected or tamper-evident storage if the risk warrants it. Trace IDs connect a request to a run; they are not a substitute for an audit trail.
+
+Monitor queue age, pending entries, stale leases, retries, timeouts and terminal failure rates. Add alerts for outbox backlog, permission denials, token use and budget thresholds. Cap steps, tool calls, tokens and elapsed time per run. Provide a kill switch and a way to pause consumers without losing durable work.
+
+## 6. Evaluate before letting the agent act
+
+Create a labelled set of representative questions and expected evidence, including unavailable invoices and cross-tenant attempts. Use fake tools for normal development so tests cannot affect real accounts. Include malicious instructions in user text and retrieved content, malformed tool arguments, duplicate delivery, expired leases and provider timeouts.
+
+Separate deterministic checks from human review. Tests can verify the tool name, schema, policy decision, stored state and number of external actions. A reviewer can judge whether the answer correctly reflects the invoice and avoids unsupported claims. Run the current and candidate prompt or model on the same cases, repeat variable cases, inspect regressions by category and keep a held-out set. Task-specific evaluation and continuous measurement are recommended in OpenAI’s evaluation guidance. <Cite id="evals" />
+
+Before release, agree on hard blockers: no cross-tenant access, no unapproved write, no duplicate side effect in the tested retry cases, and a working recovery path. Track answer quality, latency and cost separately; a valid JSON response does not establish correctness. Run failure-injection and load tests against the actual deployment, verify restore and replay procedures, then roll out to a limited audience with rollback available. The offline fixture does not establish any of those production properties.
+
+<PostLink slug="shipping-ai-features-in-laravel-without-blocking-your-app" />
+
+<PostLink slug="the-evals-i-run-before-shipping-a-prompt-change" />
+
+<PostLink slug="laravel-agent-guard-why-your-laravel-ai-agents-need-brakes" />
+
+<Takeaways>
+
+- Persist a run and outbox before publishing cross-language work.
+- Use leases, fencing and stable action IDs to handle repeated delivery.
+- Enforce tenant permissions and tool allowlists outside the model.
+- Keep a protected audit trail and rehearse recovery from failures.
+- Evaluate task quality and security before expanding access.
+
+</Takeaways>
