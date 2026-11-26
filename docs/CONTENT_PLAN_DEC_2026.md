@@ -98,7 +98,7 @@ Series keep readers moving between posts and give AI engines clusters of pages o
 | 9 | Wed 9 Dec | Engineering | What an AI feature costs: token maths for a SaaS | OpenAI API cost per user SaaS |
 | 10 | Thu 10 Dec | AI Research | Voice agents in Urdu, Punjabi and Pashto: where they break | urdu speech recognition voice agent |
 | 11 | Fri 11 Dec | Engineering | Reliable JSON from LLMs in PHP with structured outputs | openai structured outputs php laravel |
-| 12 | Sat 12 Dec | AI Research | Grading written answers with AI: what worked, what didn’t | AI answer evaluation subjective exams |
+| 12 | Sat 12 Dec | AI Research | [Grading written answers with AI: what worked, what didn’t](/blog/grading-written-answers-with-ai-what-worked-what-didnt), published 26 Nov (dated 12 July by request). Slot open: pick a reserve topic | AI answer evaluation subjective exams |
 | 13 | Sun 13 Dec | AI Research | The evals I run before shipping a prompt change | LLM prompt regression testing |
 | 14 | Mon 14 Dec | AI Research | RAG over textbooks with tables, formulas and Urdu text | chunking PDF textbooks for RAG |
 | 15 | Tue 15 Dec | Founder | Freelancer to studio: what changed when I stopped selling hours | freelancer to agency developer |
@@ -194,11 +194,11 @@ Each brief lists what the TL;DR must answer, the questions to talk through, the 
 - **Asset:** working Laravel code and the JSON schema.
 - **References:** the provider’s structured outputs docs.
 
-**12. Grading written answers with AI: what worked, what didn’t** · `ai-grading-written-answers` · AI Research, AI in production 5
-- **TL;DR answers:** how close AI grades got to a teacher’s grades in your R&D, and where it went wrong.
-- **Talk through:** the setup, the marking scheme, agreement with human graders, handwriting/OCR issues.
-- **Asset:** agreement numbers on your sample, with sample size stated.
-- **Links:** rubric-for-ai-exam-questions, grounded-exam-generation-with-rag-retrieval-and-evaluation.
+**12. Grading written answers with AI: what worked, what didn’t** · `grading-written-answers-with-ai-what-worked-what-didnt` · AI Research, AI in production · Written and published
+- **Angle:** Published research on grading accuracy and failures, a fictional marking example and a proposed teacher-led evaluation protocol. No unverified local experiment or agreement figures.
+- **Date:** 12 July 2026 requested; the article was prepared and published on 26 November 2026, as noted in the post.
+- **Asset:** Sample rubric, illustrative scoring output and evaluation measures.
+- **Links:** grounded-exam-generation-with-rag-retrieval-and-evaluation, simple-wins-designing-for-the-least-technical-user-in-the-room.
 
 **13. The evals I run before shipping a prompt change** · `prompt-change-evals` · AI Research, AI in production 6 (field note)
 - **TL;DR answers:** the small test set and checks you run before any prompt or model change goes live.
