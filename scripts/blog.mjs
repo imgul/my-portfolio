@@ -503,6 +503,7 @@ export function sitemap(posts) {
   const urls = [
     { loc: `${SITE_URL}/`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('home') },
     { loc: `${SITE_URL}/blog`, lastmod: posts.map((p) => p.updated ?? p.date).sort().at(-1), image: ogImage() },
+    { loc: `${SITE_URL}/blog/lessons`, image: ogUrl('lessons') },
     { loc: `${SITE_URL}/blog/research`, lastmod: posts.filter((p) => LICENSES[p.license].open).map((p) => p.updated ?? p.date).sort().at(-1), image: ogUrl('research') },
     ...SERIES.filter((s) => s.status === 'published').map((s) => ({
       loc: `${SITE_URL}/blog/series/${s.slug}`,
@@ -782,9 +783,9 @@ const TWITTER = PERSON_INFO.x ? [`<meta name="twitter:site" content="@${PERSON_I
 export const postTitle = (p) => p.seoTitle ?? (`${p.title} · ${BLOG_TITLE}`.length <= 65 ? `${p.title} · ${BLOG_TITLE}` : p.title)
 
 /** <head> tags for a blog page: SEO, Open Graph, Twitter, feeds, Markdown alternate and JSON-LD. */
-export function headTags({ post, posts, notFound, research, legal, series }) {
+export function headTags({ post, posts, notFound, research, legal, series, lessons }) {
   if (legal) return legalHeadTags(legal)
-  const title = notFound
+  const title = lessons ? 'Lessons that cost me something · Muhammad Gulzaib' : notFound
     ? `Page not found · ${BLOG_TITLE}`
     : post
       ? postTitle(post)
@@ -793,11 +794,11 @@ export function headTags({ post, posts, notFound, research, legal, series }) {
         : research
           ? `Research & citation: Muhammad Gulzaib · ${BLOG_TITLE}`
           : BLOG_INDEX_TITLE
-  const description = notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : series ? (series.seoDescription ?? series.description) : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
-  const url = post ? postUrl(post) : series ? `${SITE_URL}/blog/series/${series.slug}` : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
+  const description = lessons ? 'Three founder lessons on validation, distribution and simple software, learned while building products for shops and schools.' : notFound ? NOT_FOUND_DESCRIPTION : post ? post.description : series ? (series.seoDescription ?? series.description) : research ? RESEARCH_DESCRIPTION : BLOG_DESCRIPTION
+  const url = lessons ? `${SITE_URL}/blog/lessons` : post ? postUrl(post) : series ? `${SITE_URL}/blog/series/${series.slug}` : research ? `${SITE_URL}/blog/research` : `${SITE_URL}/blog`
   const lic = post ? LICENSES[post.license] : null
-  const img = post ? ogImage(post) : series ? ogUrl(`series-${series.slug}`) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
-  const imgAlt = post
+  const img = lessons ? ogUrl('lessons') : post ? ogImage(post) : series ? ogUrl(`series-${series.slug}`) : research ? ogUrl('research') : notFound ? ogUrl('404') : ogUrl('blog')
+  const imgAlt = lessons ? 'Lessons that cost me something: founder notes by Muhammad Gulzaib' : post
     ? `${post.title}: ${post.category} post by Muhammad Gulzaib`
     : series
       ? `${series.title}: blog series by Muhammad Gulzaib`
@@ -825,7 +826,7 @@ export function headTags({ post, posts, notFound, research, legal, series }) {
     `<meta property="og:site_name" content="${esc(BLOG_TITLE)}" />`,
     `<meta property="og:locale" content="en_US" />`,
     `<meta property="og:type" content="${post ? 'article' : 'website'}" />`,
-    `<meta property="og:title" content="${esc(post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
+    `<meta property="og:title" content="${esc(lessons ? title : post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${img}" />`,
@@ -844,7 +845,7 @@ export function headTags({ post, posts, notFound, research, legal, series }) {
       : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     ...TWITTER,
-    `<meta name="twitter:title" content="${esc(post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
+    `<meta name="twitter:title" content="${esc(lessons ? title : post ? post.title : series ? (series.seoTitle ?? series.title) : research ? 'Research & citation: Muhammad Gulzaib' : BLOG_INDEX_TITLE)}" />`,
     `<meta name="twitter:description" content="${esc(description)}" />`,
     `<meta name="twitter:image" content="${img}" />`,
     `<meta name="twitter:image:alt" content="${esc(imgAlt)}" />`,
@@ -857,7 +858,7 @@ export function headTags({ post, posts, notFound, research, legal, series }) {
           `<meta name="twitter:data2" content="${esc(post.category)}" />`,
         ]
       : []),
-    notFound ? '' : `<script type="application/ld+json">${json(post ? postGraph(post) : series ? seriesGraph(series, posts) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
+    notFound ? '' : `<script type="application/ld+json">${json(lessons ? { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url, author: PERSON } : post ? postGraph(post) : series ? seriesGraph(series, posts) : research ? researchGraph(posts) : indexGraph(posts))}</script>`,
   ]
   return t.filter(Boolean).join('\n    ')
 }

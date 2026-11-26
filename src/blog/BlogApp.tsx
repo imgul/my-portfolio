@@ -7,6 +7,7 @@ import { BackToTop, Footer, Header } from './components/layout'
 import { Toaster } from './components/ui'
 import { ResearchPage } from './components/scholar'
 import LegalPage from './LegalPage'
+import LessonsPage from './LessonsPage'
 import { legalByPath } from './legal.mjs'
 import CookieConsent from '../lib/consent/CookieConsent'
 import { useHydrated } from './hydrated'
@@ -52,6 +53,8 @@ export default function BlogApp({ notFound }: { notFound?: boolean }) {
         <LegalPage key={legal.id} id={legal.id} />
       ) : path === '/blog' ? (
         <BlogIndex />
+      ) : path === '/blog/lessons' ? (
+        <LessonsPage />
       ) : path === '/blog/research' ? (
         <ResearchPage />
       ) : seriesSlug && !seriesSlug.includes('/') ? (
