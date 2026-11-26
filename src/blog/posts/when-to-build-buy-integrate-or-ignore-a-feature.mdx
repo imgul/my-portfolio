@@ -1,0 +1,343 @@
+---
+title: "When to Build, Buy, Integrate, or Ignore a Feature"
+seoTitle: "Build, buy, integrate or ignore: a feature decision framework"
+description: "A practical framework for deciding whether to build, buy, integrate or ignore a feature, with scoring, vendor checks and a decision record."
+# The requested display date is not the date this guide was prepared or published.
+date: 2026-08-20
+category: Founder
+cover:
+  style: list
+  big: "4"
+  hook: "Ways to handle a feature request"
+  items:
+    - "Build the differentiator"
+    - "Buy a standard solution"
+    - "Integrate specialist services"
+    - "Ignore or defer deliberately"
+  alt: "Four ways to handle a feature request: build the differentiator, buy a standard solution, integrate specialist services, or ignore or defer deliberately."
+tags: [product, saas, founder, strategy, engineering]
+art: road
+level: Intermediate
+references:
+  - id: discovery
+    authors: Government Digital Service
+    title: "How the discovery phase works"
+    url: https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works
+faq:
+  - q: "When should a company build a feature instead of buying it?"
+    a: "Building is more compelling when the capability is central to customer value, domain-specific or strategically important to control, and the team can support it over its lifetime. Compare its full cost with available alternatives."
+  - q: "What is the difference between buying and integrating software?"
+    a: "Buying typically means adopting a ready-made product for an operational workflow; integrating connects your product to an external capability. The boundary can overlap, so judge the actual contract and customer experience."
+  - q: "When should a team ignore a feature request?"
+    a: "Defer or decline when the evidence, customer impact or strategic fit does not justify the opportunity cost. Check that it is not a foundational requirement such as security, accessibility or offline operation."
+---
+
+<TLDR>
+
+Build capabilities that make your product meaningfully different. Buy standard operational tools, integrate specialised services when you can preserve the customer experience, and deliberately defer requests whose value does not justify their cost. Decompose large features and reconsider the decision as evidence changes.
+
+</TLDR>
+
+*This guide was prepared in November 2026. The displayed 20 August 2026 date was requested for the post; it is not its original publication date.*
+
+Every feature request arrives disguised as an opportunity. A customer asks for advanced reporting. A competitor launches an AI assistant. The sales team needs an integration to close an account. An engineer proposes replacing a third-party service with an internal system. Each request sounds reasonable in isolation.
+
+The question is not simply “Should we add this feature?” It is “Should we build it ourselves, buy an existing solution, integrate with another product, or deliberately ignore it?” That decision affects differentiation, margins, reliability, security exposure, operational complexity, and the ability to move quickly.
+
+## The four options
+
+### Build
+
+Your team designs, develops, operates, and maintains the capability internally. Examples include an examination engine for an assessment platform, an offline synchronisation engine for a POS product, or domain-specific AI evaluation infrastructure.
+
+You control the experience, data model, roadmap, and implementation. You also inherit the bugs, edge cases, security risks, infrastructure bills, and maintenance obligations.
+
+### Buy
+
+You purchase a ready-made product and use it internally or embed it into your operation. Examples include a support desk, an enterprise identity product, or commercial analytics. Buying often means adopting the vendor’s workflows rather than deeply shaping the capability around your product.
+
+### Integrate
+
+You connect your product to an external service through an API, SDK, plugin, webhook, or embedded component. Examples include transactional email, SMS, a learning platform connected to a video service, accounting integrations, or an external language model.
+
+Integration can preserve your product experience while delegating a specialised capability to another provider. Buying and integrating can overlap: the important distinction is how much of the workflow your product owns.
+
+### Ignore
+
+You decide not to implement the feature, at least for now. That might mean delaying a mobile app when the web product already solves the core problem, declining a custom report requested by one customer, or skipping a competitor’s feature that does not improve the primary outcome.
+
+Ignoring deliberately is resource allocation. It is not a reason to ignore security, accessibility, or a requirement that determines whether the product works at all.
+
+## The product decision matrix
+
+Score the feature across eight dimensions from 1 to 5, where 1 is low and 5 is high:
+
+| Dimension | Key question |
+| --- | --- |
+| Strategic differentiation | Does this capability help customers choose us over alternatives? |
+| Customer importance | How strongly does it affect the customer’s core outcome? |
+| Market availability | Are reliable products or APIs already available? |
+| Domain specificity | Does the feature require unique workflows, rules, or data? |
+| Control requirement | Do we need control over behaviour, data, pricing, or roadmap? |
+| Internal capability | Can our team build and operate it effectively? |
+| Maintenance burden | How expensive will it be to support over several years? |
+| Urgency | How quickly must it reach customers? |
+
+| Decision | Typical signal |
+| --- | --- |
+| Build | High differentiation, domain specificity, and control requirement |
+| Buy | Standardised need, low differentiation, strong existing products |
+| Integrate | Important need, reliable external API, moderate customisation |
+| Ignore | Low customer impact, weak evidence, poor fit, high opportunity cost |
+
+This is a way to expose assumptions and disagreements, not a formula that automatically makes the decision. Government Digital Service’s discovery guidance similarly starts with the user’s problem and constraints before committing to a solution. Its guidance is for public services, but the distinction is useful here too. <Cite id="discovery" />
+
+## When you should build
+
+Build when the capability is part of the reason your company deserves to exist. The feature may represent proprietary knowledge, a unique workflow, a defensible data advantage, or an experience competitors cannot easily reproduce with the same tools.
+
+### The feature is central to the value proposition
+
+For an AI examination platform, the assessment engine, grading logic, evaluation workflows, question-generation controls, and integrity mechanisms may define the product. Outsourcing the entire examination engine would reduce control over the experience customers are paying you to improve.
+
+By contrast, the email delivery system notifying students about an exam is unlikely to be the core value proposition.
+
+### Existing solutions cannot support the domain
+
+An examination platform may need question randomisation, partial-credit grading, subjective-answer evaluation, multiple examination formats, moderation, institution-specific policies, low-bandwidth delivery, and detailed audit trails. If existing vendors force you to compromise the core workflow, building becomes more reasonable.
+
+Control can also have strategic value because of data residency, security, regulation, latency, unit economics, offline operation, customer configuration, or vendor roadmap uncertainty. An offline-first POS may need local storage, conflict resolution, synchronisation, and recovery to keep its basic promise. Depending entirely on a cloud-only external system can weaken that promise.
+
+### The capability improves through domain data
+
+An AI assessment platform could improve through historical grading decisions, subject-specific rubrics, question difficulty data, teacher corrections, and institutional policies. If the data improves the capability over time, internal ownership may create defensibility. That depends on permission to use the data and on whether the resulting improvements actually matter to customers.
+
+### When building is a mistake
+
+Do not build merely because engineers find the problem interesting, third-party pricing appears expensive at current volume, you want complete control in principle, a vendor’s interface is imperfect, or an internal prototype took only a few days.
+
+A prototype is not a production system. Authentication, for example, includes session management, account recovery, brute-force protection, audit logs, multifactor authentication, vulnerability management, and security updates.
+
+The build estimate must include the complete lifecycle:
+
+```text title="Total cost of ownership"
+Development + infrastructure + maintenance + support
++ security + opportunity cost
+```
+
+If two engineers spend three months building an internal system, the cost is also the customer-facing work they did not ship during those three months.
+
+## When you should buy
+
+Buy when the requirement is important but not strategically differentiating, especially when mature products already solve it. Customers usually do not care whether you built your CRM, payroll system, support desk, or internal analytics platform. They care whether your product solves their problem.
+
+Standardised candidates include payroll, customer support, CRM, accounting, project management, internal communication, device management, employee identity, and compliance monitoring. A mature vendor may already provide access controls, administrative tools, support operations, reporting, disaster recovery, and integrations that would be expensive to reproduce.
+
+Speed can matter more than customisation. If a purchased tool lets a team launch in two weeks instead of four months, the saved time may be more valuable than the subscription cost. Those are illustrative timings, not a promise for a particular vendor.
+
+### The hidden cost of buying
+
+Evaluate per-user and usage-based pricing, annual contracts, data export, implementation fees, training, workflow constraints, vendor stability, switching costs, security, and support quality.
+
+The wrong purchase can become an expensive dependency. Avoid signing a long contract before validating actual usage, particularly when pricing scales per seat, transaction, API call, student, or customer record.
+
+## When you should integrate
+
+Integrate when the feature matters to the product experience but does not need to be your proprietary capability. You can own the customer journey while delegating specialised infrastructure.
+
+Consider payment processing. The product should own pricing plans, the upgrade experience, subscription rules, entitlements, failed-payment communication, and account status. A payment provider can handle supported payment methods and parts of the payment-network and banking complexity. Responsibilities depend on the provider and contract; an integration does not remove your security or compliance obligations.
+
+### Evaluate the API as an operational dependency
+
+Look for documented APIs, stable SDKs, webhooks, idempotency support, versioning policies, sandbox environments, usage monitoring, clear rate limits, data export, and technical support. Do not evaluate only whether an API exists. Evaluate whether it is operable in production.
+
+### Isolate the dependency
+
+Instead of spreading vendor-specific code across the application, create an internal interface:
+
+```text title="NotificationService"
+sendEmail()
+sendSMS()
+sendWhatsAppMessage()
+getDeliveryStatus()
+```
+
+The initial implementation might use one provider, but the rest of the system depends on your interface. This can make it easier to replace a vendor, add another provider, route traffic by region, handle outages, and test the application.
+
+### The abstraction tax
+
+Do not overengineer vendor independence from day one. A team can spend weeks creating a universal abstraction for a dependency it may never replace. Abstract the parts that affect core business logic, data ownership, and operational resilience. Do not hide every provider-specific capability behind an elaborate internal framework.
+
+## When you should ignore
+
+A feature request can be genuine and still not deserve implementation.
+
+### It comes from one customer with no broader evidence
+
+A large customer may request a highly specific workflow. Ask how many current and target customers need it, whether it improves retention or expansion, whether it is reusable, what support complexity it creates, and whether the customer will pay for it.
+
+A request tied to a large contract may be commercially valid. But revenue alone does not make it a product feature. It may be custom development disguised as roadmap progress.
+
+### It does not improve the core outcome
+
+A customer asking for a dashboard may actually need a weekly email, an export to Excel, an API endpoint, an alert, or better search and filtering. Building the requested interface before understanding the job can produce an expensive feature that users rarely open.
+
+### The operational cost exceeds the value
+
+Custom report builders, extensive permissions, real-time collaboration, offline synchronisation, user-generated automation, multiple calendar providers, and white-label customisation can all be expensive to maintain. Estimate their operational surface area, not only their initial development time.
+
+### It is driven by competitor anxiety
+
+A competitor launching a feature does not prove your customers need it. The competitor may be testing an unvalidated idea, serving another segment, responding to a particular contract, or seeking attention rather than adoption. Copying without customer evidence turns the competitor’s assumptions into your roadmap.
+
+## A practical scoring framework
+
+Score these factors from 1 to 5. In the strategic table, a higher score means greater value:
+
+| Factor | 1 | 5 |
+| --- | --- | --- |
+| Core customer impact | Minor convenience | Essential outcome |
+| Differentiation | Commodity | Major reason to choose us |
+| Revenue impact | No measurable effect | Direct effect on acquisition, retention, or expansion |
+| Learning value | Produces little insight | Tests a critical assumption |
+
+In the execution table, a higher capability-gap, complexity, or maintenance score means greater difficulty:
+
+| Factor | 1 | 5 |
+| --- | --- | --- |
+| Internal capability gap | Expertise already exists | Major capability gap |
+| Implementation complexity | Small and isolated | Cross-system, high-risk change |
+| Maintenance burden | Minimal | Continuous specialist ownership |
+| Time sensitivity | Can wait | Immediate commercial or operational need |
+
+The first matrix scores *internal capability* positively; this table scores the *capability gap* in the opposite direction. Name the scale explicitly when recording a decision.
+
+A build tendency combines high customer impact and differentiation with domain specificity and a team able to justify long-term ownership. Buy tends to fit an operational, standardised problem with mature products and high internal complexity. Integrate tends to fit a customer-visible capability supported by a suitable external API. Ignore or defer tends to fit low impact, weak evidence, high maintenance, and a more important constraint elsewhere.
+
+## Add confidence to the decision
+
+Feature decisions should account for both value and evidence. A feature may appear valuable while the evidence behind that belief is weak.
+
+The following multipliers are an illustrative discussion aid, not calibrated probabilities:
+
+| Evidence | Example confidence |
+| --- | --- |
+| Internal opinion | 0.2 |
+| One customer request | 0.3 |
+| Several informal requests | 0.5 |
+| Repeated behaviour or observed workaround | 0.7 |
+| Paid commitment or consistent usage data | 0.9 |
+| Validated across multiple customer segments | 1.0 |
+
+A simple evidence-adjusted score could be:
+
+```text title="Illustrative score"
+(Customer impact + revenue impact + differentiation) × confidence
+```
+
+For a proposed analytics dashboard, suppose the scores are 4, 3, and 2, with confidence 0.3 because one customer requested it. The result is `(4 + 3 + 2) × 0.3 = 2.7`.
+
+For an improved CSV export, suppose the scores are 3, 2, and 2, with confidence 0.9 because usage data shows customers exporting manually every week. The result is `(3 + 2 + 2) × 0.9 = 6.3`. Both examples are hypothetical. The less impressive feature may be the better investment because the evidence is stronger.
+
+These scores combine subjective ordinal ratings and arbitrary multipliers. They are not measured probabilities or a substitute for judgement. A paid commitment can be unrepresentative, and a hard legal, safety, accessibility, or security requirement cannot be scored away. Record the evidence, its limitations, and what would change the decision.
+
+## Worked example: AI-powered exam proctoring
+
+Imagine an AI examination platform considering automated proctoring. The institution does not inherently want webcam monitoring. It wants confidence that examination results are credible.
+
+That outcome may involve identity verification, browser restrictions, suspicious-behaviour detection, screen recording, human review, audit trails, and clear appeal procedures. If integrity is central to the platform’s positioning, the capability has high strategic importance. That does not mean every component should be built.
+
+| Component | Illustrative decision | Reason |
+| --- | --- | --- |
+| Examination session workflow | Build | Central to the product experience |
+| Institution-specific violation rules | Build | Domain-specific workflow |
+| Identity verification | Integrate | Specialised infrastructure exists |
+| Video storage | Buy or integrate | Commodity infrastructure with security implications |
+| Browser lockdown | Integrate initially | High platform-specific maintenance burden |
+| Human review dashboard | Build | Tied to institutional workflow |
+| Generic facial recognition model | Ignore initially | High risk and questionable early-stage value |
+
+The example is a decomposition, not a recommendation to deploy surveillance. Before considering proctoring, assess necessity, applicable law, privacy, accessibility, accuracy and bias, retention, and meaningful human review and appeals. A human review process still needs safeguards against overreliance on model flags.
+
+The correct decision is often not one choice for the entire feature. Large features can be decomposed into components, each with its own decision.
+
+## Use reversibility as a decision rule
+
+Relatively reversible decisions include switching an internal project-management tool, testing an email provider, adding a temporary manual workflow, delaying a low-priority feature, or running a limited integration pilot. These can usually be made faster.
+
+Core data models, proprietary vendor workflows, customer identity, multi-year contracts, and permanent custom functionality deserve more scrutiny. Move quickly when the exit cost is low. Slow down when the dependency can reshape the product.
+
+## Evaluate vendors like architecture
+
+A third-party product becomes part of your system. Before buying or integrating, evaluate:
+
+| Area | Questions |
+| --- | --- |
+| Reliability | Is uptime history available? What does the agreement cover? Can the product degrade gracefully? |
+| Data ownership | Can complete data be exported? In what format? What happens to backups and model-training use? |
+| Security | What encryption, access controls, audit logs and incident disclosures are available? |
+| Commercial risk | How does pricing scale? Can prices change? Are essential capabilities locked behind another tier? |
+| Technical exit | Is the data model proprietary? How much code depends on the API? How long would migration take? |
+
+The goal is to make dependency visible, justified, and survivable.
+
+## The decision document
+
+For significant features, create a one-page decision record. [Download the decision-record template](/downloads/build-buy-integrate-ignore-decision-record.md) or use this outline:
+
+1. **Feature:** what capability is being considered?
+2. **Customer problem:** what outcome or pain does it address?
+3. **Evidence:** which interviews, usage patterns, support requests, sales losses, or paid commitments support it?
+4. **Options:** build, buy, integrate, and ignore.
+5. **Costs:** initial implementation, vendor, infrastructure, maintenance, support, migration, and opportunity cost over a stated horizon.
+6. **Strategic assessment:** differentiation, control, learning, and data advantage.
+7. **Risks:** security, reliability, vendor, adoption, operations, and roadmap.
+8. **Decision:** the selected option and why it is better than the alternatives.
+9. **Review trigger:** when the decision should be reconsidered.
+
+For example: integrate an external service for the first 10,000 monthly transactions. Reassess internal development if annual vendor cost exceeds the estimated cost of a dedicated team, the provider blocks a required workflow, or reliability falls below the contractual target. Those thresholds are illustrative. A trigger prompts a review; it does not automatically prove building is cheaper.
+
+## Questions for the decision meeting
+
+- What customer outcome does this feature improve, and what evidence shows it matters?
+- Is it differentiation or required infrastructure?
+- Which components are unique and which are commodities?
+- What would we stop building to make room for it?
+- What is the three-year cost, and who owns it after release?
+- What happens as usage grows, or if the vendor raises prices or shuts down?
+- Can we test the value manually or with a limited implementation?
+- How difficult is the decision to reverse, and what would cause a review?
+
+Every “yes” to a feature is a “no” to something else, even when that trade-off is not written in the roadmap.
+
+## Common decision mistakes
+
+**Building commodities.** Authentication, billing, messaging, file storage, analytics, and support infrastructure can look manageable at first. The operational tail is longer than the first implementation.
+
+**Buying before understanding the workflow.** A purchase cannot fix an undefined process. Establish who will use it, what data enters it, and which decision it should improve.
+
+**Integrating without an exit strategy.** Vendor calls spread across the codebase, provider identifiers enter core tables, and webhook assumptions become business rules. Switching can become a rewrite.
+
+**Ignoring foundational requirements.** Offline operation, data exports, backups, audit logs, accessibility, permissions, and low-bandwidth support can look less attractive than visible features. In the wrong market, ignoring them can invalidate the product.
+
+**Treating enterprise requests as universal needs.** Separate reusable platform capability, configurable enterprise capability, customer-specific implementation, and one-time professional services. Do not put all four on the same roadmap without acknowledging the difference.
+
+## The final rule
+
+Build what makes your product meaningfully different. Buy what your organisation needs but customers do not value as differentiation. Integrate specialised infrastructure while preserving ownership of the customer experience. Ignore features whose evidence, strategic value, or impact does not justify their opportunity cost.
+
+The decision does not need to be permanent. You can integrate before building, deliver an outcome manually before buying software, or defer a request until stronger evidence appears. The objective is to place limited resources where they create the greatest durable advantage.
+
+<PostLink slug="the-inclinepos-failure-what-ignoring-offline-requirements-taught-me" />
+
+<PostLink slug="how-i-scope-an-mvp-in-one-call-my-question-list" />
+
+<Takeaways>
+
+- Start with the customer outcome and evidence, not the requested feature.
+- Decompose large features before choosing build, buy, integrate, or ignore.
+- Compare lifecycle cost, operational ownership, and exit risk.
+- Treat scores as discussion aids, not proof or a substitute for hard requirements.
+- Record the decision and a trigger for revisiting it.
+
+</Takeaways>
